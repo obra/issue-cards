@@ -4,12 +4,17 @@
 const { Command } = require('commander');
 const { createCommand, initAction } = require('../../src/commands/init');
 const directory = require('../../src/utils/directory');
+const templateInit = require('../../src/utils/templateInit');
 const output = require('../../src/utils/output');
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn(),
   createDirectoryStructure: jest.fn(),
+}));
+
+jest.mock('../../src/utils/templateInit', () => ({
+  copyDefaultTemplates: jest.fn(),
 }));
 
 jest.mock('../../src/utils/output', () => ({
@@ -53,7 +58,7 @@ describe('Init command', () => {
   });
   
   describe('initAction', () => {
-    test('creates directory structure when not already initialized', async () => {
+    test('creates directory structure and copies templates when not already initialized', async () => {
       // Mock isInitialized to return false (not initialized)
       directory.isInitialized.mockResolvedValue(false);
       
@@ -61,6 +66,9 @@ describe('Init command', () => {
       
       // Verify directory creation was called
       expect(directory.createDirectoryStructure).toHaveBeenCalled();
+      
+      // Verify templates were copied
+      expect(templateInit.copyDefaultTemplates).toHaveBeenCalled();
       
       // Verify success message was logged
       expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Initialized'));

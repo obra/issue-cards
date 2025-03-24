@@ -3,6 +3,7 @@
 
 const { Command } = require('commander');
 const { isInitialized, createDirectoryStructure } = require('../utils/directory');
+const { copyDefaultTemplates } = require('../utils/templateInit');
 const { formatSuccess, formatError } = require('../utils/output');
 
 /**
@@ -21,7 +22,8 @@ async function initAction() {
     // Create directory structure
     await createDirectoryStructure();
     
-    // Copy default templates (will be implemented later)
+    // Copy default templates
+    await copyDefaultTemplates();
     
     console.log(formatSuccess('Initialized issue tracking system in .issues/'));
     console.log(formatSuccess('Created config templates'));
