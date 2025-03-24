@@ -308,3 +308,32 @@ Each feature in this plan follows a consistent TDD workflow:
 - [ ] Run final comprehensive test suite
 - [ ] Address any remaining issues
 - [ ] Refactor and ensure all tests pass
+
+## Implementation Insights and Future Improvements
+
+Based on the implementation experience so far, here are some areas for potential improvement and refinements that could enhance the usability and effectiveness of the Issue Cards tool:
+
+### Command Verbosity
+- Consider shorter command names for better usability
+- `complete-task` → `complete`
+- `add-task` → `add`
+- `add-question` → `question`
+- `log-failure` → `failure`
+
+### Smart Defaults
+- Add defaults for empty sections in issue creation
+- Auto-generate timestamp for issue creation
+- Provide sensible default placeholders for template fields
+- Auto-format multi-line inputs without requiring specific formatting flags
+
+### Template Discovery
+- Add template preview functionality to see template structure before using
+- Create sample issues for each template type
+- Add a command to show template examples with real data
+- Implement interactive template selection
+
+### Inline Editing
+- Add ability to edit issues without directly modifying the markdown
+- Create commands for updating specific issue sections
+- Add command to add/edit tasks without needing to edit the file
+- Support for quick commenting on issues
