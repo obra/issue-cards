@@ -45,22 +45,22 @@ Each feature in this plan follows a consistent TDD workflow:
 ## Phase 2: Template System
 
 ### 2.1 Template Engine Setup
-- [ ] Write tests for template loading mechanism
-- [ ] Set up Handlebars template engine (minimal implementation)
-- [ ] Write tests for template rendering functions
-- [ ] Implement template rendering functions
-- [ ] Write tests for default template structure
-- [ ] Set up default template structure
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for template loading mechanism
+- [x] Set up Handlebars template engine (minimal implementation)
+- [x] Write tests for template rendering functions
+- [x] Implement template rendering functions
+- [x] Write tests for default template structure
+- [x] Set up default template structure
+- [x] Refactor and ensure all tests pass
 
 ### 2.2 Default Templates
-- [ ] Write tests for template validation
-- [ ] Create default issue templates (feature, bugfix, refactor, audit)
-- [ ] Create default tag templates (unit-test, e2e-test, lint-and-commit, update-docs)
-- [ ] Write tests for template utility functions
-- [ ] Implement template validation
-- [ ] Create template utility functions
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for template validation
+- [x] Create default issue templates (feature, bugfix, refactor, audit)
+- [x] Create default tag templates (unit-test, e2e-test, lint-and-commit, update-docs)
+- [x] Write tests for template utility functions
+- [x] Implement template validation
+- [x] Create template utility functions
+- [x] Refactor and ensure all tests pass
 
 ## Phase 3: Core Commands Implementation
 
@@ -68,8 +68,8 @@ Each feature in this plan follows a consistent TDD workflow:
 - [x] Write tests for directory structure creation
 - [x] Write tests for initialization feedback
 - [x] Implement `init` command to create directory structure (minimal implementation)
-- [ ] Write tests for template copying mechanism
-- [ ] Create mechanism to copy default templates
+- [x] Write tests for template copying mechanism
+- [x] Create mechanism to copy default templates
 - [x] Set up issue tracking initialization
 - [x] Implement user feedback for initialization
 - [x] Refactor and ensure all tests pass
