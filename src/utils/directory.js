@@ -11,7 +11,8 @@ const path = require('path');
  * @returns {string} The absolute path to the issue directory
  */
 function getIssueDirectoryPath(subdir) {
-  const issuesDir = path.join(process.cwd(), '.issues');
+  // Use environment variable if set, otherwise use default .issues directory
+  const issuesDir = process.env.ISSUE_CARDS_DIR || path.join(process.cwd(), '.issues');
   return subdir ? path.join(issuesDir, subdir) : issuesDir;
 }
 

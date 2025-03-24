@@ -39,6 +39,23 @@ jest.mock('../../src/utils/output', () => ({
   formatError: jest.fn(msg => `ERROR: ${msg}`),
 }));
 
+// Mock git utilities
+jest.mock('../../src/utils/gitDetection', () => ({
+  isGitAvailable: jest.fn().mockReturnValue(true),
+  isGitRepository: jest.fn().mockResolvedValue(true),
+  getGitRoot: jest.fn(),
+}));
+
+jest.mock('../../src/utils/gitOperations', () => ({
+  gitStage: jest.fn().mockResolvedValue(''),
+  gitStatus: jest.fn(),
+  gitShowTrackedFiles: jest.fn(),
+  safelyExecuteGit: jest.fn(),
+}));
+
+const gitDetection = require('../../src/utils/gitDetection');
+const gitOperations = require('../../src/utils/gitOperations');
+
 describe('Create command', () => {
   let commandInstance;
   let mockConsoleLog;
@@ -98,7 +115,7 @@ describe('Create command', () => {
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock template.loadTemplate to return template content
-      const mockTemplateContent = '# Issue {NUMBER}: {TITLE}\n\n## Problem to be solved\n{PROBLEM}\n\n## Tasks\n{TASKS}';
+      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Problem to be solved\n{{PROBLEM}}\n\n## Tasks\n{{TASKS}}';
       template.loadTemplate.mockResolvedValue(mockTemplateContent);
       
       // Mock template.renderTemplate to return rendered content
@@ -114,6 +131,9 @@ describe('Create command', () => {
       // Verify success message was logged
       expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       expect(console.log).toHaveBeenCalled();
+      
+      // Verify git staging was attempted
+      expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
     test('shows error when issue tracking is not initialized', async () => {
@@ -163,7 +183,7 @@ describe('Create command', () => {
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock template.loadTemplate to return template with all sections
-      const mockTemplateContent = '# Issue {NUMBER}: {TITLE}\n\n## Problem to be solved\n{PROBLEM}\n\n## Planned approach\n{APPROACH}\n\n## Failed approaches\n{FAILED_APPROACHES}\n\n## Questions to resolve\n{QUESTIONS}\n\n## Tasks\n{TASKS}\n\n## Instructions\n{INSTRUCTIONS}\n\n## Next steps\n{NEXT_STEPS}';
+      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Problem to be solved\n{{PROBLEM}}\n\n## Planned approach\n{{APPROACH}}\n\n## Failed approaches\n{{FAILED_APPROACHES}}\n\n## Questions to resolve\n{{QUESTIONS}}\n\n## Tasks\n{{TASKS}}\n\n## Instructions\n{{INSTRUCTIONS}}\n\n## Next steps\n{{NEXT_STEPS}}';
       template.loadTemplate.mockResolvedValue(mockTemplateContent);
       
       // Mock template.renderTemplate to return rendered content
@@ -201,6 +221,9 @@ describe('Create command', () => {
       // Verify success message was logged
       expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       expect(console.log).toHaveBeenCalled();
+      
+      // Verify git staging was attempted
+      expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
     test('handles errors during issue creation', async () => {
@@ -217,6 +240,35 @@ describe('Create command', () => {
       expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
       expect(console.error).toHaveBeenCalled();
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
+    });
+    
+    test('skips git staging if git is not available', async () => {
+      // Mock directory.isInitialized to return true
+      directory.isInitialized.mockResolvedValue(true);
+      
+      // Mock template.loadTemplate to return template content
+      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Tasks\n{{TASKS}}';
+      template.loadTemplate.mockResolvedValue(mockTemplateContent);
+      
+      // Mock template.renderTemplate to return rendered content
+      const mockRenderedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [ ] Task 1';
+      template.renderTemplate.mockReturnValue(mockRenderedContent);
+      
+      // Mock git not available
+      gitDetection.isGitAvailable.mockReturnValue(false);
+      
+      // Call create action with required parameters
+      await createAction('feature', { title: 'Test Issue', tasks: 'Task 1' });
+      
+      // Verify issue was saved
+      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
+      
+      // Verify success message was logged
+      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(console.log).toHaveBeenCalled();
+      
+      // Verify git staging was not attempted
+      expect(gitOperations.gitStage).not.toHaveBeenCalled();
     });
   });
 });

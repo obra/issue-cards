@@ -1,22 +1,22 @@
-# Issue {NUMBER}: Refactor {TITLE}
+# Issue {{NUMBER}}: Refactor {{TITLE}}
 
 ## Problem to be solved
-{PROBLEM}
+{{PROBLEM}}
 
 ## Planned approach
-{APPROACH}
+{{APPROACH}}
 
 ## Failed approaches
-{FAILED_APPROACHES}
+{{FAILED_APPROACHES}}
 
 ## Questions to resolve
-{QUESTIONS}
+{{QUESTIONS}}
 
 ## Tasks
-{TASKS}
+{{TASKS}}
 
 ## Instructions
-{INSTRUCTIONS}
+{{INSTRUCTIONS}}
 
 ## Next steps
-{NEXT_STEPS}
+{{NEXT_STEPS}}

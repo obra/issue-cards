@@ -1,25 +1,25 @@
-# Issue {NUMBER}: Fix {TITLE}
+# Issue {{NUMBER}}: Fix {{TITLE}}
 
 ## Problem to be solved
-{PROBLEM}
+{{PROBLEM}}
 
 ## Planned approach
-{APPROACH}
+{{APPROACH}}
 
 ## Failed approaches
-{FAILED_APPROACHES}
+{{FAILED_APPROACHES}}
 
 ## Questions to resolve
-{QUESTIONS}
+{{QUESTIONS}}
 
 ## Tasks
 - [ ] Reproduce the bug with a test #unit-test
 - [ ] Fix the bug
 - [ ] Verify the fix
-{TASKS}
+{{TASKS}}
 
 ## Instructions
-{INSTRUCTIONS}
+{{INSTRUCTIONS}}
 
 ## Next steps
-{NEXT_STEPS}
+{{NEXT_STEPS}}
