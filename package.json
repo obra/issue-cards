@@ -1,6 +1,6 @@
 {
   "name": "issue-cards",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "AI-Optimized Command Line Issue Tracking Tool",
   "main": "src/index.js",
   "bin": {
@@ -10,19 +10,36 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathIgnorePatterns=tests/e2e",
+    "test:e2e": "jest tests/e2e",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{js,json,md}\""
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "prepare": "chmod +x ./bin/issue-cards.js",
+    "prepublishOnly": "npm test && npm run lint",
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "keywords": [
     "issue-tracking",
     "task-management",
     "cli",
     "markdown",
-    "git"
+    "git",
+    "todo",
+    "task",
+    "workflow",
+    "ai-friendly"
   ],
-  "author": "",
+  "author": "Issue Cards Team",
   "license": "MIT",
+  "homepage": "https://github.com/issue-cards/issue-cards",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/issue-cards/issue-cards.git"
+  },
+  "bugs": {
+    "url": "https://github.com/issue-cards/issue-cards/issues"
+  },
   "dependencies": {
     "commander": "^11.0.0",
     "handlebars": "^4.7.8",
