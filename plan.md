@@ -101,39 +101,39 @@ Each feature in this plan follows a consistent TDD workflow:
 ## Phase 4: Task Management
 
 ### 4.1 Task Parsing
-- [ ] Write tests for markdown task parsing
-- [ ] Write tests for task state tracking
-- [ ] Write tests for tag detection in tasks
-- [ ] Create markdown task parsing functionality using Unified/Remark (minimal implementation)
-- [ ] Implement task state tracking (complete/incomplete)
-- [ ] Create tag detection in task text
-- [ ] Write tests for task section manipulation
-- [ ] Build task section manipulation functions
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for markdown task parsing
+- [x] Write tests for task state tracking
+- [x] Write tests for tag detection in tasks
+- [x] Create markdown task parsing functionality using Unified/Remark (minimal implementation)
+- [x] Implement task state tracking (complete/incomplete)
+- [x] Create tag detection in task text
+- [x] Write tests for task section manipulation
+- [x] Build task section manipulation functions
+- [x] Refactor and ensure all tests pass
 
 ### 4.2 Current Task Management
-- [ ] Write tests for current task identification
-- [ ] Write tests for context extraction
-- [ ] Write tests for task expansion
-- [ ] Write tests for upcoming task preview
-- [ ] Implement `current` command to show current task (minimal implementation)
-- [ ] Create context extraction from issues
-- [ ] Build task expansion for tagged tasks
-- [ ] Implement upcoming task preview
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for current task identification
+- [x] Write tests for context extraction
+- [x] Write tests for task expansion
+- [x] Write tests for upcoming task preview
+- [x] Implement `current` command to show current task (minimal implementation)
+- [x] Create context extraction from issues
+- [x] Build task expansion for tagged tasks
+- [x] Implement upcoming task preview
+- [x] Refactor and ensure all tests pass
 
 ### 4.3 Task Completion
-- [ ] Write tests for task completion
-- [ ] Write tests for task status updating
-- [ ] Write tests for next task display
-- [ ] Write tests for issue state management
-- [ ] Write tests for issue file moving
-- [ ] Implement `complete-task` command (minimal implementation)
-- [ ] Create task status updating mechanism
-- [ ] Implement automatic next task display
-- [ ] Add issue state management (open/closed)
-- [ ] Implement issue file moving when completed
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for task completion
+- [x] Write tests for task status updating
+- [x] Write tests for next task display
+- [x] Write tests for issue state management
+- [x] Write tests for issue file moving
+- [x] Implement `complete-task` command (minimal implementation)
+- [x] Create task status updating mechanism
+- [x] Implement automatic next task display
+- [x] Add issue state management (open/closed)
+- [x] Implement issue file moving when completed
+- [x] Refactor and ensure all tests pass
 
 ## Phase 5: Task Expansion and Tag System
 
