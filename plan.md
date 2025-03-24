@@ -75,28 +75,28 @@ Each feature in this plan follows a consistent TDD workflow:
 - [x] Refactor and ensure all tests pass
 
 ### 3.2 Create Command
-- [ ] Write tests for template selection
-- [ ] Write tests for issue file creation
-- [ ] Write tests for automatic issue numbering
-- [ ] Write tests for template section support
-- [ ] Implement `create` command with template selection (minimal implementation)
-- [ ] Build issue file creation from templates
-- [ ] Implement automatic issue numbering
-- [ ] Add support for all template sections
-- [ ] Create issue saving mechanism
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for template selection
+- [x] Write tests for issue file creation
+- [x] Write tests for automatic issue numbering
+- [x] Write tests for template section support
+- [x] Implement `create` command with template selection (minimal implementation)
+- [x] Build issue file creation from templates
+- [x] Implement automatic issue numbering
+- [x] Add support for all template sections
+- [x] Create issue saving mechanism
+- [x] Refactor and ensure all tests pass
 
 ### 3.3 List and Show Commands
-- [ ] Write tests for listing open issues
-- [ ] Write tests for showing issue details
-- [ ] Write tests for issue display formatting
-- [ ] Write tests for current task identification
-- [ ] Implement `list` command to show all open issues (minimal implementation)
-- [ ] Implement `show` command to display issue details
-- [ ] Create formatting for issue display
-- [ ] Add current task identification in listings
-- [ ] Add basic issue status determination
-- [ ] Refactor and ensure all tests pass
+- [x] Write tests for listing open issues
+- [x] Write tests for showing issue details
+- [x] Write tests for issue display formatting
+- [x] Write tests for current task identification
+- [x] Implement `list` command to show all open issues (minimal implementation)
+- [x] Implement `show` command to display issue details
+- [x] Create formatting for issue display
+- [x] Add current task identification in listings
+- [x] Add basic issue status determination
+- [x] Refactor and ensure all tests pass
 
 ## Phase 4: Task Management
 
