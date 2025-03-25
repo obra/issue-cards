@@ -1,0 +1,35 @@
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+.issues/
+node_modules/
+
+# Test files
+tests/
+coverage/
+jest.config.js
+.eslintrc.js
+.prettierrc
+*.test.js
+
+# Documentation source files
+plan.md
+spec.md
+
+# Build files
+*.log
+.DS_Store
+
+# Example projects
+examples/
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.circleci/
+
+# Misc
+.editorconfig
+.eslintignore
