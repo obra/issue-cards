@@ -6,6 +6,7 @@ const { isInitialized } = require('../utils/directory');
 const { listIssues } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask } = require('../utils/taskParser');
 const { expandTask } = require('../utils/taskExpander');
+const { displayTaskWithContext } = require('../utils/taskDisplay');
 // Output manager is used for all output
 const output = require('../utils/outputManager');
 const { UninitializedError } = require('../utils/errors');
@@ -129,38 +130,8 @@ async function currentAction() {
     // Extract context from the issue
     const context = extractContext(currentIssue.content);
     
-    // Show task header with appropriate styling
-    output.section('TASK', currentTask.text);
-    
-    // Show current task separately
-    output.section('CURRENT TASK', currentTask.text);
-    
-    // Show expanded task steps if available
-    if (expandedSteps && expandedSteps.length > 0) {
-      const stepsText = expandedSteps.map((step, idx) => `${idx + 1}. ${step}`);
-      output.section('TASKS', stepsText);
-    }
-    
-    // Show context as individual sections
-    if (context.problem) {
-      output.section('Problem to be solved', context.problem);
-    }
-    
-    if (context.approach) {
-      output.section('Planned approach', context.approach);
-    }
-    
-    if (context.failed && context.failed.length > 0) {
-      output.section('Failed approaches', context.failed);
-    }
-    
-    if (context.questions && context.questions.length > 0) {
-      output.section('Questions to resolve', context.questions);
-    }
-    
-    if (context.instructions) {
-      output.section('Instructions', context.instructions);
-    }
+    // Use the shared task display utility
+    displayTaskWithContext(currentTask, context, expandedSteps, { headerPrefix: 'CURRENT' });
     
     // Show next task
     const nextTask = tasks.find(task => task.index === currentTask.index + 1);

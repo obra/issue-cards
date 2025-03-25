@@ -10,6 +10,7 @@ const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/ta
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
 const { expandTask } = require('../utils/taskExpander');
+const { displayTaskWithContext } = require('../utils/taskDisplay');
 const output = require('../utils/outputManager');
 const { UninitializedError, UserError } = require('../utils/errors');
 
@@ -107,35 +108,11 @@ async function completeTaskAction() {
       // Build output for next task
       output.blank();
       
-      // Show next task with NEXT TASK header
-      output.section('NEXT TASK', nextTask.text);
-      
-      // Show context as individual sections
-      if (context.problem) {
-        output.section('Problem to be solved', context.problem);
-      }
-      
-      if (context.approach) {
-        output.section('Planned approach', context.approach);
-      }
-      
-      if (context.failed && context.failed.length > 0) {
-        output.section('Failed approaches', context.failed);
-      }
-      
-      if (context.questions && context.questions.length > 0) {
-        output.section('Questions to resolve', context.questions);
-      }
-      
-      if (context.instructions) {
-        output.section('Instructions', context.instructions);
-      }
-      
-      // Show expanded task for the next task if it has tags
+      // Get expanded steps for the next task if it has tags
       const expandedSteps = await expandTask(nextTask);
-      if (expandedSteps.length > 0) {
-        output.section('EXPANDED TASK', expandedSteps.map((step, i) => `${i + 1}. ${step}`));
-      }
+      
+      // Display the next task with context using the shared utility
+      displayTaskWithContext(nextTask, context, expandedSteps, { headerPrefix: 'NEXT' });
     }
   } catch (error) {
     if (error instanceof UninitializedError || error instanceof UserError) {

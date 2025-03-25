@@ -33,7 +33,7 @@ function configure(options = {}) {
   if (options.verbose) config.verbosity = VERBOSITY.VERBOSE;
   if (options.debug) config.verbosity = VERBOSITY.DEBUG;
   if (options.noColor !== undefined) config.useColors = !options.noColor;
-  if (options.json) config.jsonOutput = true;
+  if (options.json !== undefined) config.jsonOutput = options.json;
 }
 
 /**
