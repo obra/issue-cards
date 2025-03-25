@@ -4,7 +4,8 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { addQuestionAction } = require('../../src/commands/addQuestion');
-const { getIssueFilePath } = require('../../src/utils/directory');
+// Import after mocking
+const { getIssueFilePath } = require('../../src/utils/issueManager');
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -16,11 +17,11 @@ jest.mock('fs', () => ({
 }));
 
 jest.mock('../../src/utils/directory', () => ({
-  getIssueFilePath: jest.fn(),
-  getIssuesRootDir: jest.fn().mockReturnValue('/test/issues'),
+  getIssueDirectoryPath: jest.fn().mockReturnValue('/test/issues'),
 }));
 
 jest.mock('../../src/utils/issueManager', () => ({
+  getIssueFilePath: jest.fn().mockReturnValue('/test/issues/open/issue-1.md'),
   getCurrentIssue: jest.fn().mockResolvedValue({ number: 2 }),
 }));
 
@@ -70,7 +71,7 @@ None yet
     });
 
     // Verify the file was read correctly
-    expect(getIssueFilePath).toHaveBeenCalledWith(1);
+    expect(getIssueFilePath).toHaveBeenCalledWith("0001");
     expect(fs.readFile).toHaveBeenCalledWith('/test/issues/open/issue-1.md', 'utf8');
 
     // Check that writeFile was called - the content format might vary slightly based on implementation
@@ -119,7 +120,7 @@ Next steps for current issue
 
     // Verify current issue was used
     expect(getCurrentIssue).toHaveBeenCalled();
-    expect(getIssueFilePath).toHaveBeenCalledWith(2);
+    expect(getIssueFilePath).toHaveBeenCalledWith("0002");
     
     // Check that writeFile was called
     expect(fs.writeFile).toHaveBeenCalled();

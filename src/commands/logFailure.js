@@ -4,7 +4,8 @@
 const { Command } = require('commander');
 const fs = require('fs').promises;
 const path = require('path');
-const { getIssueFilePath } = require('../utils/directory');
+const { getIssueDirectoryPath } = require('../utils/directory');
+const { getIssueFilePath } = require('../utils/issueManager');
 const { getCurrentIssue } = require('../utils/issueManager');
 const { 
   addContentToSection, 

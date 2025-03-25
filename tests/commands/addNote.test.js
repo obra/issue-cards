@@ -4,8 +4,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { addNoteAction } = require('../../src/commands/addNote');
-const { getIssueFilePath } = require('../../src/utils/directory');
-
 // Mock dependencies
 jest.mock('fs', () => ({
   promises: {
@@ -16,13 +14,16 @@ jest.mock('fs', () => ({
 }));
 
 jest.mock('../../src/utils/directory', () => ({
-  getIssueFilePath: jest.fn(),
-  getIssuesRootDir: jest.fn().mockReturnValue('/test/issues'),
+  getIssueDirectoryPath: jest.fn().mockReturnValue('/test/issues'),
 }));
 
 jest.mock('../../src/utils/issueManager', () => ({
+  getIssueFilePath: jest.fn().mockReturnValue('/test/issues/open/issue-1.md'),
   getCurrentIssue: jest.fn().mockResolvedValue({ number: 2 }),
 }));
+
+// Import after mocking
+const { getIssueFilePath } = require('../../src/utils/issueManager');
 
 // Import getCurrentIssue after mocking
 const { getCurrentIssue } = require('../../src/utils/issueManager');
@@ -71,7 +72,7 @@ None yet
     });
 
     // Verify the file was read correctly
-    expect(getIssueFilePath).toHaveBeenCalledWith(1);
+    expect(getIssueFilePath).toHaveBeenCalledWith("0001");
     expect(fs.readFile).toHaveBeenCalledWith('/test/issues/open/issue-1.md', 'utf8');
 
     // Check that writeFile was called
@@ -148,7 +149,7 @@ Next steps for current issue
 
     // Verify current issue was used
     expect(getCurrentIssue).toHaveBeenCalled();
-    expect(getIssueFilePath).toHaveBeenCalledWith(2);
+    expect(getIssueFilePath).toHaveBeenCalledWith("0002");
     
     // Check that writeFile was called
     expect(fs.writeFile).toHaveBeenCalled();

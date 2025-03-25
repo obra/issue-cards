@@ -75,7 +75,7 @@ describe('Init command', () => {
       expect(console.log).toHaveBeenCalled();
     });
     
-    test('shows error when already initialized', async () => {
+    test('shows message when already initialized', async () => {
       // Mock isInitialized to return true (already initialized)
       directory.isInitialized.mockResolvedValue(true);
       
@@ -84,9 +84,9 @@ describe('Init command', () => {
       // Verify directory creation was NOT called
       expect(directory.createDirectoryStructure).not.toHaveBeenCalled();
       
-      // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('already initialized'));
-      expect(console.error).toHaveBeenCalled();
+      // Verify success message was logged
+      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('already initialized'));
+      expect(console.log).toHaveBeenCalled();
     });
     
     test('handles errors during initialization', async () => {
