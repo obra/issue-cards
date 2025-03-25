@@ -1,9 +1,72 @@
 // ABOUTME: Task parsing utilities
 // ABOUTME: Handles markdown task extraction, status tracking, and tag detection
 
-const { unified } = require('unified');
-const remarkParse = require('remark-parse');
-const remarkStringify = require('remark-stringify');
+// Import unified and remark modules - handle both ESM and CommonJS environments
+let unified, remarkParse, remarkStringify;
+
+try {
+  // For ESM environments or dynamic imports
+  import('unified').then(module => {
+    unified = module.unified;
+  }).catch(() => {
+    // Fallback to CommonJS if dynamic import fails
+    unified = require('unified').unified;
+  });
+  
+  import('remark-parse').then(module => {
+    remarkParse = module.default;
+  }).catch(() => {
+    remarkParse = require('remark-parse');
+  });
+  
+  import('remark-stringify').then(module => {
+    remarkStringify = module.default;
+  }).catch(() => {
+    remarkStringify = require('remark-stringify');
+  });
+} catch (error) {
+  // Fallback to CommonJS if import syntax fails
+  unified = require('unified').unified;
+  remarkParse = require('remark-parse');
+  remarkStringify = require('remark-stringify');
+}
+
+/**
+ * Initialize the parser if it's not already initialized
+ * 
+ * @returns {Promise<Object>} Initialized unified parser
+ */
+async function ensureParserInitialized() {
+  // If modules were loaded asynchronously, we need to wait for them
+  if (!unified) {
+    try {
+      const unifiedModule = await import('unified');
+      unified = unifiedModule.unified;
+    } catch (e) {
+      unified = require('unified').unified;
+    }
+  }
+  
+  if (!remarkParse) {
+    try {
+      const remarkParseModule = await import('remark-parse');
+      remarkParse = remarkParseModule.default;
+    } catch (e) {
+      remarkParse = require('remark-parse');
+    }
+  }
+  
+  if (!remarkStringify) {
+    try {
+      const remarkStringifyModule = await import('remark-stringify');
+      remarkStringify = remarkStringifyModule.default;
+    } catch (e) {
+      remarkStringify = require('remark-stringify');
+    }
+  }
+  
+  return unified().use(remarkParse);
+}
 
 /**
  * Extract tasks from markdown content
@@ -13,10 +76,11 @@ const remarkStringify = require('remark-stringify');
  */
 async function extractTasks(content) {
   try {
+    // Make sure parser is initialized
+    const parser = await ensureParserInitialized();
+    
     // Parse markdown
-    const tree = await unified()
-      .use(remarkParse)
-      .parse(content);
+    const tree = await parser.parse(content);
     
     const tasks = [];
     let inTasksSection = false;
@@ -211,6 +275,9 @@ function getCleanTaskText(task) {
  * @returns {Promise<string>} Updated markdown content
  */
 async function updateTaskStatus(content, taskIndex, completed) {
+  // Make sure parser is initialized before extracting tasks
+  await ensureParserInitialized();
+  
   // First extract tasks to validate the index
   const tasks = await extractTasks(content);
   

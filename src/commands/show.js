@@ -24,7 +24,9 @@ async function showAction(issueNumber) {
     // If issue number provided, show that specific issue
     if (issueNumber) {
       try {
-        const issueContent = await getIssue(issueNumber);
+        // Pad to 4 digits for issue numbers like "0001"
+        const paddedNumber = issueNumber.toString().padStart(4, '0');
+        const issueContent = await getIssue(paddedNumber);
         console.log(issueContent);
       } catch (error) {
         console.error(formatError(error.message));

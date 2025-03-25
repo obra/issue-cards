@@ -19,6 +19,8 @@ jest.mock('fs', () => ({
     writeFile: jest.fn(),
     copyFile: jest.fn(),
   },
+  existsSync: jest.fn().mockReturnValue(true),
+  readdirSync: jest.fn().mockReturnValue(['issue', 'tag']),
 }));
 
 jest.mock('../../src/utils/directory', () => ({

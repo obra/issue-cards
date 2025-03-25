@@ -4,7 +4,7 @@
 const { Command } = require('commander');
 const fs = require('fs');
 const { isInitialized } = require('../utils/directory');
-const { listIssues, readIssue, writeIssue } = require('../utils/issueManager');
+const { listIssues, readIssue, writeIssue, getIssueFilePath } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, extractTagsFromTask } = require('../utils/taskParser');
 const { validateTagTemplate } = require('../utils/taskExpander');
 const { getTemplateList } = require('../utils/template');
@@ -210,16 +210,20 @@ async function addTaskAction(taskText, options) {
     // Default to the first issue
     let issueNumber = options.issue || issues[0].number;
     
-    // Find the issue
-    const issue = issues.find(i => i.number === issueNumber.toString());
+    // Find the issue - pad to 4 digits for issue numbers like "0001"
+    const paddedNumber = issueNumber.toString().padStart(4, '0');
+    const issue = issues.find(i => i.number === paddedNumber);
     
     if (!issue) {
       console.error(formatError(`Issue ${issueNumber} not found.`));
       return;
     }
     
+    // Make sure issue.path exists or construct it
+    const issuePath = issue.path || getIssueFilePath(issue.number);
+    
     // Read the issue content
-    const issueContent = await readIssue(issue.path);
+    const issueContent = await readIssue(issuePath);
     
     // Create a mock task object to extract tags
     const mockTask = { text: taskText, completed: false, index: -1 };
@@ -245,9 +249,9 @@ async function addTaskAction(taskText, options) {
     const updatedContent = await insertTaskIntoContent(issueContent, taskText, position);
     
     // Write the updated issue
-    await writeIssue(issue.path, updatedContent);
+    await writeIssue(issuePath, updatedContent);
     
-    console.log(formatSuccess(`Task added to issue ${issue.id} at position: ${position}`));
+    console.log(formatSuccess(`Task added to issue ${issue.number} at position: ${position}`));
   } catch (error) {
     console.error(formatError(`Failed to add task: ${error.message}`));
   }

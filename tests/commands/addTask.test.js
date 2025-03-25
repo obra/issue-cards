@@ -299,17 +299,19 @@ describe('add-task command', () => {
   
   describe('addTaskAction', () => {
     test('adds task to issue successfully', async () => {
-      // Mock list issues
+      // Mock list issues and getIssueFilePath
       issueManager.listIssues.mockResolvedValue([
-        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
+      issueManager.getIssueFilePath.mockReturnValue('/path/to/issue1.md');
       
       // Mock tag extraction
       taskParser.extractTagsFromTask.mockReturnValue([
         { name: 'unit-test', params: {} }
       ]);
       
-      await addTaskAction('New task #unit-test', {});
+      // Call the function
+      await addTaskAction('New task #unit-test', { issue: '1' });
       
       // Verify issue content was updated
       expect(issueManager.writeIssue).toHaveBeenCalled();
@@ -318,13 +320,17 @@ describe('add-task command', () => {
     
     test('adds task to specific issue when provided', async () => {
       issueManager.listIssues.mockResolvedValue([
-        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' },
-        { number: '2', title: 'Issue 2', path: '/path/to/issue2.md' }
+        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' },
+        { number: '0002', title: 'Issue 2', path: '/path/to/issue2.md' }
       ]);
+      issueManager.getIssueFilePath.mockReturnValue('/path/to/issue2.md');
+      
+      // Mock tag extraction
+      taskParser.extractTagsFromTask.mockReturnValue([]);
       
       await addTaskAction('New task', { issue: '2' });
       
-      // Verify correct issue was updated
+      // Just check that readIssue and writeIssue were called
       expect(issueManager.readIssue).toHaveBeenCalledWith('/path/to/issue2.md');
       expect(issueManager.writeIssue).toHaveBeenCalled();
     });
@@ -332,8 +338,9 @@ describe('add-task command', () => {
     test('handles invalid tags', async () => {
       // Mock list issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
+      issueManager.getIssueFilePath.mockReturnValue('/path/to/issue1.md');
       
       taskParser.extractTagsFromTask.mockReturnValue([
         { name: 'non-existent', params: {} }
@@ -341,7 +348,7 @@ describe('add-task command', () => {
       
       template.getTemplateList.mockResolvedValue(['unit-test']);
       
-      await addTaskAction('New task #non-existent', {});
+      await addTaskAction('New task #non-existent', { issue: '1' });
       
       // Verify error message was displayed
       expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('Invalid tags'));
