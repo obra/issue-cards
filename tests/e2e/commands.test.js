@@ -138,15 +138,15 @@ describe('Issue Cards E2E Commands', () => {
     runCommand('create feature --title "Task Options Test" --tasks "Existing task"');
     
     // Add task with tags (in the task text, not as an option)
-    let output = runCommand('add-task "New task with tags #unit-test #update-docs" --issue-number 1');
+    let output = runCommand('add-task "New task with tags #unit-test #update-docs" --issue 1');
     expect(output).toContain('Added task to issue');
     
     // Add task before current
-    output = runCommand('add-task "Task before current" --before --issue-number 1');
+    output = runCommand('add-task "Task before current" --before --issue 1');
     expect(output).toContain('Added task to issue');
     
     // Add task after current but not at end
-    output = runCommand('add-task "Task after current" --after --issue-number 1');
+    output = runCommand('add-task "Task after current" --after --issue 1');
     expect(output).toContain('Added task to issue');
     
     // Verify task order and tags
