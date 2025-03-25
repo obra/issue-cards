@@ -169,6 +169,62 @@ async function listIssues() {
   }
 }
 
+/**
+ * Get the most recently created open issue
+ * 
+ * @returns {Promise<Object|null>} Current issue object or null if none exists
+ */
+async function getCurrentIssue() {
+  try {
+    const issues = await listIssues();
+    
+    if (issues.length === 0) {
+      return null;
+    }
+    
+    // Return the most recent issue (last in the sorted list)
+    const lastIssue = issues[issues.length - 1];
+    
+    return {
+      number: lastIssue.number,
+      title: lastIssue.title,
+      content: lastIssue.content,
+      path: getIssueFilePath(lastIssue.number, 'open')
+    };
+  } catch (error) {
+    throw new Error(`Failed to get current issue: ${error.message}`);
+  }
+}
+
+/**
+ * Read issue content from file path
+ * 
+ * @param {string} filePath - Path to the issue file
+ * @returns {Promise<string>} Issue content
+ */
+async function readIssue(filePath) {
+  try {
+    return await fs.promises.readFile(filePath, 'utf8');
+  } catch (error) {
+    throw new Error(`Failed to read issue: ${error.message}`);
+  }
+}
+
+/**
+ * Write issue content to file path
+ * 
+ * @param {string} filePath - Path to the issue file
+ * @param {string} content - Content to write
+ * @returns {Promise<void>}
+ */
+async function writeIssue(filePath, content) {
+  try {
+    await fs.promises.writeFile(filePath, content, 'utf8');
+  } catch (error) {
+    throw new Error(`Failed to write issue: ${error.message}`);
+  }
+}
+
 module.exports = {
   getIssueFilePath,
   getNextIssueNumber,
@@ -176,4 +232,7 @@ module.exports = {
   getIssue,
   listIssues,
   extractIssueTitle,
+  getCurrentIssue,
+  readIssue,
+  writeIssue
 };

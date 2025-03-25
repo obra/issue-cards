@@ -15,7 +15,7 @@ async function initAction() {
     const initialized = await isInitialized();
     
     if (initialized) {
-      console.error(formatError('Issue tracking is already initialized in this project'));
+      console.log(formatSuccess('Issue tracking is already initialized in this project'));
       return;
     }
     
