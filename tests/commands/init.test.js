@@ -1,13 +1,11 @@
 // ABOUTME: Tests for the init command
 // ABOUTME: Verifies initialization of the issue tracking system
 
-const { Command } = require('commander');
-const { createCommand, initAction } = require('../../src/commands/init');
+const { mockOutputManager } = require('../utils/testHelpers');
 const directory = require('../../src/utils/directory');
 const templateInit = require('../../src/utils/templateInit');
-const output = require('../../src/utils/output');
 
-// Mock dependencies
+// Create mocks first
 jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn(),
   createDirectoryStructure: jest.fn(),
@@ -17,31 +15,26 @@ jest.mock('../../src/utils/templateInit', () => ({
   copyDefaultTemplates: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-}));
+// Setup mock for outputManager
+const mockOutput = mockOutputManager();
+jest.mock('../../src/utils/outputManager', () => mockOutput);
+
+// Mock process.exit
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+// Now import modules under test
+const { Command } = require('commander');
+const { createCommand, initAction } = require('../../src/commands/init');
 
 describe('Init command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+    mockOutput._reset();
     
     // Create a fresh command instance
     commandInstance = new Command();
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
   });
   
   describe('createCommand', () => {
@@ -70,9 +63,14 @@ describe('Init command', () => {
       // Verify templates were copied
       expect(templateInit.copyDefaultTemplates).toHaveBeenCalled();
       
-      // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Initialized'));
-      expect(console.log).toHaveBeenCalled();
+      // Verify success messages were logged
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Initialized'));
+      expect(mockOutput._captured.stdout).toContainEqual(
+        expect.objectContaining({
+          type: 'success',
+          message: expect.stringContaining('Initialized issue tracking system')
+        })
+      );
     });
     
     test('shows message when already initialized', async () => {
@@ -85,8 +83,13 @@ describe('Init command', () => {
       expect(directory.createDirectoryStructure).not.toHaveBeenCalled();
       
       // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('already initialized'));
-      expect(console.log).toHaveBeenCalled();
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('already initialized'));
+      expect(mockOutput._captured.stdout).toContainEqual(
+        expect.objectContaining({
+          type: 'success',
+          message: expect.stringContaining('already initialized')
+        })
+      );
     });
     
     test('handles errors during initialization', async () => {
@@ -100,8 +103,13 @@ describe('Init command', () => {
       await initAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize'));
+      expect(mockOutput._captured.stderr).toContainEqual(
+        expect.objectContaining({
+          type: 'error',
+          message: expect.stringContaining('Failed to initialize')
+        })
+      );
     });
   });
 });

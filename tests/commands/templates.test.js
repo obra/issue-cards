@@ -2,11 +2,10 @@
 // ABOUTME: Verifies template listing and display functionality
 
 const { Command } = require('commander');
-const directory = require('../../src/utils/directory');
-const template = require('../../src/utils/template');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError, TemplateNotFoundError } = require('../../src/utils/errors');
 
-// Mock dependencies
+// Mock dependencies first
 jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn(),
 }));
@@ -21,34 +20,23 @@ jest.mock('../../src/utils/templateValidation', () => ({
   validateTemplateStructure: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-  formatInfo: jest.fn(msg => `INFO: ${msg}`),
-  formatWarning: jest.fn(msg => `WARNING: ${msg}`),
-  formatCommand: jest.fn(cmd => `COMMAND: ${cmd}`),
-}));
+// Create mock output manager and then mock it
+const mockOutput = mockOutputManager();
+jest.mock('../../src/utils/outputManager', () => mockOutput);
 
-// Import the module under test
-// Note: We need to import after the mocks are set up
+// Mock process.exit to prevent tests from exiting
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+// Import the module under test after mocking
 const { createCommand, templatesAction } = require('../../src/commands/templates');
+const directory = require('../../src/utils/directory');
+const template = require('../../src/utils/template');
+const templateValidation = require('../../src/utils/templateValidation');
 
 describe('Templates command', () => {
-  let mockConsoleLog;
-  let mockConsoleError;
-  
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
+    mockOutput._reset();
   });
   
   describe('createCommand', () => {
@@ -82,9 +70,6 @@ describe('Templates command', () => {
   });
   
   describe('templatesAction', () => {
-    // Import the template validation module directly
-    const templateValidation = require('../../src/utils/templateValidation');
-    
     test('lists issue templates when type is issue', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
@@ -98,11 +83,20 @@ describe('Templates command', () => {
       
       // Verify template list was retrieved and displayed
       expect(template.getTemplateList).toHaveBeenCalledWith('issue');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Available issue templates:'));
+      expect(mockOutput.section).toHaveBeenCalled();
+      
+      // Check for each template in the output
       mockTemplates.forEach(templateName => {
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(templateName));
+        // Find any output entry containing the template name
+        const hasTemplate = mockOutput._captured.stdout.some(
+          entry => entry.message && entry.message.includes(templateName)
+        );
+        expect(hasTemplate).toBe(true);
       });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
+      
+      // Verify usage info was displayed - updated to match actual output
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('View issue template:'));
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('Create new issue from template:'));
     });
     
     test('lists tag templates when type is tag', async () => {
@@ -118,11 +112,20 @@ describe('Templates command', () => {
       
       // Verify template list was retrieved and displayed
       expect(template.getTemplateList).toHaveBeenCalledWith('tag');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Available tag templates:'));
+      expect(mockOutput.section).toHaveBeenCalled();
+      
+      // Check for each template in the output
       mockTemplates.forEach(templateName => {
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(templateName));
+        // Find any output entry containing the template name
+        const hasTemplate = mockOutput._captured.stdout.some(
+          entry => entry.message && entry.message.includes(templateName)
+        );
+        expect(hasTemplate).toBe(true);
       });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
+      
+      // Verify usage info was displayed - updated to match actual output
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('View tag template:'));
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('Add task with tag:'));
     });
     
     test('shows both issue and tag templates when no type is specified', async () => {
@@ -143,11 +146,18 @@ describe('Templates command', () => {
       // Verify both template lists were retrieved and displayed
       expect(template.getTemplateList).toHaveBeenCalledWith('issue');
       expect(template.getTemplateList).toHaveBeenCalledWith('tag');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Available issue templates:'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Available tag templates:'));
       
+      // Verify section headings were displayed
+      const sectionCalls = mockOutput.section.mock.calls;
+      expect(sectionCalls.some(call => call[0] && call[0].includes('issue templates'))).toBe(true);
+      expect(sectionCalls.some(call => call[0] && call[0].includes('tag templates'))).toBe(true);
+      
+      // Check for each template in the output
       [...mockIssueTemplates, ...mockTagTemplates].forEach(templateName => {
-        expect(console.log).toHaveBeenCalledWith(expect.stringMatching(new RegExp(templateName)));
+        const hasTemplate = mockOutput._captured.stdout.some(
+          entry => entry.message && entry.message.includes(templateName)
+        );
+        expect(hasTemplate).toBe(true);
       });
     });
     
@@ -168,9 +178,15 @@ describe('Templates command', () => {
       // Verify template content was retrieved and displayed
       expect(template.validateTemplate).toHaveBeenCalledWith('feature', 'issue');
       expect(template.loadTemplate).toHaveBeenCalledWith('feature', 'issue');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Template: feature (issue)'));
-      expect(console.log).toHaveBeenCalledWith(mockTemplateContent);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
+      
+      // Check for the template heading in the output
+      const hasSectionTitle = mockOutput._captured.stdout.some(
+        entry => entry.type === 'section' && entry.message && entry.message.includes('Template: feature (issue)')
+      );
+      expect(hasSectionTitle).toBe(true);
+      
+      expect(mockOutput.raw).toHaveBeenCalledWith(mockTemplateContent);
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('issue-cards create'));
     });
     
     test('shows error when template does not exist', async () => {
@@ -185,8 +201,8 @@ describe('Templates command', () => {
       
       // Verify error was displayed
       expect(template.validateTemplate).toHaveBeenCalledWith('nonexistent', 'issue');
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not found'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
     
@@ -198,8 +214,8 @@ describe('Templates command', () => {
       await templatesAction(options);
       
       // Verify error was displayed
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('must specify type'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('must specify type'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(template.validateTemplate).not.toHaveBeenCalled();
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
@@ -211,8 +227,8 @@ describe('Templates command', () => {
       await templatesAction({});
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(template.getTemplateList).not.toHaveBeenCalled();
     });
     
@@ -226,8 +242,8 @@ describe('Templates command', () => {
       await templatesAction({});
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to list templates'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to list templates'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
     });
     
     test('validates template structure when validate option is provided', async () => {
@@ -252,8 +268,8 @@ describe('Templates command', () => {
       
       // Verify validation was performed and success message displayed
       expect(templateValidation.validateTemplateStructure).toHaveBeenCalledWith('feature', 'issue');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('structure is valid'));
-      expect(console.log).toHaveBeenCalledWith(mockTemplateContent);
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('structure is valid'));
+      expect(mockOutput.raw).toHaveBeenCalledWith(mockTemplateContent);
     });
     
     test('shows validation errors for invalid templates', async () => {
@@ -278,10 +294,18 @@ describe('Templates command', () => {
       
       // Verify error messages were displayed
       expect(templateValidation.validateTemplateStructure).toHaveBeenCalledWith('feature', 'issue');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Template structure has errors'));
-      expect(output.formatWarning).toHaveBeenCalledWith(expect.stringContaining('Missing required section'));
-      expect(output.formatWarning).toHaveBeenCalledWith(expect.stringContaining('Missing variable placeholder'));
-      expect(console.log).toHaveBeenCalledWith(mockTemplateContent);
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Template structure has errors'));
+      
+      // Check for the warning messages in output
+      const hasWarnings = mockOutput._captured.stderr.filter(
+        entry => entry.type === 'warn' && entry.message && (
+          entry.message.includes('Missing required section') || 
+          entry.message.includes('Missing variable placeholder')
+        )
+      );
+      expect(hasWarnings.length).toBe(2);
+      
+      expect(mockOutput.raw).toHaveBeenCalledWith(mockTemplateContent);
     });
     
     test('validates templates when listing with validate option', async () => {
@@ -312,9 +336,14 @@ describe('Templates command', () => {
       expect(templateValidation.validateTemplateStructure).toHaveBeenCalledWith('bugfix', 'issue');
       
       // Verify validation results were displayed
-      expect(output.formatSuccess).toHaveBeenCalledWith('[valid]');
-      expect(output.formatError).toHaveBeenCalledWith('[invalid]');
-      expect(output.formatWarning).toHaveBeenCalledWith('Missing required section: Tasks');
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('feature is valid'));
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('bugfix is invalid'));
+      
+      // Check for warnings
+      const hasWarning = mockOutput._captured.stderr.some(
+        entry => entry.type === 'warn' && entry.message && entry.message.includes('Missing required section')
+      );
+      expect(hasWarning).toBe(true);
     });
     
     test('handles errors when validating templates', async () => {
@@ -338,8 +367,12 @@ describe('Templates command', () => {
       
       // Verify template content is still displayed despite validation error
       expect(templateValidation.validateTemplateStructure).toHaveBeenCalledWith('feature', 'issue');
-      // Content is still displayed, but we only check template name was shown
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Template: feature'));
+      
+      // Check for template title in output
+      const hasTitle = mockOutput._captured.stdout.some(
+        entry => entry.type === 'section' && entry.message && entry.message.includes('Template: feature (issue)')
+      );
+      expect(hasTitle).toBe(true);
     });
   });
 });

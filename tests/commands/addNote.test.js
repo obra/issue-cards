@@ -3,8 +3,9 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { addNoteAction } = require('../../src/commands/addNote');
-// Mock dependencies
+const { mockOutputManager } = require('../utils/testHelpers');
+
+// Create mocks first
 jest.mock('fs', () => ({
   promises: {
     readFile: jest.fn(),
@@ -22,16 +23,21 @@ jest.mock('../../src/utils/issueManager', () => ({
   getCurrentIssue: jest.fn().mockResolvedValue({ number: 2 }),
 }));
 
+// Setup mock for outputManager
+const mockOutput = mockOutputManager();
+jest.mock('../../src/utils/outputManager', () => mockOutput);
+
+// Mock process.exit
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
 // Import after mocking
-const { getIssueFilePath } = require('../../src/utils/issueManager');
-
-// Import getCurrentIssue after mocking
-const { getCurrentIssue } = require('../../src/utils/issueManager');
-
+const { getIssueFilePath, getCurrentIssue } = require('../../src/utils/issueManager');
+const { addNoteAction } = require('../../src/commands/addNote');
 
 describe('addNote command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOutput._reset();
     getIssueFilePath.mockReturnValue('/test/issues/open/issue-1.md');
     fs.writeFile.mockClear();
   });
@@ -84,6 +90,9 @@ None yet
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('Initial problem description');
     expect(writtenContent).toContain('This is a new note');
+    
+    // Verify success message was output
+    expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Problem to be solved section'));
   });
 
   test('should add a note to the end of a section when section is empty', async () => {
@@ -110,6 +119,9 @@ None yet
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('## Failed approaches');
     expect(writtenContent).toContain('This is my first failed approach');
+    
+    // Verify success message was output
+    expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Failed approaches section'));
   });
 
   test('should use current issue if no issue number is provided', async () => {
@@ -160,16 +172,22 @@ Next steps for current issue
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('Approach for current issue');
     expect(writtenContent).toContain('New note for current issue');
+    
+    // Verify success message was output
+    expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Planned approach section'));
   });
 
-  test('should throw error if section is not found', async () => {
+  test('should handle section not found error', async () => {
     fs.readFile.mockResolvedValue(mockIssueContent);
 
     // Call with invalid section
-    await expect(addNoteAction('Note for invalid section', { 
+    await addNoteAction('Note for invalid section', { 
       issueNumber: 1, 
       section: 'non-existent-section' 
-    })).rejects.toThrow('Section "non-existent-section" not found in issue');
+    }).catch(() => {});  // Catch and ignore errors for testing
+
+    // Verify error was output
+    expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Section "non-existent-section" not found in issue'));
   });
 
   test('should normalize section names', async () => {
@@ -190,6 +208,9 @@ Next steps for current issue
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('Initial approach');
     expect(writtenContent).toContain('New approach note');
+    
+    // Verify success message was output
+    expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Planned approach section'));
   });
 
   test('should format the note based on section type', async () => {
@@ -211,5 +232,8 @@ Next steps for current issue
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('- [ ] Question 1?');
     expect(writtenContent).toContain('- [ ] New question to resolve?');
+    
+    // Verify success message was output
+    expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Questions to resolve section'));
   });
 });

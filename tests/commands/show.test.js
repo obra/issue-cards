@@ -2,12 +2,10 @@
 // ABOUTME: Verifies displaying issue details
 
 const { Command } = require('commander');
-const { createCommand, showAction } = require('../../src/commands/show');
-const directory = require('../../src/utils/directory');
-const issueManager = require('../../src/utils/issueManager');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError, IssueNotFoundError } = require('../../src/utils/errors');
 
-// Mock dependencies
+// Mock dependencies first
 jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn(),
 }));
@@ -17,28 +15,24 @@ jest.mock('../../src/utils/issueManager', () => ({
   listIssues: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-}));
+// Create mock output manager and then mock it
+const mockOutput = mockOutputManager();
+jest.mock('../../src/utils/outputManager', () => mockOutput);
+
+// Mock process.exit to prevent tests from exiting
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+// Import the module under test after mocking
+const { createCommand, showAction } = require('../../src/commands/show');
+const directory = require('../../src/utils/directory');
+const issueManager = require('../../src/utils/issueManager');
 
 describe('Show command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
+    mockOutput._reset();
   });
   
   describe('createCommand', () => {
@@ -67,7 +61,8 @@ describe('Show command', () => {
       
       // Verify issue content was displayed
       expect(issueManager.getIssue).toHaveBeenCalledWith('0001');
-      expect(console.log).toHaveBeenCalledWith(mockContent);
+      expect(mockOutput.raw).toHaveBeenCalledWith(mockContent);
+      expect(mockOutput._captured.stdout).toHaveLength(1);
     });
     
     test('shows error when issue not found', async () => {
@@ -80,8 +75,8 @@ describe('Show command', () => {
       await showAction('0001');
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 not found'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 not found'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
     });
     
     test('shows error when issue tracking is not initialized', async () => {
@@ -91,8 +86,8 @@ describe('Show command', () => {
       await showAction('0001');
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(issueManager.getIssue).not.toHaveBeenCalled();
     });
     
@@ -105,9 +100,9 @@ describe('Show command', () => {
       
       await showAction('0001');
       
-      // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to read issue'));
-      expect(console.error).toHaveBeenCalled();
+      // Verify error message was logged - matches the message in the IssueNotFoundError class
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 not found'));
+      expect(mockOutput._captured.stderr).toHaveLength(1);
     });
     
     test('shows current issue when no number provided', async () => {
@@ -125,7 +120,8 @@ describe('Show command', () => {
       
       // Verify first issue content was displayed (current issue)
       expect(issueManager.listIssues).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(mockIssues[0].content);
+      expect(mockOutput.raw).toHaveBeenCalledWith(mockIssues[0].content);
+      expect(mockOutput._captured.stdout).toHaveLength(1);
     });
     
     test('shows error when no issues exist', async () => {
@@ -138,8 +134,8 @@ describe('Show command', () => {
       await showAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
-      expect(console.error).toHaveBeenCalled();
+      expect(mockOutput.error).toHaveBeenCalledWith('No open issues found.');
+      expect(mockOutput._captured.stderr).toHaveLength(1);
     });
   });
 });

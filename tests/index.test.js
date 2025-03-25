@@ -57,7 +57,7 @@ describe('Main Entry Point', () => {
     await main();
     
     expect(cli.createProgram).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith('Error:', 'Program creation error');
+    expect(console.error).toHaveBeenCalledWith('❌ Unexpected error: Program creation error');
     expect(process.exit).toHaveBeenCalledWith(1);
   });
   
@@ -70,7 +70,7 @@ describe('Main Entry Point', () => {
     
     expect(cli.createProgram).toHaveBeenCalled();
     expect(mockProgram.parseAsync).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith('Error:', 'Parse error');
+    expect(console.error).toHaveBeenCalledWith('❌ Unexpected error: Parse error');
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 });
