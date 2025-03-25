@@ -3,6 +3,13 @@ node_modules/
 
 # Coverage directory
 coverage/
+coverage-report/
+
+# Project files
+.issues/
+
+# Lock files
+package-lock.json
 
 # Logs
 logs
