@@ -83,6 +83,8 @@ Each issue contains:
 
 ## Configuration
 
+### Environment Variables
+
 Issue Cards can be configured using environment variables:
 
 | Variable | Description | Default |
@@ -96,6 +98,30 @@ Example:
 export ISSUE_CARDS_DIR=/path/to/custom/issues
 issue-cards init
 ```
+
+### Output Options
+
+Issue Cards supports various output formats and verbosity levels:
+
+| Option | Description |
+|--------|-------------|
+| `--quiet`, `-q` | Minimal output (errors only) |
+| `--verbose`, `-v` | Additional detailed output |
+| `--debug`, `-d` | Maximum debug information |
+| `--no-color` | Disable colored output |
+| `--json` | Output in JSON format |
+
+Example:
+
+```bash
+# Get machine-parseable JSON output
+issue-cards list --json
+
+# Minimal output for scripts
+issue-cards complete-task --quiet
+```
+
+For more details on output formats, see [Output Format Documentation](docs/output-format.md).
 
 ## Issue Example
 
@@ -221,6 +247,8 @@ For detailed documentation and more examples, see:
 - [Issue and Tag Templates](docs/templates.md)
 - [Example Workflows](docs/workflows.md)
 - [Integration with AI Tools](docs/ai-integration.md)
+- [Output Format](docs/output-format.md)
+- [Design Decisions](docs/design-decisions/)
 
 ## Contributing
 
