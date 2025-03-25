@@ -299,6 +299,11 @@ describe('add-task command', () => {
   
   describe('addTaskAction', () => {
     test('adds task to issue successfully', async () => {
+      // Mock list issues
+      issueManager.listIssues.mockResolvedValue([
+        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+      ]);
+      
       // Mock tag extraction
       taskParser.extractTagsFromTask.mockReturnValue([
         { name: 'unit-test', params: {} }
@@ -313,8 +318,8 @@ describe('add-task command', () => {
     
     test('adds task to specific issue when provided', async () => {
       issueManager.listIssues.mockResolvedValue([
-        { id: '1', title: 'Issue 1', path: '/path/to/issue1.md' },
-        { id: '2', title: 'Issue 2', path: '/path/to/issue2.md' }
+        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' },
+        { number: '2', title: 'Issue 2', path: '/path/to/issue2.md' }
       ]);
       
       await addTaskAction('New task', { issue: '2' });
@@ -325,6 +330,11 @@ describe('add-task command', () => {
     });
     
     test('handles invalid tags', async () => {
+      // Mock list issues
+      issueManager.listIssues.mockResolvedValue([
+        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+      ]);
+      
       taskParser.extractTagsFromTask.mockReturnValue([
         { name: 'non-existent', params: {} }
       ]);
@@ -357,6 +367,10 @@ describe('add-task command', () => {
     });
     
     test('handles invalid issue ID', async () => {
+      issueManager.listIssues.mockResolvedValue([
+        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+      ]);
+
       await addTaskAction('New task', { issue: '999' });
       
       expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
