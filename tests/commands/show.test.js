@@ -106,7 +106,7 @@ describe('Show command', () => {
       await showAction('0001');
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to show issue'));
+      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to read issue'));
       expect(console.error).toHaveBeenCalled();
     });
     

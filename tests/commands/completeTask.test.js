@@ -31,12 +31,22 @@ jest.mock('../../src/utils/output', () => ({
   formatError: jest.fn(msg => `ERROR: ${msg}`),
 }));
 
-// Mock child process spawn
-jest.mock('child_process', () => ({
-  spawnSync: jest.fn().mockReturnValue({ status: 0 }),
+// Mock git utilities
+jest.mock('../../src/utils/gitDetection', () => ({
+  isGitAvailable: jest.fn().mockReturnValue(true),
+  isGitRepository: jest.fn().mockResolvedValue(true),
+  getGitRoot: jest.fn(),
 }));
 
-const childProcess = require('child_process');
+jest.mock('../../src/utils/gitOperations', () => ({
+  gitStage: jest.fn().mockResolvedValue(''),
+  gitStatus: jest.fn(),
+  gitShowTrackedFiles: jest.fn(),
+  safelyExecuteGit: jest.fn(),
+}));
+
+const gitDetection = require('../../src/utils/gitDetection');
+const gitOperations = require('../../src/utils/gitOperations');
 
 describe('Complete Task command', () => {
   let commandInstance;
@@ -112,11 +122,7 @@ describe('Complete Task command', () => {
       expect(console.log).toHaveBeenCalled();
       
       // Verify git staging was attempted
-      expect(childProcess.spawnSync).toHaveBeenCalledWith(
-        'git', 
-        ['add', '/project/.issues/open/issue-0001.md'], 
-        expect.anything()
-      );
+      expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
     test('handles case when all tasks are completed', async () => {
@@ -234,8 +240,8 @@ describe('Complete Task command', () => {
       const updatedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [x] First task';
       taskParser.updateTaskStatus.mockResolvedValue(updatedContent);
       
-      // Mock git command to fail
-      childProcess.spawnSync.mockReturnValue({ status: 1 });
+      // Mock git not available
+      gitDetection.isGitAvailable.mockReturnValue(false);
       
       await completeTaskAction();
       
@@ -247,12 +253,8 @@ describe('Complete Task command', () => {
       expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Completed: First task'));
       expect(console.log).toHaveBeenCalled();
       
-      // Verify git staging was attempted
-      expect(childProcess.spawnSync).toHaveBeenCalledWith(
-        'git', 
-        ['add', '/project/.issues/open/issue-0001.md'], 
-        expect.anything()
-      );
+      // Verify git staging was not attempted
+      expect(gitOperations.gitStage).not.toHaveBeenCalled();
     });
   });
 });

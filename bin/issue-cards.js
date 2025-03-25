@@ -3,4 +3,5 @@
 // ABOUTME: CLI entry point for Issue Cards
 // ABOUTME: Handles command line parsing and execution
 
-require('../src/index.js');
+const main = require('../src/index.js');
+main();

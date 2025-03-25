@@ -2,10 +2,13 @@
 // ABOUTME: Creates new issues from templates
 
 const { Command } = require('commander');
-const { isInitialized } = require('../utils/directory');
+const path = require('path');
+const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
 const { loadTemplate, renderTemplate, validateTemplate } = require('../utils/template');
 const { getNextIssueNumber, saveIssue } = require('../utils/issueManager');
 const { formatSuccess, formatError } = require('../utils/output');
+const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
+const { gitStage } = require('../utils/gitOperations');
 
 /**
  * Format multi-line input as a list
@@ -45,6 +48,34 @@ function formatAsTasks(input) {
       return `- [ ] ${line.trim()}`;
     })
     .join('\n');
+}
+
+/**
+ * Stage issue file in git
+ * 
+ * @param {string} issueNumber - Issue number
+ * @returns {Promise<void>}
+ */
+async function stageNewIssueInGit(issueNumber) {
+  try {
+    // Check if git is available and we're in a git repo
+    if (!isGitAvailable() || !(await isGitRepository())) {
+      return; // Git not available or not in a repo, silently skip
+    }
+    
+    // Get the path to the issue file
+    const issueFilePath = path.join(getIssueDirectoryPath('open'), `issue-${issueNumber}.md`);
+    
+    // Stage the file
+    await gitStage(issueFilePath);
+    console.log(formatSuccess('New issue staged in git'));
+  } catch (error) {
+    // Silently ignore git errors - git integration is optional
+    // But log the error if we're in debug mode
+    if (process.env.DEBUG) {
+      console.error(`Git error (ignored): ${error.message}`);
+    }
+  }
 }
 
 /**
@@ -101,6 +132,9 @@ async function createAction(templateName, options) {
     
     // Save issue
     await saveIssue(issueNumber, issueContent);
+    
+    // Try to stage the new issue in git
+    await stageNewIssueInGit(issueNumber);
     
     console.log(formatSuccess(`Created Issue #${issueNumber}: ${options.title}`));
     console.log(formatSuccess(`Issue saved to .issues/open/issue-${issueNumber}.md`));

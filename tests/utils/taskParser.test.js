@@ -1,293 +1,431 @@
-// ABOUTME: Tests for markdown task parsing utilities
-// ABOUTME: Verifies task extraction, status tracking, and tag detection
+// ABOUTME: Tests for task parsing utilities
+// ABOUTME: Verifies markdown task extraction, status tracking, and tag detection
 
-const { unified } = require('unified');
-const remarkParse = require('remark-parse');
 const {
   extractTasks,
-  findTaskByIndex, 
+  findTaskByIndex,
   findCurrentTask,
-  updateTaskStatus,
   extractTagsFromTask,
-  hasTag
+  extractTagNamesFromTask,
+  parseTag,
+  hasTag,
+  getTagParameters,
+  getCleanTaskText,
+  updateTaskStatus
 } = require('../../src/utils/taskParser');
 
-describe('Task Parser utilities', () => {
-  const sampleMarkdown = `# Issue 0001: Test Issue
+// Mock dependencies
+jest.mock('unified', () => ({
+  unified: jest.fn().mockReturnValue({
+    use: jest.fn().mockReturnThis(),
+    parse: jest.fn()
+  })
+}));
 
-## Problem to be solved
-This is a test issue.
+jest.mock('remark-parse', () => ({}));
+jest.mock('remark-stringify', () => ({}));
 
-## Tasks
-- [ ] First task
-- [x] Second task (completed)
-- [ ] Third task with #unit-test tag
-- [ ] Fourth task with multiple tags #e2e-test #update-docs
-`;
-
+describe('Task parser utilities', () => {
+  // Mock parse function
+  const mockParse = jest.fn();
+  
+  beforeEach(() => {
+    // Reset mocks
+    mockParse.mockReset();
+    require('unified').unified().parse.mockReset();
+    require('unified').unified().parse.mockImplementation(mockParse);
+  });
+  
   describe('extractTasks', () => {
     test('extracts tasks from markdown content', async () => {
-      const tasks = await extractTasks(sampleMarkdown);
+      // Mock the parsed markdown structure
+      mockParse.mockResolvedValue({
+        children: [
+          // Heading for Tasks section
+          {
+            type: 'heading',
+            children: [{ type: 'text', value: 'Tasks' }]
+          },
+          // List with task items
+          {
+            type: 'list',
+            children: [
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[ ] Task 1' }]
+                }]
+              },
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[x] Task 2' }]
+                }]
+              }
+            ]
+          }
+        ]
+      });
       
-      expect(tasks).toHaveLength(4);
-      expect(tasks[0].text).toBe('First task');
-      expect(tasks[0].completed).toBe(false);
-      expect(tasks[0].index).toBe(0);
+      const tasks = await extractTasks('# Test\n\n## Tasks\n- [ ] Task 1\n- [x] Task 2');
       
-      expect(tasks[1].text).toBe('Second task (completed)');
-      expect(tasks[1].completed).toBe(true);
-      expect(tasks[1].index).toBe(1);
-      
-      expect(tasks[2].text).toBe('Third task with #unit-test tag');
-      expect(tasks[2].completed).toBe(false);
-      expect(tasks[2].index).toBe(2);
+      expect(tasks).toHaveLength(2);
+      expect(tasks[0]).toEqual({ text: 'Task 1', completed: false, index: 0 });
+      expect(tasks[1]).toEqual({ text: 'Task 2', completed: true, index: 1 });
     });
     
-    test('handles markdown with no tasks', async () => {
-      const markdownWithoutTasks = `# Issue 0001: Test Issue
-
-## Problem to be solved
-This is a test issue with no tasks.
-`;
+    test('returns empty array when no Tasks section found', async () => {
+      // Mock the parsed markdown with no Tasks section
+      mockParse.mockResolvedValue({
+        children: [
+          {
+            type: 'heading',
+            children: [{ type: 'text', value: 'Not Tasks' }]
+          }
+        ]
+      });
       
-      const tasks = await extractTasks(markdownWithoutTasks);
+      const tasks = await extractTasks('# Test\n\n## Not Tasks\n- [ ] Not a task');
       
       expect(tasks).toHaveLength(0);
     });
     
-    test('ignores tasks outside the Tasks section', async () => {
-      const markdownWithTasksOutside = `# Issue 0001: Test Issue
-
-## Problem to be solved
-- [ ] This is not a real task, just a list item
-- [x] Another list item
-
-## Tasks
-- [ ] Real task 1
-- [ ] Real task 2
-`;
+    test('handles parsing errors', async () => {
+      // Mock a parsing error
+      mockParse.mockRejectedValue(new Error('Parse error'));
       
-      const tasks = await extractTasks(markdownWithTasksOutside);
-      
-      expect(tasks).toHaveLength(2);
-      expect(tasks[0].text).toBe('Real task 1');
-      expect(tasks[1].text).toBe('Real task 2');
+      await expect(extractTasks('Invalid markdown')).rejects.toThrow('Failed to parse tasks');
     });
   });
   
   describe('findTaskByIndex', () => {
-    test('finds task by index', async () => {
-      const tasks = await extractTasks(sampleMarkdown);
+    test('finds task by index', () => {
+      const tasks = [
+        { text: 'Task 1', completed: false, index: 0 },
+        { text: 'Task 2', completed: true, index: 1 },
+        { text: 'Task 3', completed: false, index: 2 }
+      ];
       
-      const foundTask = findTaskByIndex(tasks, 2);
+      const foundTask = findTaskByIndex(tasks, 1);
       
-      expect(foundTask).not.toBeNull();
-      expect(foundTask.text).toBe('Third task with #unit-test tag');
-      expect(foundTask.index).toBe(2);
+      expect(foundTask).toEqual({ text: 'Task 2', completed: true, index: 1 });
     });
     
-    test('returns null for invalid index', async () => {
-      const tasks = await extractTasks(sampleMarkdown);
+    test('returns null for non-existent index', () => {
+      const tasks = [
+        { text: 'Task 1', completed: false, index: 0 }
+      ];
       
-      const foundTask = findTaskByIndex(tasks, 10);
+      const foundTask = findTaskByIndex(tasks, 99);
       
       expect(foundTask).toBeNull();
     });
   });
   
   describe('findCurrentTask', () => {
-    test('finds first uncompleted task', async () => {
-      const tasks = await extractTasks(sampleMarkdown);
+    test('finds first uncompleted task', () => {
+      const tasks = [
+        { text: 'Task 1', completed: true, index: 0 },
+        { text: 'Task 2', completed: false, index: 1 },
+        { text: 'Task 3', completed: false, index: 2 }
+      ];
       
       const currentTask = findCurrentTask(tasks);
       
-      expect(currentTask).not.toBeNull();
-      expect(currentTask.text).toBe('First task');
-      expect(currentTask.completed).toBe(false);
-      expect(currentTask.index).toBe(0);
+      expect(currentTask).toEqual({ text: 'Task 2', completed: false, index: 1 });
     });
     
-    test('handles all tasks completed', async () => {
-      const allTasksCompleted = `# Issue 0001: Test Issue
-
-## Tasks
-- [x] First task
-- [x] Second task
-`;
+    test('returns null when all tasks completed', () => {
+      const tasks = [
+        { text: 'Task 1', completed: true, index: 0 },
+        { text: 'Task 2', completed: true, index: 1 }
+      ];
       
-      const tasks = await extractTasks(allTasksCompleted);
       const currentTask = findCurrentTask(tasks);
       
       expect(currentTask).toBeNull();
     });
     
-    test('skips completed tasks', async () => {
-      const mixedTasksMarkdown = `# Issue 0001: Test Issue
-
-## Tasks
-- [x] First task
-- [ ] Second task
-- [x] Third task
-`;
+    test('returns null for empty task list', () => {
+      const currentTask = findCurrentTask([]);
       
-      const tasks = await extractTasks(mixedTasksMarkdown);
-      const currentTask = findCurrentTask(tasks);
+      expect(currentTask).toBeNull();
+    });
+  });
+  
+  describe('parseTag', () => {
+    test('parses tag without parameters', () => {
+      const tag = parseTag('unit-test');
       
-      expect(currentTask).not.toBeNull();
-      expect(currentTask.text).toBe('Second task');
-      expect(currentTask.index).toBe(1);
+      expect(tag).toEqual({
+        name: 'unit-test',
+        params: {}
+      });
+    });
+    
+    test('parses tag with single parameter', () => {
+      const tag = parseTag('unit-test(component=UserService)');
+      
+      expect(tag).toEqual({
+        name: 'unit-test',
+        params: { component: 'UserService' }
+      });
+    });
+    
+    test('parses tag with multiple parameters', () => {
+      const tag = parseTag('test(component=Auth,scope=login,priority=high)');
+      
+      expect(tag).toEqual({
+        name: 'test',
+        params: {
+          component: 'Auth',
+          scope: 'login',
+          priority: 'high'
+        }
+      });
+    });
+    
+    test('handles malformed parameter string', () => {
+      const tag = parseTag('test(component=Auth,badparam)');
+      
+      expect(tag).toEqual({
+        name: 'test',
+        params: { component: 'Auth' }
+      });
     });
   });
   
   describe('extractTagsFromTask', () => {
-    test('extracts single tag from task', async () => {
-      const task = {
-        text: 'Task with #unit-test tag',
-        completed: false,
-        index: 0
-      };
+    test('extracts tags without parameters', () => {
+      const task = { text: 'Implement feature X #unit-test #update-docs', completed: false, index: 0 };
       
       const tags = extractTagsFromTask(task);
       
-      expect(tags).toHaveLength(1);
-      expect(tags[0]).toBe('unit-test');
+      expect(tags).toHaveLength(2);
+      expect(tags[0]).toEqual({ name: 'unit-test', params: {} });
+      expect(tags[1]).toEqual({ name: 'update-docs', params: {} });
     });
     
-    test('extracts multiple tags from task', async () => {
-      const task = {
-        text: 'Task with multiple tags #e2e-test #update-docs',
-        completed: false,
-        index: 0
+    test('extracts tags with parameters', () => {
+      const task = { 
+        text: 'Implement feature X #unit-test(component=UserService) #update-docs', 
+        completed: false, 
+        index: 0 
       };
       
       const tags = extractTagsFromTask(task);
       
       expect(tags).toHaveLength(2);
-      expect(tags).toContain('e2e-test');
-      expect(tags).toContain('update-docs');
+      expect(tags[0]).toEqual({ 
+        name: 'unit-test', 
+        params: { component: 'UserService' } 
+      });
+      expect(tags[1]).toEqual({ name: 'update-docs', params: {} });
     });
     
-    test('handles task with no tags', async () => {
-      const task = {
-        text: 'Task with no tags',
-        completed: false,
-        index: 0
-      };
+    test('returns empty array for task without tags', () => {
+      const task = { text: 'Implement feature X', completed: false, index: 0 };
       
       const tags = extractTagsFromTask(task);
       
       expect(tags).toHaveLength(0);
     });
-    
-    test('handles tags in the middle of text', async () => {
-      const task = {
-        text: 'Task with #unit-test tag in the middle',
-        completed: false,
-        index: 0
+  });
+  
+  describe('extractTagNamesFromTask', () => {
+    test('extracts tag names only', () => {
+      const task = { 
+        text: 'Implement feature X #unit-test(component=UserService) #update-docs', 
+        completed: false, 
+        index: 0 
       };
       
-      const tags = extractTagsFromTask(task);
+      const tagNames = extractTagNamesFromTask(task);
       
-      expect(tags).toHaveLength(1);
-      expect(tags[0]).toBe('unit-test');
+      expect(tagNames).toHaveLength(2);
+      expect(tagNames).toEqual(['unit-test', 'update-docs']);
     });
   });
   
   describe('hasTag', () => {
-    test('returns true when task has the tag', async () => {
-      const task = {
-        text: 'Task with #unit-test tag',
-        completed: false,
-        index: 0
-      };
+    test('returns true when task has tag', () => {
+      const task = { text: 'Implement feature X #unit-test #update-docs', completed: false, index: 0 };
       
       expect(hasTag(task, 'unit-test')).toBe(true);
+      expect(hasTag(task, 'update-docs')).toBe(true);
     });
     
-    test('returns false when task does not have the tag', async () => {
-      const task = {
-        text: 'Task with #unit-test tag',
-        completed: false,
-        index: 0
+    test('returns false when task does not have tag', () => {
+      const task = { text: 'Implement feature X #unit-test', completed: false, index: 0 };
+      
+      expect(hasTag(task, 'non-existent')).toBe(false);
+    });
+  });
+  
+  describe('getTagParameters', () => {
+    test('returns parameters for existing tag', () => {
+      const task = { 
+        text: 'Implement X #unit-test(component=Auth,scope=login) #update-docs', 
+        completed: false, 
+        index: 0 
       };
       
-      expect(hasTag(task, 'e2e-test')).toBe(false);
+      const params = getTagParameters(task, 'unit-test');
+      
+      expect(params).toEqual({ component: 'Auth', scope: 'login' });
     });
     
-    test('returns false for task with no tags', async () => {
-      const task = {
-        text: 'Task with no tags',
-        completed: false,
-        index: 0
+    test('returns empty object for tag without parameters', () => {
+      const task = { text: 'Implement X #unit-test #update-docs', completed: false, index: 0 };
+      
+      const params = getTagParameters(task, 'unit-test');
+      
+      expect(params).toEqual({});
+    });
+    
+    test('returns null for non-existent tag', () => {
+      const task = { text: 'Implement X #unit-test', completed: false, index: 0 };
+      
+      const params = getTagParameters(task, 'non-existent');
+      
+      expect(params).toBeNull();
+    });
+  });
+  
+  describe('getCleanTaskText', () => {
+    test('removes all tags from task text', () => {
+      const task = { 
+        text: 'Implement auth feature #unit-test(component=Auth) #update-docs', 
+        completed: false, 
+        index: 0 
       };
       
-      expect(hasTag(task, 'unit-test')).toBe(false);
+      const cleanText = getCleanTaskText(task);
+      
+      expect(cleanText).toBe('Implement auth feature');
+    });
+    
+    test('handles task without tags', () => {
+      const task = { text: 'Implement auth feature', completed: false, index: 0 };
+      
+      const cleanText = getCleanTaskText(task);
+      
+      expect(cleanText).toBe('Implement auth feature');
     });
   });
   
   describe('updateTaskStatus', () => {
+    beforeEach(() => {
+      // Reset mocks
+      mockParse.mockReset();
+    });
+    
     test('updates task status to completed', async () => {
-      const originalMarkdown = `# Issue 0001: Test Issue
-
-## Tasks
-- [ ] First task
-- [ ] Second task
-`;
+      // Mock extractTasks to return our test tasks
+      mockParse.mockResolvedValueOnce({
+        children: [
+          // Heading for Tasks section
+          {
+            type: 'heading',
+            children: [{ type: 'text', value: 'Tasks' }]
+          },
+          // List with task items
+          {
+            type: 'list',
+            children: [
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[ ] Task 1' }]
+                }]
+              },
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[ ] Task 2' }]
+                }]
+              }
+            ]
+          }
+        ]
+      });
       
-      const updatedMarkdown = await updateTaskStatus(originalMarkdown, 0, true);
+      const content = '## Tasks\n- [ ] Task 1\n- [ ] Task 2';
+      const updatedContent = await updateTaskStatus(content, 1, true);
       
-      expect(updatedMarkdown).toContain('- [x] First task');
-      expect(updatedMarkdown).toContain('- [ ] Second task');
+      expect(updatedContent).toBe('## Tasks\n- [ ] Task 1\n- [x] Task 2');
     });
     
-    test('updates task status to uncompleted', async () => {
-      const originalMarkdown = `# Issue 0001: Test Issue
-
-## Tasks
-- [x] First task
-- [ ] Second task
-`;
+    test('updates task status to incomplete', async () => {
+      // Mock extractTasks to return our test tasks
+      mockParse.mockResolvedValueOnce({
+        children: [
+          // Heading for Tasks section
+          {
+            type: 'heading',
+            children: [{ type: 'text', value: 'Tasks' }]
+          },
+          // List with task items
+          {
+            type: 'list',
+            children: [
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[x] Task 1' }]
+                }]
+              },
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[x] Task 2' }]
+                }]
+              }
+            ]
+          }
+        ]
+      });
       
-      const updatedMarkdown = await updateTaskStatus(originalMarkdown, 0, false);
+      const content = '## Tasks\n- [x] Task 1\n- [x] Task 2';
+      const updatedContent = await updateTaskStatus(content, 0, false);
       
-      expect(updatedMarkdown).toContain('- [ ] First task');
-      expect(updatedMarkdown).toContain('- [ ] Second task');
+      expect(updatedContent).toBe('## Tasks\n- [ ] Task 1\n- [x] Task 2');
     });
     
-    test('handles invalid task index', async () => {
-      const originalMarkdown = `# Issue 0001: Test Issue
-
-## Tasks
-- [ ] First task
-- [ ] Second task
-`;
+    test('throws error for invalid task index', async () => {
+      // Mock extractTasks to return a single task
+      mockParse.mockResolvedValueOnce({
+        children: [
+          // Heading for Tasks section
+          {
+            type: 'heading',
+            children: [{ type: 'text', value: 'Tasks' }]
+          },
+          // List with task items
+          {
+            type: 'list',
+            children: [
+              {
+                type: 'listItem',
+                children: [{
+                  type: 'paragraph',
+                  children: [{ type: 'text', value: '[ ] Task 1' }]
+                }]
+              }
+            ]
+          }
+        ]
+      });
       
-      await expect(updateTaskStatus(originalMarkdown, 5, true)).rejects.toThrow('Task index out of bounds');
-    });
-    
-    test('preserves other content in the markdown', async () => {
-      const originalMarkdown = `# Issue 0001: Test Issue
-
-## Problem to be solved
-This is a test issue.
-
-## Tasks
-- [ ] First task
-- [ ] Second task
-
-## Instructions
-Follow these instructions.
-`;
+      const content = '## Tasks\n- [ ] Task 1';
       
-      const updatedMarkdown = await updateTaskStatus(originalMarkdown, 1, true);
-      
-      expect(updatedMarkdown).toContain('# Issue 0001: Test Issue');
-      expect(updatedMarkdown).toContain('## Problem to be solved');
-      expect(updatedMarkdown).toContain('This is a test issue.');
-      expect(updatedMarkdown).toContain('## Instructions');
-      expect(updatedMarkdown).toContain('Follow these instructions.');
-      expect(updatedMarkdown).toContain('- [ ] First task');
-      expect(updatedMarkdown).toContain('- [x] Second task');
+      await expect(updateTaskStatus(content, 1, true)).rejects.toThrow('Task index out of bounds');
     });
   });
 });

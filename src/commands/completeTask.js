@@ -2,12 +2,13 @@
 // ABOUTME: Marks the current task as complete and shows the next task
 
 const { Command } = require('commander');
-const { spawnSync } = require('child_process');
 const path = require('path');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
 const { listIssues, saveIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/taskParser');
 const { formatSuccess, formatError } = require('../utils/output');
+const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
+const { gitStage } = require('../utils/gitOperations');
 
 // Importing the currentAction to show the next task
 const { currentAction } = require('./current');
@@ -16,25 +17,27 @@ const { currentAction } = require('./current');
  * Stage issue file changes in git
  * 
  * @param {string} issueNumber - Issue number
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function stageChangesInGit(issueNumber) {
+async function stageChangesInGit(issueNumber) {
   try {
+    // Check if git is available and we're in a git repo
+    if (!isGitAvailable() || !(await isGitRepository())) {
+      return; // Git not available or not in a repo, silently skip
+    }
+    
     // Get the path to the issue file
     const issueFilePath = path.join(getIssueDirectoryPath('open'), `issue-${issueNumber}.md`);
     
-    // Run git add command
-    const result = spawnSync('git', ['add', issueFilePath], { 
-      stdio: 'ignore',
-      timeout: 5000 // 5 second timeout
-    });
-    
-    // git add command succeeded
-    if (result.status === 0) {
-      console.log(formatSuccess('Changes staged in git'));
-    }
+    // Stage the file
+    await gitStage(issueFilePath);
+    console.log(formatSuccess('Changes staged in git'));
   } catch (error) {
     // Silently ignore git errors - git integration is optional
+    // But log the error if we're in debug mode
+    if (process.env.DEBUG) {
+      console.error(`Git error (ignored): ${error.message}`);
+    }
   }
 }
 
@@ -84,7 +87,7 @@ async function completeTaskAction() {
     await saveIssue(currentIssue.number, updatedContent);
     
     // Try to stage changes in git
-    stageChangesInGit(currentIssue.number);
+    await stageChangesInGit(currentIssue.number);
     
     // Show completion message
     console.log(formatSuccess(`Completed: ${currentTask.text}`));

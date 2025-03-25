@@ -109,33 +109,97 @@ function findCurrentTask(tasks) {
 }
 
 /**
+ * Parse a tag string to extract name and parameters
+ * 
+ * @param {string} tagString - Tag string (e.g., "unit-test" or "unit-test(component=UserService)")
+ * @returns {Object} Tag object with name and parameters
+ */
+function parseTag(tagString) {
+  // Check if tag has parameters
+  const paramMatch = tagString.match(/^([a-zA-Z0-9-]+)\((.+)\)$/);
+  
+  if (paramMatch) {
+    const tagName = paramMatch[1];
+    const paramString = paramMatch[2];
+    const params = {};
+    
+    // Parse parameter string (format: key1=value1,key2=value2)
+    paramString.split(',').forEach(pair => {
+      const [key, value] = pair.split('=').map(s => s.trim());
+      if (key && value) {
+        params[key] = value;
+      }
+    });
+    
+    return { name: tagName, params };
+  }
+  
+  // No parameters
+  return { name: tagString, params: {} };
+}
+
+/**
  * Extract tags from a task
  * 
  * @param {Object} task - Task object
- * @returns {Array<string>} List of tags
+ * @returns {Array<Object>} List of tag objects with name and parameters
  */
 function extractTagsFromTask(task) {
   const tags = [];
-  const tagRegex = /#([a-zA-Z0-9-]+)/g;
+  const tagRegex = /#([a-zA-Z0-9-]+(?:\([^)]+\))?)/g;
   let match;
   
   while ((match = tagRegex.exec(task.text)) !== null) {
-    tags.push(match[1]);
+    tags.push(parseTag(match[1]));
   }
   
   return tags;
 }
 
 /**
+ * Extract tag names (without parameters) from a task
+ * 
+ * @param {Object} task - Task object
+ * @returns {Array<string>} List of tag names
+ */
+function extractTagNamesFromTask(task) {
+  return extractTagsFromTask(task).map(tag => tag.name);
+}
+
+/**
  * Check if a task has a specific tag
  * 
  * @param {Object} task - Task object
- * @param {string} tag - Tag to check for
+ * @param {string} tagName - Tag name to check for
  * @returns {boolean} True if task has the tag
  */
-function hasTag(task, tag) {
+function hasTag(task, tagName) {
+  const tagNames = extractTagNamesFromTask(task);
+  return tagNames.includes(tagName);
+}
+
+/**
+ * Get parameters for a specific tag in a task
+ * 
+ * @param {Object} task - Task object
+ * @param {string} tagName - Tag name
+ * @returns {Object|null} Tag parameters or null if tag not found
+ */
+function getTagParameters(task, tagName) {
   const tags = extractTagsFromTask(task);
-  return tags.includes(tag);
+  const tag = tags.find(t => t.name === tagName);
+  return tag ? tag.params : null;
+}
+
+/**
+ * Get clean task text (without tags)
+ * 
+ * @param {Object} task - Task object
+ * @returns {string} Task text without tags
+ */
+function getCleanTaskText(task) {
+  // Remove all tags from the task text
+  return task.text.replace(/#[a-zA-Z0-9-]+(?:\([^)]+\))?/g, '').trim();
 }
 
 /**
@@ -205,6 +269,10 @@ module.exports = {
   findTaskByIndex,
   findCurrentTask,
   extractTagsFromTask,
+  extractTagNamesFromTask,
+  parseTag,
   hasTag,
+  getTagParameters,
+  getCleanTaskText,
   updateTaskStatus,
 };
