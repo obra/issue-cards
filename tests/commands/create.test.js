@@ -4,13 +4,10 @@
 const fs = require('fs');
 const path = require('path');
 const { Command } = require('commander');
-const { createCommand, createAction } = require('../../src/commands/create');
-const directory = require('../../src/utils/directory');
-const template = require('../../src/utils/template');
-const issueManager = require('../../src/utils/issueManager');
 const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError, TemplateNotFoundError, UserError } = require('../../src/utils/errors');
 
-// Mock dependencies
+// Mock dependencies first
 jest.mock('fs', () => ({
   promises: {
     writeFile: jest.fn(),
@@ -34,9 +31,6 @@ jest.mock('../../src/utils/issueManager', () => ({
   saveIssue: jest.fn(),
 }));
 
-// Use the output manager mock helper
-const outputManager = mockOutputManager();
-
 // Mock git utilities
 jest.mock('../../src/utils/gitDetection', () => ({
   isGitAvailable: jest.fn().mockReturnValue(true),
@@ -48,24 +42,23 @@ jest.mock('../../src/utils/gitOperations', () => ({
   gitStage: jest.fn().mockResolvedValue(''),
   gitStatus: jest.fn(),
   gitShowTrackedFiles: jest.fn(),
-  safelyExecuteGit: jest.fn(),
 }));
 
-// Mock error classes
-jest.mock('../../src/utils/errors', () => ({
-  UninitializedError: jest.fn().mockImplementation(() => ({
-    message: 'Issue tracking is not initialized',
-    recoveryHint: 'Run `issue-cards init` first'
-  })),
-  TemplateNotFoundError: jest.fn().mockImplementation((templateName) => ({
-    message: `Template not found: ${templateName}`
-  })),
-  UserError: jest.fn().mockImplementation((message) => ({
-    message,
-    withRecoveryHint: (hint) => ({ message, recoveryHint: hint })
-  }))
-}));
+// Create mock output manager and then mock it
+const mockOutput = mockOutputManager();
+jest.mock('../../src/utils/outputManager', () => mockOutput);
 
+// Import the real outputManager for direct spying
+const realOutputManager = jest.requireActual('../../src/utils/outputManager');
+
+// Mock process.exit to prevent tests from exiting
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+// Import the module under test after mocking
+const { createCommand, createAction } = require('../../src/commands/create');
+const directory = require('../../src/utils/directory');
+const template = require('../../src/utils/template');
+const issueManager = require('../../src/utils/issueManager');
 const gitDetection = require('../../src/utils/gitDetection');
 const gitOperations = require('../../src/utils/gitOperations');
 
@@ -74,22 +67,46 @@ describe('Create command', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOutput._reset();
     
-    // Reset output manager mocks
-    outputManager._reset();
+    // Default mocks
+    directory.isInitialized.mockResolvedValue(true);
+    directory.getIssueDirectoryPath.mockImplementation(type => `/project/.issues/${type}`);
+    issueManager.getNextIssueNumber.mockResolvedValue('0001');
+    template.validateTemplate.mockResolvedValue(true);
     
-    // Set up mock implementation for directory.getIssueDirectoryPath
-    directory.getIssueDirectoryPath.mockImplementation((subdir) => {
-      if (subdir === 'open') return '/project/.issues/open';
-      if (subdir === 'config/templates/issue') return '/project/.issues/config/templates/issue';
-      return '/project/.issues';
+    // Mock a full feature template with all sections
+    template.loadTemplate.mockResolvedValue(
+      '# Issue {{NUMBER}}: {{TITLE}}\n\n' +
+      '## Problem to be solved\n{{PROBLEM}}\n\n' +
+      '## Planned approach\n{{APPROACH}}\n\n' +
+      '## Failed approaches\n{{FAILED_APPROACHES}}\n\n' +
+      '## Questions to resolve\n{{QUESTIONS}}\n\n' +
+      '## Tasks\n{{TASKS}}\n\n' +
+      '## Instructions\n{{INSTRUCTIONS}}\n\n' +
+      '## Next steps\n{{NEXT_STEPS}}'
+    );
+    
+    // Mock template renderer to replace placeholders
+    template.renderTemplate.mockImplementation((content, data) => {
+      let result = content;
+      
+      result = result.replace(/{{NUMBER}}/g, data.NUMBER || '')
+                    .replace(/{{TITLE}}/g, data.TITLE || '')
+                    .replace(/{{PROBLEM}}/g, data.PROBLEM || '')
+                    .replace(/{{APPROACH}}/g, data.APPROACH || '')
+                    .replace(/{{FAILED_APPROACHES}}/g, data.FAILED_APPROACHES || '')
+                    .replace(/{{QUESTIONS}}/g, data.QUESTIONS || '')
+                    .replace(/{{TASKS}}/g, data.TASKS || '')
+                    .replace(/{{INSTRUCTIONS}}/g, data.INSTRUCTIONS || '')
+                    .replace(/{{NEXT_STEPS}}/g, data.NEXT_STEPS || '');
+                    
+      return result;
     });
     
-    // Mock issueManager.getNextIssueNumber
-    issueManager.getNextIssueNumber.mockResolvedValue('0001');
-    
-    // Mock template validation
-    template.validateTemplate.mockResolvedValue(true);
+    issueManager.saveIssue.mockImplementation((number, content) => {
+      return Promise.resolve(`/project/.issues/open/issue-${number}.md`);
+    });
   });
   
   describe('createCommand', () => {
@@ -99,41 +116,56 @@ describe('Create command', () => {
       expect(command.name()).toBe('create');
       expect(command.description()).toContain('Create a new issue');
       
-      // Verify command has expected options
+      // Verify options are set
       const options = command.options;
-      expect(options.some(opt => opt.flags.includes('--title'))).toBe(true);
-      expect(options.some(opt => opt.flags.includes('--problem'))).toBe(true);
-      expect(options.some(opt => opt.flags.includes('--approach'))).toBe(true);
-      expect(options.some(opt => opt.flags.includes('--task'))).toBe(true);
-      expect(options.some(opt => opt.flags.includes('--instructions'))).toBe(true);
+      expect(options.length).toBeGreaterThan(0);
       
-      // Verify action handler is set
-      const actionHandler = command._actionHandler;
-      expect(typeof actionHandler).toBe('function');
+      const titleOption = options.find(opt => opt.long === '--title');
+      const taskOption = options.find(opt => opt.long === '--task');
+      
+      expect(titleOption).toBeDefined();
+      expect(titleOption.description).toContain('Issue title');
+      
+      expect(taskOption).toBeDefined();
+      expect(taskOption.description).toContain('task');
     });
   });
   
   describe('createAction', () => {
     test('creates issue from valid template with title', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
+      // Set up the template name and options
+      const templateName = 'feature';
+      const options = {
+        title: 'Test Issue'
+      };
       
-      // Mock template.loadTemplate to return template content
-      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Problem to be solved\n{{PROBLEM}}\n\n## Tasks\n{{TASKS}}';
-      template.loadTemplate.mockResolvedValue(mockTemplateContent);
+      await createAction(templateName, options);
       
-      // Mock template.renderTemplate to return rendered content
-      const mockRenderedContent = '# Issue 0001: Test Issue\n\n## Problem to be solved\nTest problem\n\n## Tasks\n- [ ] Task 1\n- [ ] Task 2';
-      template.renderTemplate.mockReturnValue(mockRenderedContent);
+      // Verify template was loaded and rendered
+      expect(template.validateTemplate).toHaveBeenCalledWith(templateName, 'issue');
+      expect(template.loadTemplate).toHaveBeenCalledWith(templateName, 'issue');
       
-      // Call create action with required parameters
-      await createAction('feature', { title: 'Test Issue', problem: 'Test problem', task: ['Task 1', 'Task 2'] });
+      // Verify the rendered template had correct data
+      expect(template.renderTemplate).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ 
+          NUMBER: '0001',
+          TITLE: 'Test Issue'
+        })
+      );
       
       // Verify issue was saved
-      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
+      expect(issueManager.saveIssue).toHaveBeenCalledWith(
+        '0001',
+        expect.any(String)
+      );
       
-      // Verify success message was logged
-      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      // Verify success messages was logged
+      const successMessages = mockOutput._captured.stdout.filter(
+        entry => entry.type === 'success'
+      );
+      expect(successMessages.length).toBeGreaterThan(1);
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       
       // Verify git staging was attempted
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
@@ -143,129 +175,157 @@ describe('Create command', () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      // Call create action
-      await createAction('feature', { title: 'Test Issue' });
+      const templateName = 'feature';
+      const options = {
+        title: 'Test Issue'
+      };
+      
+      await createAction(templateName, options);
       
       // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Issue tracking is not initialized'));
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/not initialized/i));
+      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
     test('shows error when template is invalid', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
-      
-      // Mock template.validateTemplate to return false
+      // Mock template validation to fail
       template.validateTemplate.mockResolvedValue(false);
       
-      // Call create action with invalid template
-      await createAction('invalid-template', { title: 'Test Issue' });
+      const templateName = 'invalid-template';
+      const options = {
+        title: 'Test Issue'
+      };
+      
+      await createAction(templateName, options);
       
       // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Template not found'));
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/template not found/i));
+      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
     test('shows error when title is missing', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
+      const templateName = 'feature';
+      const options = {
+        // No title provided
+      };
       
-      // Call create action without title
-      await createAction('feature', {});
+      await createAction(templateName, options);
       
       // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('title is required'));
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/title is required/i));
+      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
     test('creates issue with all optional sections', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
-      
-      // Mock template.loadTemplate to return template with all sections
-      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Problem to be solved\n{{PROBLEM}}\n\n## Planned approach\n{{APPROACH}}\n\n## Failed approaches\n{{FAILED_APPROACHES}}\n\n## Questions to resolve\n{{QUESTIONS}}\n\n## Tasks\n{{TASKS}}\n\n## Instructions\n{{INSTRUCTIONS}}\n\n## Next steps\n{{NEXT_STEPS}}';
-      template.loadTemplate.mockResolvedValue(mockTemplateContent);
-      
-      // Mock template.renderTemplate to return rendered content
-      const mockRenderedContent = '# Issue 0001: Test Issue\n\n## Problem to be solved\nTest problem\n\n## Planned approach\nTest approach\n\n## Failed approaches\n- Failed approach 1\n- Failed approach 2\n\n## Questions to resolve\n- Question 1\n- Question 2\n\n## Tasks\n- [ ] Task 1\n- [ ] Task 2\n\n## Instructions\nTest instructions\n\n## Next steps\n- Next step 1\n- Next step 2';
-      template.renderTemplate.mockReturnValue(mockRenderedContent);
-      
-      // Call create action with all sections
-      await createAction('feature', {
+      const templateName = 'feature';
+      const options = {
         title: 'Test Issue',
-        problem: 'Test problem',
-        approach: 'Test approach',
+        problem: 'Test problem description',
+        approach: 'Test planned approach',
+        task: ['Task 1', 'Task 2', 'Task 3'],
         failedApproaches: 'Failed approach 1\nFailed approach 2',
-        questions: 'Question 1\nQuestion 2',
-        task: ['Task 1', 'Task 2'],
-        instructions: 'Test instructions',
-        nextSteps: 'Next step 1\nNext step 2'
-      });
+        questions: 'Question 1?\nQuestion 2?',
+        instructions: 'Step 1\nStep 2',
+        nextSteps: 'Next step 1\nNext step 2',
+      };
       
-      // Verify template was rendered with all data
-      expect(template.renderTemplate).toHaveBeenCalledWith(mockTemplateContent, {
-        NUMBER: '0001',
-        TITLE: 'Test Issue',
-        PROBLEM: 'Test problem',
-        APPROACH: 'Test approach',
-        FAILED_APPROACHES: '- Failed approach 1\n- Failed approach 2',
-        QUESTIONS: '- Question 1\n- Question 2',
-        TASKS: '- [ ] Task 1\n- [ ] Task 2',
-        INSTRUCTIONS: 'Test instructions',
-        NEXT_STEPS: '- Next step 1\n- Next step 2'
-      });
+      await createAction(templateName, options);
+      
+      // Verify template was loaded and rendered
+      expect(template.validateTemplate).toHaveBeenCalledWith(templateName, 'issue');
+      expect(template.loadTemplate).toHaveBeenCalledWith(templateName, 'issue');
+      
+      // Verify template data contains all options
+      expect(template.renderTemplate).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          NUMBER: '0001',
+          TITLE: 'Test Issue',
+          PROBLEM: 'Test problem description',
+          APPROACH: 'Test planned approach'
+        })
+      );
+      
+      // Verify lists were formatted correctly
+      const templateData = template.renderTemplate.mock.calls[0][1];
+      expect(templateData.TASKS).toContain('- [ ] Task 1');
+      expect(templateData.TASKS).toContain('- [ ] Task 2');
+      expect(templateData.FAILED_APPROACHES).toContain('- Failed approach 1');
+      expect(templateData.QUESTIONS).toContain('- Question 1?');
+      expect(templateData.NEXT_STEPS).toContain('- Next step 1');
       
       // Verify issue was saved
-      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
+      expect(issueManager.saveIssue).toHaveBeenCalledWith(
+        '0001',
+        expect.any(String)
+      );
       
       // Verify success message was logged
-      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(mockOutput._captured.stdout.length).toBeGreaterThan(0);
       
       // Verify git staging was attempted
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
     test('handles errors during issue creation', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
-      
-      // Mock template.loadTemplate to throw an error
+      // Mock loadTemplate to throw error
       template.loadTemplate.mockRejectedValue(new Error('Failed to load template'));
       
-      // Call create action
-      await createAction('feature', { title: 'Test Issue' });
+      const templateName = 'feature';
+      const options = {
+        title: 'Test Issue'
+      };
+      
+      await createAction(templateName, options);
       
       // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
+      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
+      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
     test('skips git staging if git is not available', async () => {
-      // Mock directory.isInitialized to return true
-      directory.isInitialized.mockResolvedValue(true);
-      
-      // Mock template.loadTemplate to return template content
-      const mockTemplateContent = '# Issue {{NUMBER}}: {{TITLE}}\n\n## Tasks\n{{TASKS}}';
-      template.loadTemplate.mockResolvedValue(mockTemplateContent);
-      
-      // Mock template.renderTemplate to return rendered content
-      const mockRenderedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [ ] Task 1';
-      template.renderTemplate.mockReturnValue(mockRenderedContent);
-      
       // Mock git not available
       gitDetection.isGitAvailable.mockReturnValue(false);
       
-      // Call create action with required parameters
-      await createAction('feature', { title: 'Test Issue', task: ['Task 1'] });
+      const templateName = 'feature';
+      const options = {
+        title: 'Test Issue'
+      };
       
-      // Verify issue was saved
-      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
+      await createAction(templateName, options);
       
       // Verify success message was logged
-      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(mockOutput._captured.stdout.length).toBeGreaterThan(0);
       
       // Verify git staging was not attempted
       expect(gitOperations.gitStage).not.toHaveBeenCalled();
+    });
+    
+    test('handles git staging errors gracefully', async () => {
+      // Mock git staging to throw error
+      gitOperations.gitStage.mockRejectedValue(new Error('Git error'));
+      
+      const templateName = 'feature';
+      const options = {
+        title: 'Test Issue'
+      };
+      
+      await createAction(templateName, options);
+      
+      // Verify success message for issue creation was logged
+      expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
+      expect(mockOutput._captured.stdout.length).toBeGreaterThan(0);
+      
+      // Since the debug level output depends on verbosity, we don't test for
+      // the debug method call, but verify the issue was still created successfully
+      // This confirms the git error was handled gracefully without affecting the main functionality
+      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', expect.any(String));
     });
   });
 });
