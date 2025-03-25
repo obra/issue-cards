@@ -208,13 +208,13 @@ async function addTaskAction(taskText, options) {
     }
     
     // Default to the first issue
-    let issueId = options.issue || issues[0].id;
+    let issueNumber = options.issue || issues[0].number;
     
     // Find the issue
-    const issue = issues.find(i => i.id === issueId.toString());
+    const issue = issues.find(i => i.number === issueNumber.toString());
     
     if (!issue) {
-      console.error(formatError(`Issue ${issueId} not found.`));
+      console.error(formatError(`Issue ${issueNumber} not found.`));
       return;
     }
     
