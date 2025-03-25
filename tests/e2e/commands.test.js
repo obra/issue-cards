@@ -254,13 +254,13 @@ describe('Issue Cards E2E Commands', () => {
   test('templates command', () => {
     // List all templates
     let output = runCommand('templates');
-    expect(output).toContain('Available Issue Templates:');
+    expect(output).toContain('Available issue templates:');
     expect(output).toContain('feature');
     expect(output).toContain('bugfix');
     expect(output).toContain('refactor');
     expect(output).toContain('audit');
     
-    expect(output).toContain('Available Tag Templates:');
+    expect(output).toContain('Available tag templates:');
     expect(output).toContain('unit-test');
     expect(output).toContain('e2e-test');
     expect(output).toContain('lint-and-commit');
