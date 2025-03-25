@@ -36,7 +36,9 @@ describe('Context Extractor E2E', () => {
       '--approach "The approach is to test all context extraction functions" ' +
       '--failed-approaches "First failed attempt\\nSecond failed attempt" ' +
       '--questions "Question about the context?\\nAnother question about relevance?" ' +
-      '--tasks "Task related to extraction #unit-test\\nTask about parsing\\nTask for relevance testing" ' +
+      '--task "Task related to extraction #unit-test" ' +
+      '--task "Task about parsing" ' +
+      '--task "Task for relevance testing" ' +
       '--instructions "Follow these instructions for testing" ' +
       '--next-steps "Improve context extraction\\nAdd more tests"');
     
@@ -151,7 +153,8 @@ describe('Context Extractor E2E', () => {
   test('context extraction with tagged tasks', () => {
     // Create issue with tagged tasks
     runCommand('create feature --title "Tagged Context Test" ' +
-      '--tasks "Task with unit-test tag #unit-test\\nTask with e2e-test tag #e2e-test"');
+      '--task "Task with unit-test tag #unit-test" ' +
+      '--task "Task with e2e-test tag #e2e-test"');
     
     // First current will show the unit-test task with expanded context
     const output = runCommand('current');
@@ -165,7 +168,7 @@ describe('Context Extractor E2E', () => {
   test('question relevance in context', () => {
     // Create issue with related questions and tasks
     runCommand('create feature --title "Question Relevance Test" ' +
-      '--tasks "Implement user authentication" ' +
+      '--task "Implement user authentication" ' +
       '--questions "How should we handle user credentials?\\nWhat is the password reset flow?\\nWhen should authorization happen?"');
     
     // Current task should include the relevant questions
@@ -181,7 +184,7 @@ describe('Context Extractor E2E', () => {
   test('failed approach relevance in context', () => {
     // Create issue with failed approaches related to a specific task
     runCommand('create feature --title "Failed Approach Test" ' +
-      '--tasks "Implement API caching" ' +
+      '--task "Implement API caching" ' +
       '--failed-approaches "Tried using localStorage for API cache\\nAttempted to use service workers for caching"');
     
     // Add a structured failed approach
@@ -202,7 +205,9 @@ describe('Context Extractor E2E', () => {
     runCommand('create feature --title "Word Relevance Test" ' +
       '--problem "Need to improve performance in the database queries" ' +
       '--approach "Will optimize SQL queries and add indexes" ' +
-      '--tasks "Analyze slow queries\\nAdd database indexes\\nImplement query caching" ' +
+      '--task "Analyze slow queries" ' +
+      '--task "Add database indexes" ' +
+      '--task "Implement query caching" ' +
       '--questions "Which queries are slowest?\\nHow to measure performance improvement?"');
     
     // Check tasks before completion
@@ -237,7 +242,9 @@ describe('Context Extractor E2E', () => {
       '--approach "The approach has several steps and considerations" ' +
       '--failed-approaches "Approach 1 that failed\\nApproach 2 that also failed" ' +
       '--questions "Important question 1?\\nImportant question 2?" ' +
-      '--tasks "First important task\\nSecond related task\\nThird follow-up task" ' +
+      '--task "First important task" ' +
+      '--task "Second related task" ' +
+      '--task "Third follow-up task" ' +
       '--instructions "Follow these detailed instructions" ' +
       '--next-steps "Future work item 1\\nFuture work item 2"');
     

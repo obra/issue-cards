@@ -97,7 +97,9 @@ describe('Issue Cards Comprehensive E2E', () => {
       '--approach "This is the approach" ' + 
       '--failed-approaches "Failed approach 1\nFailed approach 2" ' +
       '--questions "Question 1?\nQuestion 2?" ' +
-      '--tasks "Task 1\nTask 2\nTask 3" ' +
+      '--task "Task 1" ' +
+      '--task "Task 2" ' +
+      '--task "Task 3" ' +
       '--instructions "Test instructions" ' +
       '--next-steps "Future step 1\nFuture step 2"');
     
@@ -234,7 +236,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     runCommand('init');
     
     // Create an issue first to work with
-    runCommand('create feature --title "Parameter Test" --tasks "Task 1\nTask 2"');
+    runCommand('create feature --title "Parameter Test" --task "Task 1" --task "Task 2"');
     
     // Test add-note with all parameters
     let output = runCommand('add-note "Test note" --section "Problem to be solved"');
@@ -333,7 +335,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     }
     
     // 6. Create issue then try to add note to non-existent section
-    runCommand('create feature --title "Error Test" --tasks "Task 1"');
+    runCommand('create feature --title "Error Test" --task "Task 1"');
     
     try {
       execSync(`node ${binPath} add-note "Test note" --section "Non-existent section"`, {
@@ -366,11 +368,13 @@ describe('Issue Cards Comprehensive E2E', () => {
     // Initialize
     runCommand('init');
     
-    // Create an issue with multiline content
+    // Create an issue with multiline content in problem and approach
     const output = runCommand('create feature --title "Multiline Test" ' +
       '--problem "Line 1\nLine 2\nLine 3" ' +
       '--approach "Approach line 1\nApproach line 2" ' +
-      '--tasks "Task with\nnewlines\nin it\nSecond task"');
+      '--task "First task" ' +
+      '--task "Second task" ' +
+      '--task "Task with a #unit-test tag"');
     
     expect(output).toContain('Created Issue #0001');
     
@@ -388,9 +392,8 @@ describe('Issue Cards Comprehensive E2E', () => {
     expect(content).toContain('Approach line 2');
     
     // Tasks should be properly formatted
-    expect(content).toContain('- [ ] Task with');
-    expect(content).toContain('- [ ] newlines');
-    expect(content).toContain('- [ ] in it');
+    expect(content).toContain('- [ ] First task');
     expect(content).toContain('- [ ] Second task');
+    expect(content).toContain('- [ ] Task with a #unit-test tag');
   });
 });

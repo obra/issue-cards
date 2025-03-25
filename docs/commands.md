@@ -72,7 +72,7 @@ Optional sections:
 - `--approach` - High-level strategy for solving the issue
 - `--failed-approaches` - List of approaches already tried (one item per line)
 - `--questions` - Questions that need answers (one item per line)
-- `--tasks` - List of tasks, one per line, can include #tags
+- `--task` - A task to add to the issue (can be specified multiple times), can include #tags
 - `--instructions` - Guidelines to follow during implementation
 - `--next-steps` - Future work after this issue (one item per line)
 
@@ -88,10 +88,10 @@ issue-cards create bugfix \
   --approach "Store the original URL in session storage before redirect." \
   --failed-approaches "Tried using URL parameters but it broke for complex URLs." \
   --questions "Should we handle deep linking to protected pages?" \
-  --tasks "Reproduce the issue with a test #unit-test
-Add URL storage before login redirect
-Implement redirect after successful login
-Add error handling for invalid URLs" \
+  --task "Reproduce the issue with a test #unit-test" \
+  --task "Add URL storage before login redirect" \
+  --task "Implement redirect after successful login" \
+  --task "Add error handling for invalid URLs" \
   --instructions "Use sessionStorage rather than localStorage for security." \
   --next-steps "Consider implementing a more robust auth flow."
 ```

@@ -289,7 +289,7 @@ The tool provides these core commands:
     - `--approach` - High-level strategy for solving the issue
     - `--failed-approaches` - List of approaches already tried (one per line)
     - `--questions` - Open questions that need answers (one per line)
-    - `--tasks` - List of tasks to implement (one per line, can include #tags)
+    - `--task` - A task to add to the issue (can be specified multiple times), can include #tags
     - `--instructions` - Guidelines to follow during implementation
     - `--next-steps` - Future work after this issue (one item per line)
 
@@ -576,13 +576,13 @@ Tried using Firebase Auth but it doesn't support our custom user data needs" \
   --questions "What should the JWT expiration time be?
 Should we support social login (Google, GitHub)?" \
   --instructions "Follow OWASP security guidelines. Include CSRF protection. Rate-limit login attempts." \
-  --tasks "Create User model and database schema #unit-test
-Create user registration endpoint with input validation #e2e-test
-Implement secure password hashing with bcrypt #unit-test
-Create login endpoint with JWT token generation #e2e-test
-Implement authentication middleware
-Create logout functionality
-Add password reset workflow #e2e-test" \
+  --task "Create User model and database schema #unit-test" \
+  --task "Create user registration endpoint with input validation #e2e-test" \
+  --task "Implement secure password hashing with bcrypt #unit-test" \
+  --task "Create login endpoint with JWT token generation #e2e-test" \
+  --task "Implement authentication middleware" \
+  --task "Create logout functionality" \
+  --task "Add password reset workflow #e2e-test" \
   --next-steps "After authentication is complete:
 - Implement user profiles
 - Add role-based authorization
@@ -904,7 +904,7 @@ Options:
   --failed-approaches List of approaches already tried (one per line)
   --questions       List of questions that need answers (one per line)
   --instructions    Guidelines to follow during implementation
-  --tasks           List of tasks, one per line. Add #tag to tag tasks
+  --task            A task to add to the issue (can be specified multiple times). Add #tag to tag tasks
   --next-steps      Future work (for context only)
 
 Examples:
@@ -913,9 +913,9 @@ Examples:
   issue-cards create bugfix --title "Fix login redirect" \
     --problem "After login, users are not redirected to the original page" \
     --failed-approaches "Tried storing the URL in a cookie but it was too large" \
-    --tasks "Reproduce the issue #unit-test
-    Store original URL before login
-    Implement redirect after successful login"
+    --task "Reproduce the issue #unit-test" \
+    --task "Store original URL before login" \
+    --task "Implement redirect after successful login"
 
   # Create a complete issue with all sections in one command
   issue-cards create feature --title "User Authentication" \
@@ -923,8 +923,8 @@ Examples:
     --approach "We'll implement JWT-based authentication..." \
     --failed-approaches "Tried using localStorage..." \
     --questions "What should be the JWT expiration time?" \
-    --tasks "Create User model #unit-test
-    Create login endpoint #e2e-test" \
+    --task "Create User model #unit-test" \
+    --task "Create login endpoint #e2e-test" \
     --instructions "Follow OWASP security guidelines..." \
     --next-steps "Implement user profiles"
 ```

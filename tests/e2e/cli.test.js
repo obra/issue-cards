@@ -170,7 +170,7 @@ describe('CLI E2E', () => {
   // Test command chaining and full lifecycle
   test('command chaining', () => {
     // Create an issue with all options
-    execSync(`node ${binPath} create feature --title "Chaining Test" --tasks "Task 1\nTask 2"`, {
+    execSync(`node ${binPath} create feature --title "Chaining Test" --task "Task 1" --task "Task 2"`, {
       cwd: testDir,
       encoding: 'utf8',
       env: { ...process.env }

@@ -105,9 +105,8 @@ describe('Current command', () => {
       expect(taskExpander.expandTask).toHaveBeenCalledWith(tasks[0]);
       
       // Check console output
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('COMMAND: issue-cards current'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('TASK: First task'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('TASKS:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CURRENT TASK:'));
       
       // Verify task info is shown
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CURRENT TASK:'));

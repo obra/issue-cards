@@ -53,7 +53,7 @@ function formatSection(title, content) {
 function formatContext(context) {
   const sections = [];
   
-  sections.push(chalk.bold('CONTEXT:'));
+  sections.push(chalk.bold('CONTEXT:') + '\n');
   
   if (context.problem) {
     sections.push(formatSection('Problem to be solved', context.problem));

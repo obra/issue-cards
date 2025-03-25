@@ -103,7 +103,9 @@ describe('Issue Cards E2E Commands', () => {
       '--approach "Using all available options" ' +
       '--failed-approaches "Tried without options" ' +
       '--questions "Is this comprehensive?" ' +
-      '--tasks "Task 1\nTask 2\nTask 3" ' +
+      '--task "Task 1" ' +
+      '--task "Task 2" ' +
+      '--task "Task 3" ' +
       '--instructions "Follow these instructions" ' +
       '--next-steps "Future enhancements"');
     
@@ -135,7 +137,7 @@ describe('Issue Cards E2E Commands', () => {
   // Test add-task command with various options
   test('add-task command with options', () => {
     // Create an issue first
-    runCommand('create feature --title "Task Options Test" --tasks "Existing task"');
+    runCommand('create feature --title "Task Options Test" --task "Existing task"');
     
     // Add task with tags (in the task text, not as an option)
     let output = runCommand('add-task "New task with tags #unit-test #update-docs" -i 1');
@@ -229,7 +231,7 @@ describe('Issue Cards E2E Commands', () => {
   // Test current and complete-task commands
   test('current and complete-task commands', () => {
     // Create an issue with multiple tasks
-    runCommand('create feature --title "Task Management" --tasks "Task 1\nTask 2\nTask 3"');
+    runCommand('create feature --title "Task Management" --task "Task 1" --task "Task 2" --task "Task 3"');
     
     // Check current task
     let output = runCommand('current');

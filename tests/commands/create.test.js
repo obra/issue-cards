@@ -100,7 +100,7 @@ describe('Create command', () => {
       expect(options.some(opt => opt.flags.includes('--title'))).toBe(true);
       expect(options.some(opt => opt.flags.includes('--problem'))).toBe(true);
       expect(options.some(opt => opt.flags.includes('--approach'))).toBe(true);
-      expect(options.some(opt => opt.flags.includes('--tasks'))).toBe(true);
+      expect(options.some(opt => opt.flags.includes('--task'))).toBe(true);
       expect(options.some(opt => opt.flags.includes('--instructions'))).toBe(true);
       
       // Verify action handler is set
@@ -123,7 +123,7 @@ describe('Create command', () => {
       template.renderTemplate.mockReturnValue(mockRenderedContent);
       
       // Call create action with required parameters
-      await createAction('feature', { title: 'Test Issue', problem: 'Test problem', tasks: 'Task 1\nTask 2' });
+      await createAction('feature', { title: 'Test Issue', problem: 'Test problem', task: ['Task 1', 'Task 2'] });
       
       // Verify issue was saved
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
@@ -197,7 +197,7 @@ describe('Create command', () => {
         approach: 'Test approach',
         failedApproaches: 'Failed approach 1\nFailed approach 2',
         questions: 'Question 1\nQuestion 2',
-        tasks: 'Task 1\nTask 2',
+        task: ['Task 1', 'Task 2'],
         instructions: 'Test instructions',
         nextSteps: 'Next step 1\nNext step 2'
       });

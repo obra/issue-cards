@@ -183,10 +183,10 @@ issue-cards create feature \
   --title "Add user authentication" \
   --problem "Users need to securely log in to access their content." \
   --approach "We'll implement JWT-based authentication with secure cookies." \
-  --tasks "Create User model #unit-test
-Create login endpoint #e2e-test
-Add JWT token generation
-Implement auth middleware" \
+  --task "Create User model #unit-test" \
+  --task "Create login endpoint #e2e-test" \
+  --task "Add JWT token generation" \
+  --task "Implement auth middleware" \
   --instructions "Follow OWASP security guidelines."
 ```
 

@@ -29,23 +29,23 @@ function formatAsList(input) {
 /**
  * Format tasks with checkboxes
  * 
- * @param {string} input - Multi-line string input
+ * @param {string[]} input - Array of tasks
  * @returns {string} Input formatted as markdown task list
  */
 function formatAsTasks(input) {
   if (!input) return '';
   
+  // Handle array of tasks (from multiple --task options)
   return input
-    .split('\n')
-    .filter(line => line.trim())
-    .map(line => {
+    .filter(task => task && task.trim())
+    .map(task => {
       // If already formatted as a task, leave it as is
-      if (line.trim().startsWith('- [ ]')) {
-        return line.trim();
+      if (task.trim().startsWith('- [ ]')) {
+        return task.trim();
       }
       
       // Otherwise, add the checkbox
-      return `- [ ] ${line.trim()}`;
+      return `- [ ] ${task.trim()}`;
     })
     .join('\n');
 }
@@ -122,7 +122,7 @@ async function createAction(templateName, options) {
       APPROACH: options.approach || '',
       FAILED_APPROACHES: formatAsList(options.failedApproaches),
       QUESTIONS: formatAsList(options.questions),
-      TASKS: formatAsTasks(options.tasks),
+      TASKS: formatAsTasks(options.task),
       INSTRUCTIONS: options.instructions || '',
       NEXT_STEPS: formatAsList(options.nextSteps)
     };
@@ -157,7 +157,11 @@ function createCommand() {
     .option('--approach <strategy>', 'Planned approach for solving the issue')
     .option('--failed-approaches <list>', 'List of approaches already tried (one per line)')
     .option('--questions <list>', 'List of questions that need answers (one per line)')
-    .option('--tasks <list>', 'List of tasks, one per line')
+    .option('--task <task>', 'A task to add to the issue (can be used multiple times)', (value, previous) => {
+      const result = previous || [];
+      result.push(value);
+      return result;
+    })
     .option('--instructions <guidelines>', 'Guidelines to follow during implementation')
     .option('--next-steps <list>', 'Future work (for context only)')
     .action(createAction);

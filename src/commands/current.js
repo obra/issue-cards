@@ -138,18 +138,20 @@ async function currentAction() {
     // Build output
     const output = [];
     
-    // Show command and task
-    output.push(formatCommand('issue-cards current'));
+    // Show task
     output.push(formatTask(currentTask.text));
     
     // Show current task separately
     output.push(formatSection('CURRENT TASK', currentTask.text));
     
+    // Show expanded task steps if available
+    if (expandedSteps && expandedSteps.length > 0) {
+      const stepsText = expandedSteps.map((step, idx) => `${idx + 1}. ${step}`).join('\n');
+      output.push(formatSection('TASKS', stepsText));
+    }
+    
     // Show context
     output.push(formatContext(context));
-    
-    // Show expanded tasks
-    output.push(formatSection('TASKS', expandedSteps.map((step, i) => `${i + 1}. ${step}`)));
     
     // Show next task
     const nextTask = tasks.find(task => task.index === currentTask.index + 1);
