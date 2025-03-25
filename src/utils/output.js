@@ -59,8 +59,16 @@ function formatContext(context) {
     sections.push(formatSection('Problem to be solved', context.problem));
   }
   
+  if (context.approach) {
+    sections.push(formatSection('Planned approach', context.approach));
+  }
+  
   if (context.failed && context.failed.length > 0) {
     sections.push(formatSection('Failed approaches', context.failed));
+  }
+  
+  if (context.questions && context.questions.length > 0) {
+    sections.push(formatSection('Questions to resolve', context.questions));
   }
   
   if (context.instructions) {

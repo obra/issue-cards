@@ -105,7 +105,7 @@ async function createAction(templateName, options) {
     // Require title
     if (!options.title) {
       console.error(formatError('A title is required. Use --title "Your issue title"'));
-      return;
+      throw new Error('Title is required');
     }
     
     // Get next issue number

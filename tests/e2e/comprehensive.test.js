@@ -122,14 +122,15 @@ describe('Issue Cards Comprehensive E2E', () => {
     output = runCommand('create bugfix --title "Bug Test" --problem "This is a bug"');
     expect(output).toContain('Created Issue #0002');
     
-    // 7. Show issue without number (should show most recent)
-    output = runCommand('show');
-    expect(output).toContain('Fix Bug Test');
+    // 7. Show issue with number (showing issue #2)
+    output = runCommand('show 2');
+    expect(output).toContain('Bug Test');
     
-    // 8. Check current task
+    // 8. Check current task (should work on the oldest issue - issue #1)
     output = runCommand('current');
     expect(output).toContain('CURRENT TASK:');
-    expect(output).toContain('This is a bug');
+    // Should contain content from issue #1, not issue #2
+    expect(output).toContain('This is a test problem');
     
     // 9. Add note to current issue
     output = runCommand('add-note "Additional bug details" --section "Problem to be solved"');
@@ -157,7 +158,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     
     // 15. Add a new task
     output = runCommand('add-task "New bug fix task"');
-    expect(output).toContain('Added task to issue');
+    expect(output).toContain('Task added to issue');
     
     // 16. Complete the task
     output = runCommand('complete-task');
@@ -165,20 +166,20 @@ describe('Issue Cards Comprehensive E2E', () => {
     
     // 17. List templates
     output = runCommand('templates');
-    expect(output).toContain('Available Issue Templates:');
+    expect(output).toContain('Available issue templates:');
     expect(output).toContain('feature');
     expect(output).toContain('bugfix');
     expect(output).toContain('refactor');
     expect(output).toContain('audit');
     
-    expect(output).toContain('Available Tag Templates:');
+    expect(output).toContain('Available tag templates:');
     expect(output).toContain('unit-test');
     expect(output).toContain('e2e-test');
     expect(output).toContain('lint-and-commit');
     expect(output).toContain('update-docs');
     
     // 18. View specific template
-    output = runCommand('templates feature');
+    output = runCommand('templates -t issue -n feature');
     expect(output).toContain('Template: feature');
     expect(output).toContain('Issue {{NUMBER}}: {{TITLE}}');
     
@@ -190,15 +191,15 @@ describe('Issue Cards Comprehensive E2E', () => {
     
     // 20. Add task with tags (tags added directly in task text)
     output = runCommand('add-task "New task with tags #unit-test #e2e-test"');
-    expect(output).toContain('Added task to issue');
+    expect(output).toContain('Task added to issue');
     
     // 21. Add task before current task
     output = runCommand('add-task "Task before current" --before');
-    expect(output).toContain('Added task to issue');
+    expect(output).toContain('Task added to issue');
     
     // 22. Add task after current task
     output = runCommand('add-task "Task after current" --after');
-    expect(output).toContain('Added task to issue');
+    expect(output).toContain('Task added to issue');
     
     // 23. Check current task
     output = runCommand('current');
@@ -208,16 +209,23 @@ describe('Issue Cards Comprehensive E2E', () => {
     output = runCommand('complete-task');
     expect(output).toContain('✅ Task completed');
     expect(output).toContain('NEXT TASK:');
-    expect(output).toContain('Task 1');
+    expect(output).toContain('Task after current');
     
     // 25. Verify file content directly to ensure all commands worked correctly
     const issueFile = path.join(testDir, '.issues/open/issue-0001.md');
     const content = fs.readFileSync(issueFile, 'utf8');
     
+    // Task 1 was completed in step 164
+    expect(content).toContain('[x] Task 1');
+    // Task before current was completed in step 209
     expect(content).toContain('[x] Task before current');
-    expect(content).toContain('[ ] Task 1');
-    expect(content).toContain('Task after current');
-    expect(content).toContain('New task with tags #unit-test #e2e-test');
+    // New bug fix task should be the current task now
+    expect(content).toContain('[ ] New bug fix task');
+    // These tasks should remain uncompleted
+    expect(content).toContain('[ ] Task after current');
+    expect(content).toContain('[ ] Task 2');
+    expect(content).toContain('[ ] Task 3');
+    expect(content).toContain('[ ] New task with tags');
   });
 
   // Tests that specifically check for correct parameter handling
@@ -242,7 +250,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     
     // Test add-task with all parameters correctly (tags are included in the task text)
     output = runCommand('add-task "Test task with tag #unit-test"');
-    expect(output).toContain('Added task to issue');
+    expect(output).toContain('Task added to issue');
     
     // Verify additions
     const issueFile = path.join(testDir, '.issues/open/issue-0001.md');

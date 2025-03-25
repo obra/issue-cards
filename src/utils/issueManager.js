@@ -170,7 +170,7 @@ async function listIssues() {
 }
 
 /**
- * Get the most recently created open issue
+ * Get the oldest open issue (considered the current issue)
  * 
  * @returns {Promise<Object|null>} Current issue object or null if none exists
  */
@@ -182,14 +182,14 @@ async function getCurrentIssue() {
       return null;
     }
     
-    // Return the most recent issue (last in the sorted list)
-    const lastIssue = issues[issues.length - 1];
+    // Return the oldest issue (first in the alphabetically sorted list)
+    const firstIssue = issues[0];
     
     return {
-      number: lastIssue.number,
-      title: lastIssue.title,
-      content: lastIssue.content,
-      path: getIssueFilePath(lastIssue.number, 'open')
+      number: firstIssue.number,
+      title: firstIssue.title,
+      content: firstIssue.content,
+      path: getIssueFilePath(firstIssue.number, 'open')
     };
   } catch (error) {
     throw new Error(`Failed to get current issue: ${error.message}`);

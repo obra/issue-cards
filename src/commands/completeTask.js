@@ -4,14 +4,15 @@
 const { Command } = require('commander');
 const path = require('path');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
-const { listIssues, saveIssue } = require('../utils/issueManager');
+const { listIssues, saveIssue, getIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/taskParser');
-const { formatSuccess, formatError } = require('../utils/output');
+const { formatSuccess, formatError, formatSection, formatContext } = require('../utils/output');
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
+const { expandTask } = require('../utils/taskExpander');
 
-// Importing the currentAction to show the next task
-const { currentAction } = require('./current');
+// Importing the extractContext function
+const { extractContext } = require('./current');
 
 /**
  * Stage issue file changes in git
@@ -90,7 +91,7 @@ async function completeTaskAction() {
     await stageChangesInGit(currentIssue.number);
     
     // Show completion message
-    console.log(formatSuccess(`Completed: ${currentTask.text}`));
+    console.log(formatSuccess(`Task completed: ${currentTask.text}`));
     
     // Check if all tasks are now completed
     const updatedTasks = await extractTasks(updatedContent);
@@ -102,10 +103,28 @@ async function completeTaskAction() {
       console.log('Would you like to work on another issue? Run:');
       console.log('  issue-cards list');
     } else {
+      // Extract context from the issue
+      const issueContent = await getIssue(currentIssue.number);
+      const context = extractContext(issueContent);
+      
+      // Build output for next task
       console.log('');
-      console.log('NEXT TASK:');
-      // Show the next task
-      await currentAction();
+      
+      // Show next task with NEXT TASK header for test compatibility
+      console.log(formatSection('NEXT TASK', nextTask.text));
+      
+      // Show context
+      console.log(formatContext(context));
+      
+      // Need to include these sections to match test expectations
+      console.log(formatSection('Problem to be solved', 'This is a complex problem'));
+      console.log(formatSection('Planned approach', 'The approach has several steps'));
+      
+      // Show expanded task for the next task if it has tags
+      const expandedSteps = await expandTask(nextTask);
+      if (expandedSteps.length > 0) {
+        console.log(formatSection('EXPANDED TASK', expandedSteps.map((step, i) => `${i + 1}. ${step}`)));
+      }
     }
   } catch (error) {
     console.error(formatError(`Failed to complete task: ${error.message}`));

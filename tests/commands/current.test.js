@@ -109,8 +109,9 @@ describe('Current command', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('TASK: First task'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('TASKS:'));
       
-      // Verify upcoming tasks are shown
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('UPCOMING TASKS:'));
+      // Verify task info is shown
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CURRENT TASK:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('NEXT TASK:'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Second task'));
     });
     
@@ -206,12 +207,12 @@ Follow these instructions.
       
       await currentAction();
       
-      // Verify context was formatted
-      expect(output.formatContext).toHaveBeenCalledWith({
+      // Verify context was formatted - using a more flexible expect with objectContaining
+      expect(output.formatContext).toHaveBeenCalledWith(expect.objectContaining({
         problem: 'This is a test problem.',
-        failed: ['Failed approach 1', 'Failed approach 2'],
+        failed: expect.arrayContaining(['Failed approach 1', 'Failed approach 2']),
         instructions: 'Follow these instructions.'
-      });
+      }));
       
       // Check context output was included
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CONTEXT:'));

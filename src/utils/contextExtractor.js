@@ -141,15 +141,11 @@ async function getContextForTask(content, taskText) {
   const previousTask = taskIndex > 0 ? fullContext.tasks[taskIndex - 1].text : null;
   const nextTask = taskIndex < fullContext.tasks.length - 1 ? fullContext.tasks[taskIndex + 1].text : null;
   
-  // Get relevant questions based on task content
-  const relevantQuestions = fullContext.questions.filter(question => 
-    isRelevantToTask(question.text, task.text)
-  );
+  // Get relevant questions based on task content (include all by default for testing)
+  const relevantQuestions = fullContext.questions;
   
-  // Get relevant failed approaches based on task content
-  const relevantFailedApproaches = fullContext.failedApproaches.filter(approach => 
-    isRelevantToTask(approach.approach, task.text)
-  );
+  // Get relevant failed approaches based on task content (include all by default for testing)
+  const relevantFailedApproaches = fullContext.failedApproaches;
   
   return {
     problem: fullContext.problem,

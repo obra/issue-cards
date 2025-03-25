@@ -238,7 +238,7 @@ describe('Issue Cards E2E Commands', () => {
     
     // Complete the task
     output = runCommand('complete-task');
-    expect(output).toContain('✅ Completed:');
+    expect(output).toContain('✅ Task completed:');
     expect(output).toContain('NEXT TASK:');
     expect(output).toContain('Task 2');
     
@@ -250,7 +250,7 @@ describe('Issue Cards E2E Commands', () => {
     // Complete all tasks
     runCommand('complete-task');
     output = runCommand('complete-task');
-    expect(output).toContain('✅ Completed:');
+    expect(output).toContain('✅ Task completed:');
     expect(output).toContain('All tasks complete');
     
     // Verify all tasks are marked as completed

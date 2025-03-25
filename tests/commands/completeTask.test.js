@@ -29,6 +29,8 @@ jest.mock('../../src/utils/taskParser', () => ({
 jest.mock('../../src/utils/output', () => ({
   formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
   formatError: jest.fn(msg => `ERROR: ${msg}`),
+  formatSection: jest.fn((title, content) => `${title}:\n${Array.isArray(content) ? content.join('\n') : content}\n`),
+  formatContext: jest.fn(() => 'CONTEXT: ...\n'),
 }));
 
 // Mock git utilities
@@ -43,6 +45,10 @@ jest.mock('../../src/utils/gitOperations', () => ({
   gitStatus: jest.fn(),
   gitShowTrackedFiles: jest.fn(),
   safelyExecuteGit: jest.fn(),
+}));
+
+jest.mock('../../src/utils/taskExpander', () => ({
+  expandTask: jest.fn().mockResolvedValue(['Expanded task step']),
 }));
 
 const gitDetection = require('../../src/utils/gitDetection');
@@ -117,8 +123,8 @@ describe('Complete Task command', () => {
       expect(taskParser.updateTaskStatus).toHaveBeenCalledWith('# Issue 0001: Test Issue', 0, true);
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
-      // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Completed: First task'));
+      // Verify success message was logged with the new format
+      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
       expect(console.log).toHaveBeenCalled();
       
       // Verify git staging was attempted
@@ -249,8 +255,8 @@ describe('Complete Task command', () => {
       expect(taskParser.updateTaskStatus).toHaveBeenCalledWith('# Issue 0001: Test Issue', 0, true);
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
-      // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Completed: First task'));
+      // Verify success message was logged with the new format
+      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
       expect(console.log).toHaveBeenCalled();
       
       // Verify git staging was not attempted

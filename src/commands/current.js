@@ -24,15 +24,36 @@ const {
 function extractContext(content) {
   const context = {
     problem: '',
+    approach: '',
     failed: [],
+    questions: [],
     instructions: ''
   };
   
   // Simple section extraction
   const sections = {
     'Problem to be solved': (text) => { context.problem = text; },
+    'Planned approach': (text) => { context.approach = text; },
     'Failed approaches': (text) => { 
-      context.failed = text
+      // Process both list items and structured notes with ### Failed attempt
+      const listItems = text
+        .split('\n')
+        .filter(line => line.trim().startsWith('-'))
+        .map(line => line.trim().substring(1).trim());
+      
+      // Also look for structured notes
+      const structuredNotes = [];
+      if (text.includes('### Failed attempt')) {
+        const parts = text.split('### Failed attempt');
+        for (let i = 1; i < parts.length; i++) {
+          structuredNotes.push(parts[i].trim().split('\n')[0]);
+        }
+      }
+      
+      context.failed = [...listItems, ...structuredNotes];
+    },
+    'Questions to resolve': (text) => {
+      context.questions = text
         .split('\n')
         .filter(line => line.trim().startsWith('-'))
         .map(line => line.trim().substring(1).trim());
@@ -121,15 +142,24 @@ async function currentAction() {
     output.push(formatCommand('issue-cards current'));
     output.push(formatTask(currentTask.text));
     
+    // Show current task separately
+    output.push(formatSection('CURRENT TASK', currentTask.text));
+    
     // Show context
     output.push(formatContext(context));
     
     // Show expanded tasks
     output.push(formatSection('TASKS', expandedSteps.map((step, i) => `${i + 1}. ${step}`)));
     
+    // Show next task
+    const nextTask = tasks.find(task => task.index === currentTask.index + 1);
+    if (nextTask) {
+      output.push(formatSection('NEXT TASK', nextTask.text));
+    }
+    
     // Show upcoming tasks
     const upcomingTasks = tasks
-      .filter(task => task.index > currentTask.index)
+      .filter(task => task.index > currentTask.index + 1)
       .map(task => task.text);
       
     if (upcomingTasks.length > 0) {
