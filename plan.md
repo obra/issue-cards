@@ -337,3 +337,46 @@ Based on the implementation experience so far, here are some areas for potential
 - Create commands for updating specific issue sections
 - Add command to add/edit tasks without needing to edit the file
 - Support for quick commenting on issues
+
+## Test Suite Fixing Plan (March 2025)
+
+After conducting a comprehensive analysis of the failing tests, we've identified several key issues that need to be addressed to achieve a fully passing test suite. This plan outlines the steps needed to fix these issues.
+
+### 1. File System Utility Issues
+- Fix issues in templateInit.js with fs.existsSync and fs.readdirSync
+- Ensure consistent use of fs promises vs synchronous functions
+- Address path resolution inconsistencies across different environments
+
+### 2. ESM Module Compatibility 
+- Further refine Jest configuration to properly handle ESM modules (unified, remark)
+- Consider proper mocking strategy for ESM-based dependencies
+- Fix initialization of parsing tools in the task parser
+
+### 3. Template Management Issues
+- Ensure template paths are consistent across unit tests and E2E tests
+- Fix template validation in test environments
+- Address template content inconsistencies between tests and implementation
+
+### 4. Test Mocking Updates
+- Update mocks to match implementation changes (issue.number vs issue.id)
+- Ensure consistent mocking patterns across test files
+- Fix missing or incorrect mocks for fs, path, and other core modules
+
+### 5. E2E Test Improvements
+- Align command parameter names in tests with actual implementation
+- Fix environment variable handling in E2E tests
+- Ensure proper test cleanup to prevent cross-test contamination
+
+### 6. Version Flag and Command Expectations
+- Fix version flag test to properly handle command output
+- Ensure consistent expectations for command output formatting
+
+### Implementation Priority:
+1. Fix fs module usage in templateInit.js
+2. Address ESM module compatibility issues
+3. Fix template path and content issues
+4. Update mocks to match implementation
+5. Align E2E test parameters with implementation
+6. Fix version flag and command expectations
+
+By addressing these issues in the specified order, we should be able to systematically fix the failing tests and achieve a robust test suite that accurately validates the functionality of the Issue Cards tool.
