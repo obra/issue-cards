@@ -137,16 +137,16 @@ describe('Issue Cards E2E Commands', () => {
     // Create an issue first
     runCommand('create feature --title "Task Options Test" --tasks "Existing task"');
     
-    // Add task with all options
-    let output = runCommand('add-task "New task with tags" --tags "unit-test,update-docs" --issue 1');
+    // Add task with tags (in the task text, not as an option)
+    let output = runCommand('add-task "New task with tags #unit-test #update-docs" --issue-number 1');
     expect(output).toContain('Added task to issue');
     
     // Add task before current
-    output = runCommand('add-task "Task before current" --before --issue 1');
+    output = runCommand('add-task "Task before current" --before --issue-number 1');
     expect(output).toContain('Added task to issue');
     
     // Add task after current but not at end
-    output = runCommand('add-task "Task after current" --after --issue 1');
+    output = runCommand('add-task "Task after current" --after --issue-number 1');
     expect(output).toContain('Added task to issue');
     
     // Verify task order and tags
@@ -168,15 +168,15 @@ describe('Issue Cards E2E Commands', () => {
     runCommand('create feature --title "Notes Test" --problem "Initial problem"');
     
     // Add note with section specified
-    let output = runCommand('add-note "Additional problem info" --section "Problem to be solved" --issue 1');
+    let output = runCommand('add-note "Additional problem info" --section "Problem to be solved" --issue-number 1');
     expect(output).toContain('Added note to Problem to be solved section');
     
     // Add question
-    output = runCommand('add-question "Important question?" --issue 1');
+    output = runCommand('add-question "Important question?" --issue-number 1');
     expect(output).toContain('Added question to issue');
     
     // Log a failed approach
-    output = runCommand('log-failure "This didn\'t work" --issue 1');
+    output = runCommand('log-failure "This didn\'t work" --issue-number 1');
     expect(output).toContain('Logged failed approach to issue');
     
     // Verify all additions

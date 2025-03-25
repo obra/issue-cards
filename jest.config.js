@@ -12,4 +12,9 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js'],
   testPathIgnorePatterns: ['/node_modules/'],
   verbose: true,
+  // Handle ES modules
+  transformIgnorePatterns: [
+    // Important: This pattern allows Jest to transform ES modules in node_modules
+    'node_modules/(?!(unified|unist|remark|mdast|micromark|bail|trough|vfile|))',
+  ],
 };
