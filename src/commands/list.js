@@ -4,7 +4,8 @@
 const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
 const { listIssues } = require('../utils/issueManager');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UninitializedError } = require('../utils/errors');
 
 /**
  * Action handler for the list command
@@ -15,30 +16,26 @@ async function listAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // Get all open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      console.log('No open issues found.');
+      output.info('No open issues found.');
       return;
     }
     
     // Display issues
-    console.log('Open Issues:');
-    console.log('');
-    
-    issues.forEach(issue => {
-      console.log(`  #${issue.number}: ${issue.title}`);
-    });
-    
-    console.log('');
-    console.log(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
+    output.section('Open Issues', issues.map(issue => `#${issue.number}: ${issue.title}`));
+    output.info(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
   } catch (error) {
-    console.error(formatError(`Failed to list issues: ${error.message}`));
+    if (error instanceof UninitializedError) {
+      output.error(`${error.message} (${error.recoveryHint})`);
+    } else {
+      output.error(`Failed to list issues: ${error.message}`);
+    }
   }
 }
 

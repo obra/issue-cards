@@ -15,14 +15,15 @@ function getDefaultTemplatesDir() {
   const templatesDir = path.join(__dirname, '../../templates');
   
   // For debugging purposes
-  console.log(`Default templates directory: ${templatesDir}`);
-  console.log(`Exists: ${fs.existsSync(templatesDir)}`);
+  const outputManager = require('./outputManager');
+  outputManager.debug(`Default templates directory: ${templatesDir}`);
+  outputManager.debug(`Exists: ${fs.existsSync(templatesDir)}`);
   if (fs.existsSync(templatesDir)) {
     try {
       const files = fs.readdirSync(templatesDir);
-      console.log(`Templates subdirectories: ${files.join(', ')}`);
+      outputManager.debug(`Templates subdirectories: ${files.join(', ')}`);
     } catch (error) {
-      console.error(`Error listing templates: ${error.message}`);
+      outputManager.error(`Error listing templates: ${error.message}`);
     }
   }
   
@@ -78,20 +79,21 @@ async function copyDefaultTemplates() {
  */
 async function copyTemplatesOfType(sourceDir, destDir) {
   try {
-    console.log(`Copying templates from ${sourceDir} to ${destDir}`);
+    const outputManager = require('./outputManager');
+    outputManager.debug(`Copying templates from ${sourceDir} to ${destDir}`);
     
     // Ensure destination directory exists
     await fs.promises.mkdir(destDir, { recursive: true });
     
     const files = await fs.promises.readdir(sourceDir);
-    console.log(`Found ${files.length} files in ${sourceDir}: ${files.join(', ')}`);
+    outputManager.debug(`Found ${files.length} files in ${sourceDir}: ${files.join(', ')}`);
     
     for (const file of files) {
       if (file.endsWith('.md')) {
         const sourceFile = path.join(sourceDir, file);
         const destFile = path.join(destDir, file);
         
-        console.log(`Copying ${sourceFile} to ${destFile}`);
+        outputManager.debug(`Copying ${sourceFile} to ${destFile}`);
         const content = await fs.promises.readFile(sourceFile, 'utf8');
         await fs.promises.writeFile(destFile, content, 'utf8');
       }
@@ -99,11 +101,11 @@ async function copyTemplatesOfType(sourceDir, destDir) {
   } catch (error) {
     // If the templates directory doesn't exist, log a warning but don't throw
     if (error.code === 'ENOENT') {
-      console.warn(`Warning: Default templates directory not found: ${sourceDir}`);
+      outputManager.warn(`Default templates directory not found: ${sourceDir}`);
       return;
     }
     
-    console.error(`Error copying templates: ${error.message}`);
+    outputManager.error(`Error copying templates: ${error.message}`);
     throw error;
   }
 }

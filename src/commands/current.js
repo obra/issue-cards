@@ -6,14 +6,9 @@ const { isInitialized } = require('../utils/directory');
 const { listIssues } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask } = require('../utils/taskParser');
 const { expandTask } = require('../utils/taskExpander');
-const { 
-  formatCommand, 
-  formatTask, 
-  formatContext,
-  formatSection,
-  formatSuccess,
-  formatError
-} = require('../utils/output');
+// Output manager is used for all output
+const output = require('../utils/outputManager');
+const { UninitializedError } = require('../utils/errors');
 
 /**
  * Extract context from an issue's content
@@ -103,15 +98,14 @@ async function currentAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      console.error(formatError('No open issues found.'));
+      output.error('No open issues found.');
       return;
     }
     
@@ -125,7 +119,7 @@ async function currentAction() {
     const currentTask = findCurrentTask(tasks);
     
     if (!currentTask) {
-      console.log(formatSuccess('All tasks completed in this issue!'));
+      output.success('All tasks completed in this issue!');
       return;
     }
     
@@ -135,28 +129,43 @@ async function currentAction() {
     // Extract context from the issue
     const context = extractContext(currentIssue.content);
     
-    // Build output
-    const output = [];
-    
-    // Show task
-    output.push(formatTask(currentTask.text));
+    // Show task header with appropriate styling
+    output.section('TASK', currentTask.text);
     
     // Show current task separately
-    output.push(formatSection('CURRENT TASK', currentTask.text));
+    output.section('CURRENT TASK', currentTask.text);
     
     // Show expanded task steps if available
     if (expandedSteps && expandedSteps.length > 0) {
-      const stepsText = expandedSteps.map((step, idx) => `${idx + 1}. ${step}`).join('\n');
-      output.push(formatSection('TASKS', stepsText));
+      const stepsText = expandedSteps.map((step, idx) => `${idx + 1}. ${step}`);
+      output.section('TASKS', stepsText);
     }
     
-    // Show context
-    output.push(formatContext(context));
+    // Show context as individual sections
+    if (context.problem) {
+      output.section('Problem to be solved', context.problem);
+    }
+    
+    if (context.approach) {
+      output.section('Planned approach', context.approach);
+    }
+    
+    if (context.failed && context.failed.length > 0) {
+      output.section('Failed approaches', context.failed);
+    }
+    
+    if (context.questions && context.questions.length > 0) {
+      output.section('Questions to resolve', context.questions);
+    }
+    
+    if (context.instructions) {
+      output.section('Instructions', context.instructions);
+    }
     
     // Show next task
     const nextTask = tasks.find(task => task.index === currentTask.index + 1);
     if (nextTask) {
-      output.push(formatSection('NEXT TASK', nextTask.text));
+      output.section('NEXT TASK', nextTask.text);
     }
     
     // Show upcoming tasks
@@ -165,14 +174,15 @@ async function currentAction() {
       .map(task => task.text);
       
     if (upcomingTasks.length > 0) {
-      output.push(formatSection('UPCOMING TASKS', upcomingTasks));
-      output.push('Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.');
+      output.section('UPCOMING TASKS', upcomingTasks);
+      output.info('Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.');
     }
-    
-    // Display output
-    console.log(output.join('\n'));
   } catch (error) {
-    console.error(formatError(`Failed to show current task: ${error.message}`));
+    if (error instanceof UninitializedError) {
+      output.error(error.message, error.recoveryHint);
+    } else {
+      output.error(`Failed to show current task: ${error.message}`);
+    }
   }
 }
 

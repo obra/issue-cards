@@ -4,7 +4,7 @@
 const { Command } = require('commander');
 const { isInitialized, createDirectoryStructure } = require('../utils/directory');
 const { copyDefaultTemplates } = require('../utils/templateInit');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
 
 /**
  * Action handler for the init command
@@ -15,7 +15,7 @@ async function initAction() {
     const initialized = await isInitialized();
     
     if (initialized) {
-      console.log(formatSuccess('Issue tracking is already initialized in this project'));
+      output.success('Issue tracking is already initialized in this project');
       return;
     }
     
@@ -25,11 +25,11 @@ async function initAction() {
     // Copy default templates
     await copyDefaultTemplates();
     
-    console.log(formatSuccess('Initialized issue tracking system in .issues/'));
-    console.log(formatSuccess('Created config templates'));
-    console.log(formatSuccess('Ready to create your first issue'));
+    output.success('Initialized issue tracking system in .issues/');
+    output.success('Created config templates');
+    output.success('Ready to create your first issue');
   } catch (error) {
-    console.error(formatError(`Failed to initialize issue tracking: ${error.message}`));
+    output.error(`Failed to initialize issue tracking: ${error.message}`);
   }
 }
 

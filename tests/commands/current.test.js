@@ -7,7 +7,14 @@ const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
 const taskParser = require('../../src/utils/taskParser');
 const taskExpander = require('../../src/utils/taskExpander');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError } = require('../../src/utils/errors');
+
+// Mock the output manager
+const outputManager = mockOutputManager();
+
+// Manually mock the outputManager module
+jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -28,32 +35,12 @@ jest.mock('../../src/utils/taskExpander', () => ({
   expandTask: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatCommand: jest.fn(cmd => `COMMAND: ${cmd}`),
-  formatTask: jest.fn(task => `TASK: ${task}`),
-  formatContext: jest.fn(() => 'CONTEXT: ...\n'),
-  formatSection: jest.fn((title, content) => `${title}:\n${Array.isArray(content) ? content.join('\n') : content}\n`),
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-}));
-
 describe('Current command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
+    outputManager._reset();
   });
   
   describe('createCommand', () => {
@@ -104,14 +91,22 @@ describe('Current command', () => {
       expect(taskParser.findCurrentTask).toHaveBeenCalledWith(tasks);
       expect(taskExpander.expandTask).toHaveBeenCalledWith(tasks[0]);
       
-      // Check console output
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('TASK: First task'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CURRENT TASK:'));
+      // Check section output
+      expect(outputManager.section).toHaveBeenCalledWith('TASK', 'First task');
+      expect(outputManager.section).toHaveBeenCalledWith('CURRENT TASK', 'First task');
+      expect(outputManager.section).toHaveBeenCalledWith('TASKS', expandedSteps.map((step, idx) => `${idx + 1}. ${step}`));
+      expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
       
-      // Verify task info is shown
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CURRENT TASK:'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('NEXT TASK:'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Second task'));
+      // Verify the output manager recorded the outputs
+      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
+      expect(sectionCalls.length).toBeGreaterThanOrEqual(3);
+      
+      // Check for specific content
+      const sectionTexts = sectionCalls.map(call => call.message);
+      expect(sectionTexts.some(text => text.includes('TASK'))).toBe(true);
+      expect(sectionTexts.some(text => text.includes('First task'))).toBe(true);
+      expect(sectionTexts.some(text => text.includes('NEXT TASK'))).toBe(true);
+      expect(sectionTexts.some(text => text.includes('Second task'))).toBe(true);
     });
     
     test('shows error when no open issues exist', async () => {
@@ -124,11 +119,15 @@ describe('Current command', () => {
       await currentAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
+      
+      // Verify the error is in the captured stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('No open issues');
     });
     
-    test('shows error when all tasks are completed', async () => {
+    test('shows success when all tasks are completed', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
@@ -150,8 +149,12 @@ describe('Current command', () => {
       await currentAction();
       
       // Verify completion message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('All tasks completed'));
-      expect(console.log).toHaveBeenCalled();
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('All tasks completed'));
+      
+      // Verify the success message is in the captured stdout
+      const successCalls = outputManager._captured.stdout.filter(entry => entry.type === 'success');
+      expect(successCalls.length).toBe(1);
+      expect(successCalls[0].message).toContain('All tasks completed');
     });
     
     test('shows error when issue tracking is not initialized', async () => {
@@ -160,9 +163,13 @@ describe('Current command', () => {
       
       await currentAction();
       
-      // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      // Verify error message was logged using the new UninitializedError
+      expect(outputManager.error).toHaveBeenCalledWith('Issue tracking is not initialized', expect.anything());
+      
+      // Verify the error message is in the captured stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
     });
     
     test('extracts context from issue and displays it', async () => {
@@ -206,15 +213,18 @@ Follow these instructions.
       
       await currentAction();
       
-      // Verify context was formatted - using a more flexible expect with objectContaining
-      expect(output.formatContext).toHaveBeenCalledWith(expect.objectContaining({
-        problem: 'This is a test problem.',
-        failed: expect.arrayContaining(['Failed approach 1', 'Failed approach 2']),
-        instructions: 'Follow these instructions.'
-      }));
+      // Verify context sections were output
+      expect(outputManager.section).toHaveBeenCalledWith('Problem to be solved', 'This is a test problem.');
+      expect(outputManager.section).toHaveBeenCalledWith('Failed approaches', ['Failed approach 1', 'Failed approach 2']);
+      expect(outputManager.section).toHaveBeenCalledWith('Instructions', 'Follow these instructions.');
       
-      // Check context output was included
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CONTEXT:'));
+      // Check that all necessary sections were output
+      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
+      const sectionTitles = sectionCalls.map(call => call.message);
+      
+      expect(sectionTitles.some(title => title.includes('Problem to be solved'))).toBe(true);
+      expect(sectionTitles.some(title => title.includes('Failed approaches'))).toBe(true);
+      expect(sectionTitles.some(title => title.includes('Instructions'))).toBe(true);
     });
   });
 });

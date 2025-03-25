@@ -8,7 +8,8 @@ const { listIssues, readIssue, writeIssue, getIssueFilePath } = require('../util
 const { extractTasks, findCurrentTask, extractTagsFromTask } = require('../utils/taskParser');
 const { validateTagTemplate } = require('../utils/taskExpander');
 const { getTemplateList } = require('../utils/template');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UninitializedError, UserError, IssueNotFoundError } = require('../utils/errors');
 
 /**
  * Insert a task into a list of tasks at the specified position
@@ -195,16 +196,14 @@ async function addTaskAction(taskText, options) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      console.error(formatError('No open issues found.'));
-      return;
+      throw new UserError('No open issues found');
     }
     
     // Default to the first issue
@@ -215,8 +214,7 @@ async function addTaskAction(taskText, options) {
     const issue = issues.find(i => i.number === paddedNumber);
     
     if (!issue) {
-      console.error(formatError(`Issue ${issueNumber} not found.`));
-      return;
+      throw new IssueNotFoundError(issueNumber);
     }
     
     // Make sure issue.path exists or construct it
@@ -233,8 +231,7 @@ async function addTaskAction(taskText, options) {
     const tagErrors = await validateTags(tags);
     
     if (tagErrors.length > 0) {
-      console.error(formatError(`Invalid tags in task: ${tagErrors.join(', ')}`));
-      return;
+      throw new UserError(`Invalid tags in task: ${tagErrors.join(', ')}`);
     }
     
     // Determine position
@@ -251,9 +248,15 @@ async function addTaskAction(taskText, options) {
     // Write the updated issue
     await writeIssue(issuePath, updatedContent);
     
-    console.log(formatSuccess(`Task added to issue ${issue.number} at position: ${position}`));
+    output.success(`Task added to issue ${issue.number} at position: ${position}`);
   } catch (error) {
-    console.error(formatError(`Failed to add task: ${error.message}`));
+    if (error instanceof UninitializedError || 
+        error instanceof UserError || 
+        error instanceof IssueNotFoundError) {
+      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to add task: ${error.message}`);
+    }
   }
 }
 

@@ -11,7 +11,8 @@ const {
   addContentToSection, 
   normalizeSectionName 
 } = require('../utils/sectionManager');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UserError, SectionNotFoundError } = require('../utils/errors');
 
 /**
  * Add a note to a specific section of an issue
@@ -31,7 +32,7 @@ async function addNoteAction(noteText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new Error('No current issue found. Specify an issue number or set a current issue.');
+        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
       }
       issueNumber = currentIssue.number;
     }
@@ -45,21 +46,33 @@ async function addNoteAction(noteText, options = {}) {
     // Get normalized section name
     const normalizedSection = normalizeSectionName(options.section);
     
-    // Add note to the section
-    const updatedContent = addContentToSection(
-      content, 
-      normalizedSection, 
-      noteText, 
-      options.format,
-      options
-    );
-    
-    // Write the updated content back to the file
-    await fs.writeFile(issueFilePath, updatedContent, 'utf8');
-    
-    console.log(formatSuccess(`Added note to ${normalizedSection} section of issue #${issueNumber}`));
+    try {
+      // Add note to the section
+      const updatedContent = addContentToSection(
+        content, 
+        normalizedSection, 
+        noteText, 
+        options.format,
+        options
+      );
+      
+      // Write the updated content back to the file
+      await fs.writeFile(issueFilePath, updatedContent, 'utf8');
+      
+      output.success(`Added note to ${normalizedSection} section of issue #${issueNumber}`);
+    } catch (sectionErr) {
+      // Handle section not found specifically
+      if (sectionErr.message.includes('not found')) {
+        throw new SectionNotFoundError(normalizedSection);
+      }
+      throw sectionErr;
+    }
   } catch (err) {
-    console.error(formatError(`Failed to add note: ${err.message}`));
+    if (err instanceof UserError || err instanceof SectionNotFoundError) {
+      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to add note: ${err.message}`);
+    }
     throw err;
   }
 }

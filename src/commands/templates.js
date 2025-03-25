@@ -5,7 +5,8 @@ const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
 const { getTemplateList, loadTemplate, validateTemplate } = require('../utils/template');
 const { validateTemplateStructure } = require('../utils/templateValidation');
-const { formatSuccess, formatError, formatInfo, formatCommand, formatWarning } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UninitializedError, TemplateNotFoundError, UserError, IssueCardsError } = require('../utils/errors');
 
 /**
  * Create the templates command
@@ -37,8 +38,7 @@ async function templatesAction(options) {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // If a specific template name is provided, show that template
@@ -50,7 +50,14 @@ async function templatesAction(options) {
     // Otherwise, list templates
     await listTemplates(options.type, options.validate);
   } catch (error) {
-    console.error(formatError(`Error: ${error.message}`));
+    if (error instanceof IssueCardsError) {
+      const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
+      output.error(`${error.message}${hint}`);
+      process.exit(error.code);
+    } else {
+      output.error(`Error: ${error.message}`);
+      process.exit(1);
+    }
   }
 }
 
@@ -68,27 +75,29 @@ async function listTemplates(type, validate) {
       const issueTemplates = await getTemplateList('issue');
       const tagTemplates = await getTemplateList('tag');
       
-      console.log(formatInfo('Available issue templates:'));
+      output.section('Available issue templates', '');
       
       if (validate) {
         await Promise.all(issueTemplates.map(async name => {
           await printTemplateWithValidation(name, 'issue');
         }));
       } else {
-        issueTemplates.forEach(name => console.log(`  - ${name}`));
+        const formattedList = issueTemplates.map(name => `${name}`);
+        output.list(formattedList);
       }
-      console.log('');
+      output.blank();
       
-      console.log(formatInfo('Available tag templates:'));
+      output.section('Available tag templates', '');
       
       if (validate) {
         await Promise.all(tagTemplates.map(async name => {
           await printTemplateWithValidation(name, 'tag');
         }));
       } else {
-        tagTemplates.forEach(name => console.log(`  - ${name}`));
+        const formattedList = tagTemplates.map(name => `${name}`);
+        output.list(formattedList);
       }
-      console.log('');
+      output.blank();
       
       // Show usage information
       showUsageInfo();
@@ -97,21 +106,22 @@ async function listTemplates(type, validate) {
     
     // Show templates for the specified type
     const templates = await getTemplateList(type);
-    console.log(formatInfo(`Available ${type} templates:`));
+    output.section(`Available ${type} templates`, '');
     
     if (validate) {
       await Promise.all(templates.map(async name => {
         await printTemplateWithValidation(name, type);
       }));
     } else {
-      templates.forEach(name => console.log(`  - ${name}`));
+      const formattedList = templates.map(name => `${name}`);
+      output.list(formattedList);
     }
-    console.log('');
+    output.blank();
     
     // Show usage information
     showUsageInfo(type);
   } catch (error) {
-    throw new Error(`Failed to list templates: ${error.message}`);
+    throw new UserError(`Failed to list templates: ${error.message}`);
   }
 }
 
@@ -127,17 +137,17 @@ async function printTemplateWithValidation(name, type) {
     const validation = await validateTemplateStructure(name, type);
     
     if (validation.valid) {
-      console.log(`  - ${name} ${formatSuccess('[valid]')}`);
+      output.success(`${name} is valid`);
     } else {
-      console.log(`  - ${name} ${formatError('[invalid]')}`);
+      output.error(`${name} is invalid`);
       
       // Print validation errors indented
       validation.errors.forEach(error => {
-        console.log(`      ${formatWarning(error)}`);
+        output.warn(`  ${error}`);
       });
     }
   } catch (error) {
-    console.log(`  - ${name} ${formatError('[validation failed]')}`);
+    output.error(`${name} validation failed: ${error.message}`);
   }
 }
 
@@ -152,50 +162,53 @@ async function printTemplateWithValidation(name, type) {
 async function showTemplate(name, type, validate) {
   // Require type to be specified
   if (!type) {
-    console.error(formatError('You must specify type when viewing a template'));
-    return;
+    throw new UserError('You must specify type when viewing a template')
+      .withRecoveryHint('Use --type issue or --type tag');
   }
   
   try {
     // Validate that the template exists
     const exists = await validateTemplate(name, type);
     if (!exists) {
-      console.error(formatError(`Template ${name} (${type}) not found`));
-      return;
+      throw new TemplateNotFoundError(`${name} (${type})`)
+        .withRecoveryHint(`Run 'issue-cards templates' to see available templates`);
     }
     
     // Load and display the template
     const content = await loadTemplate(name, type);
-    console.log(formatInfo(`Template: ${name} (${type})`));
+    output.section(`Template: ${name} (${type})`, '');
     
     // Validate template structure if requested
     if (validate) {
       const validation = await validateTemplateStructure(name, type);
       
       if (validation.valid) {
-        console.log(formatSuccess('Template structure is valid'));
+        output.success('Template structure is valid');
       } else {
-        console.log(formatError('Template structure has errors:'));
+        output.error('Template structure has errors:');
         validation.errors.forEach(error => {
-          console.log(`  ${formatWarning(error)}`);
+          output.warn(`  ${error}`);
         });
-        console.log('');
+        output.blank();
       }
     }
     
-    console.log(content);
-    console.log('');
+    output.raw(content);
+    output.blank();
     
     // Show usage information
+    output.section('Usage', '');
     if (type === 'issue') {
-      console.log(formatInfo('Usage:'));
-      console.log(formatCommand(`issue-cards create -t ${name}`));
+      output.info(`issue-cards create -t ${name}`);
     } else if (type === 'tag') {
-      console.log(formatInfo('Usage:'));
-      console.log(formatCommand(`issue-cards add-task "Task with #${name} tag"`));
+      output.info(`issue-cards add-task "Task with #${name} tag"`);
     }
   } catch (error) {
-    throw new Error(`Failed to show template: ${error.message}`);
+    if (error instanceof IssueCardsError) {
+      throw error;
+    } else {
+      throw new UserError(`Failed to show template: ${error.message}`);
+    }
   }
 }
 
@@ -205,16 +218,21 @@ async function showTemplate(name, type, validate) {
  * @param {string} [type] - Template type
  */
 function showUsageInfo(type) {
-  console.log(formatInfo('Usage:'));
+  output.section('Usage', '');
   
   if (!type || type === 'issue') {
-    console.log(formatCommand('issue-cards templates -t issue -n <template-name>'));
-    console.log(formatCommand('issue-cards create -t <template-name>'));
+    output.info('View issue template:');
+    output.raw('issue-cards templates -t issue -n <template-name>');
+    output.info('Create new issue from template:');
+    output.raw('issue-cards create -t <template-name>');
+    output.blank();
   }
   
   if (!type || type === 'tag') {
-    console.log(formatCommand('issue-cards templates -t tag -n <template-name>'));
-    console.log(formatCommand('issue-cards add-task "Task with #<template-name> tag"'));
+    output.info('View tag template:');
+    output.raw('issue-cards templates -t tag -n <template-name>');
+    output.info('Add task with tag:');
+    output.raw('issue-cards add-task "Task with #<template-name> tag"');
   }
 }
 

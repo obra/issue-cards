@@ -6,7 +6,14 @@ const { createCommand, completeTaskAction } = require('../../src/commands/comple
 const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
 const taskParser = require('../../src/utils/taskParser');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError, UserError } = require('../../src/utils/errors');
+
+// Mock the output manager
+const outputManager = mockOutputManager();
+
+// Manually mock the outputManager module
+jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -24,13 +31,6 @@ jest.mock('../../src/utils/taskParser', () => ({
   extractTasks: jest.fn(),
   findCurrentTask: jest.fn(),
   updateTaskStatus: jest.fn(),
-}));
-
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-  formatSection: jest.fn((title, content) => `${title}:\n${Array.isArray(content) ? content.join('\n') : content}\n`),
-  formatContext: jest.fn(() => 'CONTEXT: ...\n'),
 }));
 
 // Mock git utilities
@@ -56,15 +56,10 @@ const gitOperations = require('../../src/utils/gitOperations');
 
 describe('Complete Task command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+    outputManager._reset();
     
     // Setup directory mock
     directory.getIssueDirectoryPath.mockImplementation((subdir) => {
@@ -72,12 +67,6 @@ describe('Complete Task command', () => {
       if (subdir === 'closed') return '/project/.issues/closed';
       return '/project/.issues';
     });
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
   });
   
   describe('createCommand', () => {
@@ -117,18 +106,26 @@ describe('Complete Task command', () => {
       const updatedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [x] First task\n- [ ] Second task';
       taskParser.updateTaskStatus.mockResolvedValue(updatedContent);
       
+      // Mock getIssue to return the same content
+      issueManager.getIssue.mockResolvedValue(updatedContent);
+      
       await completeTaskAction();
       
       // Verify task was updated
       expect(taskParser.updateTaskStatus).toHaveBeenCalledWith('# Issue 0001: Test Issue', 0, true);
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
-      // Verify success message was logged with the new format
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
-      expect(console.log).toHaveBeenCalled();
+      // Verify success message was logged with the new output manager
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
+      
+      // Verify the next task section was shown
+      expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
       
       // Verify git staging was attempted
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
+      
+      // Verify the staged message was shown
+      expect(outputManager.success).toHaveBeenCalledWith('Changes staged in git');
     });
     
     test('handles case when all tasks are completed', async () => {
@@ -173,8 +170,11 @@ describe('Complete Task command', () => {
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
       // Verify completion message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('All tasks complete'));
-      expect(console.log).toHaveBeenCalled();
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('All tasks complete'));
+      
+      // Verify info message was shown
+      expect(outputManager.info).toHaveBeenCalledTimes(2);
+      expect(outputManager.info).toHaveBeenNthCalledWith(1, expect.stringContaining('Would you like to work on another issue?'));
     });
     
     test('shows error when no open issues exist', async () => {
@@ -187,8 +187,12 @@ describe('Complete Task command', () => {
       await completeTaskAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
+      
+      // Check for UserError in the stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('No open issues');
     });
     
     test('shows error when no current task exists', async () => {
@@ -209,8 +213,12 @@ describe('Complete Task command', () => {
       await completeTaskAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('No tasks found'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No tasks found'));
+      
+      // Check for UserError in the stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('No tasks found');
     });
     
     test('shows error when issue tracking is not initialized', async () => {
@@ -220,8 +228,12 @@ describe('Complete Task command', () => {
       await completeTaskAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Issue tracking is not initialized'));
+      
+      // Check for UninitializedError in the stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
     });
     
     test('skips git staging if git is not available', async () => {
@@ -249,15 +261,20 @@ describe('Complete Task command', () => {
       // Mock git not available
       gitDetection.isGitAvailable.mockReturnValue(false);
       
+      // Mock getIssue for context
+      issueManager.getIssue.mockResolvedValue(updatedContent);
+      
       await completeTaskAction();
       
       // Verify task was updated
       expect(taskParser.updateTaskStatus).toHaveBeenCalledWith('# Issue 0001: Test Issue', 0, true);
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
-      // Verify success message was logged with the new format
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
-      expect(console.log).toHaveBeenCalled();
+      // Verify success message was logged with the new output manager
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Task completed: First task'));
+      
+      // Verify debug log shows git operation skipped
+      expect(outputManager.debug).toHaveBeenCalledWith(expect.stringContaining('Git operation skipped'));
       
       // Verify git staging was not attempted
       expect(gitOperations.gitStage).not.toHaveBeenCalled();

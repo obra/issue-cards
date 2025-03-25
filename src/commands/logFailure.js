@@ -12,7 +12,8 @@ const {
   findSectionByName, 
   normalizeSectionName 
 } = require('../utils/sectionManager');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UserError, SectionNotFoundError } = require('../utils/errors');
 
 /**
  * Log a failed approach to an issue
@@ -31,7 +32,7 @@ async function logFailureAction(approachText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new Error('No current issue found. Specify an issue number or set a current issue.');
+        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
       }
       issueNumber = currentIssue.number;
     }
@@ -47,7 +48,7 @@ async function logFailureAction(approachText, options = {}) {
     const section = findSectionByName(content, sectionName);
     
     if (!section) {
-      throw new Error(`Section "${sectionName}" not found in issue`);
+      throw new SectionNotFoundError(sectionName);
     }
     
     // Add the failed approach to the section
@@ -62,9 +63,13 @@ async function logFailureAction(approachText, options = {}) {
     // Write the updated content back to the file
     await fs.writeFile(issueFilePath, updatedContent, 'utf8');
     
-    console.log(formatSuccess(`Logged failed approach to issue #${issueNumber}`));
+    output.success(`Logged failed approach to issue #${issueNumber}`);
   } catch (err) {
-    console.error(formatError(`Failed to log approach: ${err.message}`));
+    if (err instanceof UserError || err instanceof SectionNotFoundError) {
+      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to log approach: ${err.message}`);
+    }
     throw err;
   }
 }

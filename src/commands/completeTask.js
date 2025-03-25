@@ -6,10 +6,12 @@ const path = require('path');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
 const { listIssues, saveIssue, getIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/taskParser');
-const { formatSuccess, formatError, formatSection, formatContext } = require('../utils/output');
+// Output manager is used for all output formatting
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
 const { expandTask } = require('../utils/taskExpander');
+const output = require('../utils/outputManager');
+const { UninitializedError, UserError } = require('../utils/errors');
 
 // Importing the extractContext function
 const { extractContext } = require('./current');
@@ -32,13 +34,11 @@ async function stageChangesInGit(issueNumber) {
     
     // Stage the file
     await gitStage(issueFilePath);
-    console.log(formatSuccess('Changes staged in git'));
+    output.success('Changes staged in git');
   } catch (error) {
     // Silently ignore git errors - git integration is optional
-    // But log the error if we're in debug mode
-    if (process.env.DEBUG) {
-      console.error(`Git error (ignored): ${error.message}`);
-    }
+    // But log the error in debug mode
+    output.debug(`Git operation skipped: ${error.message}`);
   }
 }
 
@@ -51,16 +51,14 @@ async function completeTaskAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      console.error(formatError('No open issues found.'));
-      return;
+      throw new UserError('No open issues found');
     }
     
     // Use the first issue as the current one
@@ -73,8 +71,7 @@ async function completeTaskAction() {
     const currentTask = findCurrentTask(tasks);
     
     if (!currentTask) {
-      console.error(formatError('No tasks found or all tasks are already completed.'));
-      return;
+      throw new UserError('No tasks found or all tasks are already completed');
     }
     
     // Update the task status
@@ -91,43 +88,61 @@ async function completeTaskAction() {
     await stageChangesInGit(currentIssue.number);
     
     // Show completion message
-    console.log(formatSuccess(`Task completed: ${currentTask.text}`));
+    output.success(`Task completed: ${currentTask.text}`);
     
     // Check if all tasks are now completed
     const updatedTasks = await extractTasks(updatedContent);
     const nextTask = findCurrentTask(updatedTasks);
     
     if (!nextTask) {
-      console.log(formatSuccess('🎉 All tasks complete! Issue has been closed.'));
-      console.log('');
-      console.log('Would you like to work on another issue? Run:');
-      console.log('  issue-cards list');
+      output.success('🎉 All tasks complete! Issue has been closed.');
+      output.blank();
+      output.info('Would you like to work on another issue? Run:');
+      output.info('  issue-cards list');
     } else {
       // Extract context from the issue
       const issueContent = await getIssue(currentIssue.number);
       const context = extractContext(issueContent);
       
       // Build output for next task
-      console.log('');
+      output.blank();
       
-      // Show next task with NEXT TASK header for test compatibility
-      console.log(formatSection('NEXT TASK', nextTask.text));
+      // Show next task with NEXT TASK header
+      output.section('NEXT TASK', nextTask.text);
       
-      // Show context
-      console.log(formatContext(context));
+      // Show context as individual sections
+      if (context.problem) {
+        output.section('Problem to be solved', context.problem);
+      }
       
-      // Need to include these sections to match test expectations
-      console.log(formatSection('Problem to be solved', 'This is a complex problem'));
-      console.log(formatSection('Planned approach', 'The approach has several steps'));
+      if (context.approach) {
+        output.section('Planned approach', context.approach);
+      }
+      
+      if (context.failed && context.failed.length > 0) {
+        output.section('Failed approaches', context.failed);
+      }
+      
+      if (context.questions && context.questions.length > 0) {
+        output.section('Questions to resolve', context.questions);
+      }
+      
+      if (context.instructions) {
+        output.section('Instructions', context.instructions);
+      }
       
       // Show expanded task for the next task if it has tags
       const expandedSteps = await expandTask(nextTask);
       if (expandedSteps.length > 0) {
-        console.log(formatSection('EXPANDED TASK', expandedSteps.map((step, i) => `${i + 1}. ${step}`)));
+        output.section('EXPANDED TASK', expandedSteps.map((step, i) => `${i + 1}. ${step}`));
       }
     }
   } catch (error) {
-    console.error(formatError(`Failed to complete task: ${error.message}`));
+    if (error instanceof UninitializedError || error instanceof UserError) {
+      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to complete task: ${error.message}`);
+    }
   }
 }
 

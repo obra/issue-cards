@@ -6,9 +6,10 @@ const path = require('path');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
 const { loadTemplate, renderTemplate, validateTemplate } = require('../utils/template');
 const { getNextIssueNumber, saveIssue } = require('../utils/issueManager');
-const { formatSuccess, formatError } = require('../utils/output');
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
+const output = require('../utils/outputManager');
+const { UninitializedError, TemplateNotFoundError, UserError } = require('../utils/errors');
 
 /**
  * Format multi-line input as a list
@@ -68,13 +69,11 @@ async function stageNewIssueInGit(issueNumber) {
     
     // Stage the file
     await gitStage(issueFilePath);
-    console.log(formatSuccess('New issue staged in git'));
+    output.success('New issue staged in git');
   } catch (error) {
     // Silently ignore git errors - git integration is optional
-    // But log the error if we're in debug mode
-    if (process.env.DEBUG) {
-      console.error(`Git error (ignored): ${error.message}`);
-    }
+    // But log the error in debug mode
+    output.debug(`Git operation skipped: ${error.message}`);
   }
 }
 
@@ -90,22 +89,19 @@ async function createAction(templateName, options) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // Validate template exists
     const validTemplate = await validateTemplate(templateName, 'issue');
     
     if (!validTemplate) {
-      console.error(formatError(`Template not found: ${templateName}`));
-      return;
+      throw new TemplateNotFoundError(templateName);
     }
     
     // Require title
     if (!options.title) {
-      console.error(formatError('A title is required. Use --title "Your issue title"'));
-      throw new Error('Title is required');
+      throw new UserError('A title is required').withRecoveryHint('Use --title "Your issue title"');
     }
     
     // Get next issue number
@@ -136,10 +132,18 @@ async function createAction(templateName, options) {
     // Try to stage the new issue in git
     await stageNewIssueInGit(issueNumber);
     
-    console.log(formatSuccess(`Created Issue #${issueNumber}: ${options.title}`));
-    console.log(formatSuccess(`Issue saved to .issues/open/issue-${issueNumber}.md`));
+    output.success(`Created Issue #${issueNumber}: ${options.title}`);
+    output.success(`Issue saved to .issues/open/issue-${issueNumber}.md`);
   } catch (error) {
-    console.error(formatError(`Failed to create issue: ${error.message}`));
+    if (error instanceof UninitializedError || 
+        error instanceof TemplateNotFoundError || 
+        error instanceof UserError) {
+      // Use structured error with recovery hint if available
+      const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
+      output.error(`${error.message}${hint}`);
+    } else {
+      output.error(`Failed to create issue: ${error.message}`);
+    }
   }
 }
 

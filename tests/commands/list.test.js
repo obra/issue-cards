@@ -5,7 +5,14 @@ const { Command } = require('commander');
 const { createCommand, listAction } = require('../../src/commands/list');
 const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
+const { UninitializedError } = require('../../src/utils/errors');
+
+// Mock the output manager
+const outputManager = mockOutputManager();
+
+// Manually mock the outputManager module
+jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -16,28 +23,12 @@ jest.mock('../../src/utils/issueManager', () => ({
   listIssues: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-}));
-
 describe('List command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
+    outputManager._reset();
   });
   
   describe('createCommand', () => {
@@ -67,11 +58,19 @@ describe('List command', () => {
       
       await listAction();
       
-      // Verify issues were listed
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Open Issues:'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('#0001: First Issue'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('#0002: Second Issue'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Total: 2 open issues'));
+      // Verify issues were listed using the section method
+      expect(outputManager.section).toHaveBeenCalledWith(
+        'Open Issues',
+        expect.arrayContaining(['#0001: First Issue', '#0002: Second Issue'])
+      );
+
+      // Verify total count info message
+      expect(outputManager.info).toHaveBeenCalledWith('Total: 2 open issues');
+      
+      // Check the captured stdout for sections
+      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
+      expect(sectionCalls.length).toBe(1);
+      expect(sectionCalls[0].message).toContain('Open Issues');
     });
     
     test('shows message when no issues exist', async () => {
@@ -84,7 +83,12 @@ describe('List command', () => {
       await listAction();
       
       // Verify message about no issues was shown
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
+      expect(outputManager.info).toHaveBeenCalledWith('No open issues found.');
+      
+      // Check the captured stdout
+      const infoCalls = outputManager._captured.stdout.filter(entry => entry.type === 'info');
+      expect(infoCalls.length).toBe(1);
+      expect(infoCalls[0].message).toContain('No open issues');
     });
     
     test('shows error when issue tracking is not initialized', async () => {
@@ -93,9 +97,15 @@ describe('List command', () => {
       
       await listAction();
       
-      // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      // Verify error message was logged using the error method
+      expect(outputManager.error).toHaveBeenCalledWith('Issue tracking is not initialized (Run `issue-cards init` first)');
+      
+      // Check the captured stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
+      
+      // Verify the listIssues method wasn't called
       expect(issueManager.listIssues).not.toHaveBeenCalled();
     });
     
@@ -109,8 +119,12 @@ describe('List command', () => {
       await listAction();
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to list issues'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith('Failed to list issues: Failed to list issues');
+      
+      // Check the captured stderr
+      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
+      expect(errorCalls.length).toBe(1);
+      expect(errorCalls[0].message).toContain('Failed to list issues');
     });
   });
 });

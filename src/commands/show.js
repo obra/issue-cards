@@ -4,7 +4,8 @@
 const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
 const { getIssue, listIssues } = require('../utils/issueManager');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UninitializedError, IssueNotFoundError } = require('../utils/errors');
 
 /**
  * Action handler for the show command
@@ -17,8 +18,7 @@ async function showAction(issueNumber) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      console.error(formatError('Issue tracking is not initialized. Run `issue-cards init` first.'));
-      return;
+      throw new UninitializedError();
     }
     
     // If issue number provided, show that specific issue
@@ -27,9 +27,9 @@ async function showAction(issueNumber) {
         // Pad to 4 digits for issue numbers like "0001"
         const paddedNumber = issueNumber.toString().padStart(4, '0');
         const issueContent = await getIssue(paddedNumber);
-        console.log(issueContent);
+        output.raw(issueContent);
       } catch (error) {
-        console.error(formatError(error.message));
+        throw new IssueNotFoundError(issueNumber);
       }
       return;
     }
@@ -38,14 +38,18 @@ async function showAction(issueNumber) {
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      console.error(formatError('No open issues found.'));
+      output.error('No open issues found.');
       return;
     }
     
     // Display the first (current) issue
-    console.log(issues[0].content);
+    output.raw(issues[0].content);
   } catch (error) {
-    console.error(formatError(`Failed to show issue: ${error.message}`));
+    if (error instanceof UninitializedError || error instanceof IssueNotFoundError) {
+      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to show issue: ${error.message}`);
+    }
   }
 }
 

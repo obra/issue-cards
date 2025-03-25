@@ -8,7 +8,7 @@ const { createCommand, createAction } = require('../../src/commands/create');
 const directory = require('../../src/utils/directory');
 const template = require('../../src/utils/template');
 const issueManager = require('../../src/utils/issueManager');
-const output = require('../../src/utils/output');
+const { mockOutputManager } = require('../utils/testHelpers');
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -34,10 +34,8 @@ jest.mock('../../src/utils/issueManager', () => ({
   saveIssue: jest.fn(),
 }));
 
-jest.mock('../../src/utils/output', () => ({
-  formatSuccess: jest.fn(msg => `SUCCESS: ${msg}`),
-  formatError: jest.fn(msg => `ERROR: ${msg}`),
-}));
+// Use the output manager mock helper
+const outputManager = mockOutputManager();
 
 // Mock git utilities
 jest.mock('../../src/utils/gitDetection', () => ({
@@ -53,20 +51,32 @@ jest.mock('../../src/utils/gitOperations', () => ({
   safelyExecuteGit: jest.fn(),
 }));
 
+// Mock error classes
+jest.mock('../../src/utils/errors', () => ({
+  UninitializedError: jest.fn().mockImplementation(() => ({
+    message: 'Issue tracking is not initialized',
+    recoveryHint: 'Run `issue-cards init` first'
+  })),
+  TemplateNotFoundError: jest.fn().mockImplementation((templateName) => ({
+    message: `Template not found: ${templateName}`
+  })),
+  UserError: jest.fn().mockImplementation((message) => ({
+    message,
+    withRecoveryHint: (hint) => ({ message, recoveryHint: hint })
+  }))
+}));
+
 const gitDetection = require('../../src/utils/gitDetection');
 const gitOperations = require('../../src/utils/gitOperations');
 
 describe('Create command', () => {
   let commandInstance;
-  let mockConsoleLog;
-  let mockConsoleError;
   
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock console methods
-    mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
-    mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+    // Reset output manager mocks
+    outputManager._reset();
     
     // Set up mock implementation for directory.getIssueDirectoryPath
     directory.getIssueDirectoryPath.mockImplementation((subdir) => {
@@ -80,12 +90,6 @@ describe('Create command', () => {
     
     // Mock template validation
     template.validateTemplate.mockResolvedValue(true);
-  });
-  
-  afterEach(() => {
-    // Restore console mocks
-    mockConsoleLog.mockRestore();
-    mockConsoleError.mockRestore();
   });
   
   describe('createCommand', () => {
@@ -129,8 +133,7 @@ describe('Create command', () => {
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
       
       // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
-      expect(console.log).toHaveBeenCalled();
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       
       // Verify git staging was attempted
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
@@ -144,8 +147,7 @@ describe('Create command', () => {
       await createAction('feature', { title: 'Test Issue' });
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Issue tracking is not initialized'));
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
@@ -160,8 +162,7 @@ describe('Create command', () => {
       await createAction('invalid-template', { title: 'Test Issue' });
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Template not found'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Template not found'));
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
@@ -173,8 +174,7 @@ describe('Create command', () => {
       await createAction('feature', {});
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('title is required'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('title is required'));
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
@@ -219,8 +219,7 @@ describe('Create command', () => {
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
       
       // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
-      expect(console.log).toHaveBeenCalled();
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       
       // Verify git staging was attempted
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
@@ -237,8 +236,7 @@ describe('Create command', () => {
       await createAction('feature', { title: 'Test Issue' });
       
       // Verify error message was logged
-      expect(output.formatError).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
-      expect(console.error).toHaveBeenCalled();
+      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
@@ -258,14 +256,13 @@ describe('Create command', () => {
       gitDetection.isGitAvailable.mockReturnValue(false);
       
       // Call create action with required parameters
-      await createAction('feature', { title: 'Test Issue', tasks: 'Task 1' });
+      await createAction('feature', { title: 'Test Issue', task: ['Task 1'] });
       
       // Verify issue was saved
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', mockRenderedContent);
       
       // Verify success message was logged
-      expect(output.formatSuccess).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
-      expect(console.log).toHaveBeenCalled();
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Created Issue #0001'));
       
       // Verify git staging was not attempted
       expect(gitOperations.gitStage).not.toHaveBeenCalled();

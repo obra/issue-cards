@@ -11,7 +11,8 @@ const {
   addContentToSection, 
   findSectionByName 
 } = require('../utils/sectionManager');
-const { formatSuccess, formatError } = require('../utils/output');
+const output = require('../utils/outputManager');
+const { UserError, SectionNotFoundError } = require('../utils/errors');
 
 /**
  * Add a question to an issue
@@ -29,7 +30,7 @@ async function addQuestionAction(questionText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new Error('No current issue found. Specify an issue number or set a current issue.');
+        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
       }
       issueNumber = currentIssue.number;
     }
@@ -45,7 +46,7 @@ async function addQuestionAction(questionText, options = {}) {
     const section = findSectionByName(content, sectionName);
     
     if (!section) {
-      throw new Error(`Section "${sectionName}" not found in issue`);
+      throw new SectionNotFoundError(sectionName);
     }
     
     // Ensure the text ends with a question mark
@@ -64,9 +65,13 @@ async function addQuestionAction(questionText, options = {}) {
     // Write the updated content back to the file
     await fs.writeFile(issueFilePath, updatedContent, 'utf8');
     
-    console.log(formatSuccess(`Added question to issue #${issueNumber}`));
+    output.success(`Added question to issue #${issueNumber}`);
   } catch (err) {
-    console.error(formatError(`Failed to add question: ${err.message}`));
+    if (err instanceof UserError || err instanceof SectionNotFoundError) {
+      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+    } else {
+      output.error(`Failed to add question: ${err.message}`);
+    }
     throw err;
   }
 }

@@ -12,25 +12,34 @@ const { Command } = require('commander');
  * @returns {Command} The configured program
  */
 function configureCommander(program) {
-  return program
+  // Capture version and help actions so we can properly handle output
+  const packageVersion = require('../package.json').version;
+  
+  // Build program with commander's methods
+  const configuredProgram = program
     .name('issue-cards')
     .description('AI-Optimized Command Line Issue Tracking Tool')
-    .version(require('../package.json').version)
+    .version(packageVersion, '-V, --version', 'Output the version number')
     .addHelpCommand(true)
     .showHelpAfterError(true)
     .exitOverride((err) => {
       // Custom handling for commander exit
-      if (err.code === 'commander.helpDisplayed') {
+      if (err.code === 'commander.helpDisplayed' || err.code === 'commander.version') {
+        // Help and version are success cases, exit cleanly
         process.exit(0);
       }
       
       if (err.code === 'commander.unknownCommand') {
-        console.error(`Unknown command: ${err.message}`);
+        const outputManager = require('./utils/outputManager');
+        outputManager.error(`Unknown command: ${err.message}`);
         process.exit(1);
       }
       
       throw err;
     });
+  
+  // Return the configured program
+  return configuredProgram;
 }
 
 /**
