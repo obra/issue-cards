@@ -12,7 +12,21 @@ const { getIssueDirectoryPath } = require('./directory');
  */
 function getDefaultTemplatesDir() {
   // Templates are included in the package
-  return path.join(__dirname, '../../templates');
+  const templatesDir = path.join(__dirname, '../../templates');
+  
+  // For debugging purposes
+  console.log(`Default templates directory: ${templatesDir}`);
+  console.log(`Exists: ${fs.existsSync(templatesDir)}`);
+  if (fs.existsSync(templatesDir)) {
+    try {
+      const files = fs.readdirSync(templatesDir);
+      console.log(`Templates subdirectories: ${files.join(', ')}`);
+    } catch (error) {
+      console.error(`Error listing templates: ${error.message}`);
+    }
+  }
+  
+  return templatesDir;
 }
 
 /**
@@ -64,13 +78,20 @@ async function copyDefaultTemplates() {
  */
 async function copyTemplatesOfType(sourceDir, destDir) {
   try {
+    console.log(`Copying templates from ${sourceDir} to ${destDir}`);
+    
+    // Ensure destination directory exists
+    await fs.promises.mkdir(destDir, { recursive: true });
+    
     const files = await fs.promises.readdir(sourceDir);
+    console.log(`Found ${files.length} files in ${sourceDir}: ${files.join(', ')}`);
     
     for (const file of files) {
       if (file.endsWith('.md')) {
         const sourceFile = path.join(sourceDir, file);
         const destFile = path.join(destDir, file);
         
+        console.log(`Copying ${sourceFile} to ${destFile}`);
         const content = await fs.promises.readFile(sourceFile, 'utf8');
         await fs.promises.writeFile(destFile, content, 'utf8');
       }
@@ -82,6 +103,7 @@ async function copyTemplatesOfType(sourceDir, destDir) {
       return;
     }
     
+    console.error(`Error copying templates: ${error.message}`);
     throw error;
   }
 }
