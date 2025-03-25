@@ -113,6 +113,16 @@ function formatList(items, options = {}) {
     .join('\n');
 }
 
+/**
+ * Format an informational message
+ * 
+ * @param {string} message - The informational message
+ * @returns {string} - Formatted informational message
+ */
+function formatInfo(message) {
+  return `${chalk.blue('ℹ️ ' + message)}\n`;
+}
+
 module.exports = {
   formatCommand,
   formatTask,
@@ -121,4 +131,5 @@ module.exports = {
   formatSuccess,
   formatError,
   formatList,
+  formatInfo,
 };
