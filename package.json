@@ -7,7 +7,8 @@
     "issue-cards": "./bin/issue-cards.js"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --silent",
+    "test:verbose": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathIgnorePatterns=tests/e2e",
@@ -41,18 +42,19 @@
     "url": "https://github.com/issue-cards/issue-cards/issues"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "handlebars": "^4.7.8",
-    "simple-git": "^3.22.0",
-    "unified": "^10.1.2",
     "remark-parse": "^10.0.2",
     "remark-stringify": "^10.0.3",
-    "chalk": "^4.1.2"
+    "simple-git": "^3.22.0",
+    "unified": "^10.1.2"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^29.7.0",
+    "jest-silent-reporter": "^0.6.0",
     "prettier": "^3.2.5"
   },
   "engines": {

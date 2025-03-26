@@ -11,7 +11,9 @@ module.exports = {
   },
   testMatch: ['**/tests/**/*.test.js'],
   testPathIgnorePatterns: ['/node_modules/'],
-  verbose: true,
+  // Configure test output to be less verbose
+  silent: false,
+  verbose: false,
   // Handle ES modules
   transformIgnorePatterns: [
     // Important: This pattern allows Jest to transform ES modules in node_modules

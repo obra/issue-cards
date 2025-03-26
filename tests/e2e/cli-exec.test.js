@@ -1,10 +1,10 @@
 // ABOUTME: End-to-end tests for CLI execution
 // ABOUTME: Tests CLI behavior using child_process.execSync
 
-const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { runQuietly, expectCommand } = require('./e2eHelpers');
 
 describe('CLI Execution', () => {
   let testDir;
@@ -58,74 +58,68 @@ describe('CLI Execution', () => {
 
   // Test help output
   test('help output', () => {
-    const output = execSync(`node ${binPath} --help`, {
+    const { stdout } = runQuietly(`node ${binPath} --help`, {
       cwd: testDir,
-      encoding: 'utf8',
       env: { ...process.env }
     });
     
     // Verify help output contains expected sections
-    expect(output).toContain('Usage:');
-    expect(output).toContain('Options:');
-    expect(output).toContain('Commands:');
+    expect(stdout).toContain('Usage:');
+    expect(stdout).toContain('Options:');
+    expect(stdout).toContain('Commands:');
     
     // Verify all commands are listed
-    expect(output).toContain('create');
-    expect(output).toContain('init');
-    expect(output).toContain('list');
-    expect(output).toContain('show');
-    expect(output).toContain('current');
-    expect(output).toContain('complete-task');
-    expect(output).toContain('add-task');
-    expect(output).toContain('add-note');
-    expect(output).toContain('add-question');
-    expect(output).toContain('log-failure');
-    expect(output).toContain('templates');
+    expect(stdout).toContain('create');
+    expect(stdout).toContain('init');
+    expect(stdout).toContain('list');
+    expect(stdout).toContain('show');
+    expect(stdout).toContain('current');
+    expect(stdout).toContain('complete-task');
+    expect(stdout).toContain('add-task');
+    expect(stdout).toContain('add-note');
+    expect(stdout).toContain('add-question');
+    expect(stdout).toContain('log-failure');
+    expect(stdout).toContain('templates');
   });
 
   // Test version command
   test('version command', () => {
-    // Using try/catch since version outputs to stderr
-    try {
-      execSync(`node ${binPath} --version`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env }
-      });
-    } catch (error) {
-      // Version is output to stderr but it still returns a non-zero exit code
-      const output = error.message;
-      // Verify version matches semver pattern
-      expect(output).toMatch(/\d+\.\d+\.\d+/);
-    }
+    const result = runQuietly(`node ${binPath} --version`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    
+    // Check for version output (could be in stdout or stderr)
+    const output = result.stdout || result.stderr || '';
+    
+    // Verify version matches semver pattern
+    expect(output).toMatch(/\d+\.\d+\.\d+/);
   });
 
   // Test command help
   test('command help output', () => {
-    const output = execSync(`node ${binPath} create --help`, {
+    const { stdout } = runQuietly(`node ${binPath} create --help`, {
       cwd: testDir,
-      encoding: 'utf8',
       env: { ...process.env }
     });
     
     // Verify command help output
-    expect(output).toContain('Usage: issue-cards create');
-    expect(output).toContain('<template>');
-    expect(output).toContain('Options:');
+    expect(stdout).toContain('Usage: issue-cards create');
+    expect(stdout).toContain('<template>');
+    expect(stdout).toContain('Options:');
   });
 
   // Test error handling for unknown commands
   test('unknown command handling', () => {
-    try {
-      execSync(`node ${binPath} unknown-command`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env }
-      });
-      fail('Should have thrown an error');
-    } catch (error) {
-      // Verify error message
-      expect(error.stderr).toContain('unknown command');
-    }
+    const result = runQuietly(`node ${binPath} unknown-command`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    
+    // Should have a non-zero status
+    expect(result.status).not.toBe(0);
+    
+    // Verify error message
+    expect(result.stderr).toContain('unknown command');
   });
 });

@@ -111,17 +111,18 @@ describe('CLI E2E', () => {
 
   // Test unknown command handling
   test('unknown command handling', () => {
-    try {
-      execSync(`node ${binPath} unknown-command`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env }
-      });
-      fail('Expected command to throw an error');
-    } catch (error) {
-      // Command should fail with an error message about unknown command
-      expect(error.stderr.toString()).toContain('Unknown command');
-    }
+    const { runQuietly } = require('./e2eHelpers');
+    
+    const result = runQuietly(`node ${binPath} unknown-command`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    
+    // Command should fail with a non-zero status
+    expect(result.status).not.toBe(0);
+    
+    // Command should fail with an error message about unknown command
+    expect(result.stderr).toContain('Unknown command');
   });
 
   // Test command error handling
