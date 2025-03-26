@@ -13,6 +13,7 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathIgnorePatterns=tests/e2e",
     "test:e2e": "jest tests/e2e",
+    "test:e2e-coverage": "cross-env E2E_COLLECT_COVERAGE=true jest tests/e2e --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
@@ -51,6 +52,7 @@
     "unified": "^10.1.2"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^29.7.0",

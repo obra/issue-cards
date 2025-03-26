@@ -42,7 +42,21 @@ npm run test:unit
 
 # Run only E2E tests
 npm run test:e2e
+
+# Run E2E tests with coverage collection
+npm run test:e2e-coverage
 ```
+
+### Code Coverage for E2E Tests
+
+E2E tests execute the CLI as a separate process, which makes it challenging to collect coverage information. To address this, we've added a special E2E coverage collection mode:
+
+1. The `test:e2e-coverage` script sets the `E2E_COLLECT_COVERAGE` environment variable
+2. When this variable is set, our `runQuietly` helper switches to use `runWithCoverage`
+3. `runWithCoverage` uses Node's source map support to improve coverage reporting
+4. This allows us to collect coverage information from code run in subprocesses
+
+Note that E2E coverage collection might report lower numbers than unit tests since E2E tests typically don't exercise all code paths and edge cases.
 
 ## E2E Testing Best Practices
 
