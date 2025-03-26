@@ -17,53 +17,49 @@ async function extractContext(content) {
   // Get all sections
   const sections = getSections(content);
   
-  // Initialize context object
-  const context = {
-    problem: '',
-    approach: '',
-    failedApproaches: [],
-    questions: [],
-    tasks,
-    instructions: '',
-    nextSteps: ''
-  };
+  // Initialize context object with tasks
+  const context = { tasks };
   
-  // Fill in context from sections
+  // Fill in context from sections - just use raw content
   for (const section of sections) {
-    switch (section.name) {
-      case 'Problem to be solved':
-        context.problem = section.content;
-        break;
-        
-      case 'Planned approach':
-        context.approach = section.content;
-        break;
-        
-      case 'Failed approaches':
-        // Parse failed approaches into structured format
-        context.failedApproaches = parseFailedApproaches(section.content);
-        break;
-        
-      case 'Questions to resolve':
-        // Parse questions into structured format
-        context.questions = parseQuestions(section.content);
-        break;
-        
-      case 'Instructions':
-        context.instructions = section.content;
-        break;
-        
-      case 'Next steps':
-        context.nextSteps = section.content;
-        break;
-    }
+    // Use section name as key, content as value
+    context[section.name] = section.content;
   }
   
   return context;
 }
 
 /**
+ * Parse questions section into structured format
+ * This function is kept for backwards compatibility but simplified
+ * 
+ * @param {string} content - Questions section content
+ * @returns {Array<Object>} List of questions with text and completion status
+ */
+function parseQuestions(content) {
+  if (!content) return [];
+  
+  const questions = [];
+  const lines = content.split('\n');
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    // Check if this is a task item
+    if (trimmed.startsWith('- [ ]') || trimmed.startsWith('- [x]')) {
+      const completed = trimmed.startsWith('- [x]');
+      const text = trimmed.substring(completed ? 6 : 6).trim();
+      
+      questions.push({ text, completed });
+    }
+  }
+  
+  return questions;
+}
+
+/**
  * Parse failed approaches section into structured format
+ * This function is kept for backwards compatibility but simplified
  * 
  * @param {string} content - Failed approaches section content
  * @returns {Array<Object>} List of failed approaches with approach and reason
@@ -91,174 +87,52 @@ function parseFailedApproaches(content) {
 }
 
 /**
- * Parse questions section into structured format
- * 
- * @param {string} content - Questions section content
- * @returns {Array<Object>} List of questions with text and completion status
- */
-function parseQuestions(content) {
-  if (!content) return [];
-  
-  const questions = [];
-  const lines = content.split('\n');
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    
-    // Check if this is a task item
-    if (trimmed.startsWith('- [ ]') || trimmed.startsWith('- [x]')) {
-      const completed = trimmed.startsWith('- [x]');
-      const text = trimmed.substring(completed ? 6 : 6).trim();
-      
-      questions.push({ text, completed });
-    }
-  }
-  
-  return questions;
-}
-
-/**
- * Extract context relevant to a specific task
+ * Get context that includes a specific task
+ * Simple alternative to the removed getContextForTask function
  * 
  * @param {string} content - Issue markdown content
  * @param {string} taskText - Text of the task
- * @returns {Object|null} Task-specific context or null if task not found
+ * @returns {Object|null} Context that includes the task or null if task not found
  */
-async function getContextForTask(content, taskText) {
-  // Get full context first
-  const fullContext = await extractContext(content);
+async function getBasicTaskContext(content, taskText) {
+  const context = await extractContext(content);
+  const task = context.tasks.find(t => t.text.includes(taskText));
   
-  // Find the specific task
-  const taskIndex = fullContext.tasks.findIndex(task => task.text.includes(taskText));
-  
-  if (taskIndex === -1) {
+  if (!task) {
     return null;
   }
   
-  const task = fullContext.tasks[taskIndex];
-  
-  // Get adjacent tasks
-  const previousTask = taskIndex > 0 ? fullContext.tasks[taskIndex - 1].text : null;
-  const nextTask = taskIndex < fullContext.tasks.length - 1 ? fullContext.tasks[taskIndex + 1].text : null;
-  
-  // Get relevant questions based on task content (include all by default for testing)
-  const relevantQuestions = fullContext.questions;
-  
-  // Get relevant failed approaches based on task content (include all by default for testing)
-  const relevantFailedApproaches = fullContext.failedApproaches;
-  
-  return {
-    problem: fullContext.problem,
-    approach: fullContext.approach,
-    relevantQuestions,
-    relevantFailedApproaches,
-    previousTask,
-    nextTask,
-    instructions: fullContext.instructions,
-    task
-  };
+  return { ...context, task };
 }
 
 /**
- * Get sections relevant to a specific keyword
+ * Find sections that contain specific text
+ * Simple alternative to the removed getRelevantSections function
  * 
- * @param {string} content - Issue markdown content
- * @param {string} keyword - Keyword to find relevant sections for
- * @returns {Object} Object with relevant sections
+ * @param {Object} context - Context object from extractContext
+ * @param {string} searchText - Text to search for
+ * @returns {Object} Object with sections that contain the search text
  */
-async function getRelevantSections(content, keyword) {
-  const fullContext = await extractContext(content);
+function findSectionsWithText(context, searchText) {
+  const searchTextLower = searchText.toLowerCase();
   const relevantSections = {};
   
-  // Check each section for relevance
-  if (fullContext.problem.toLowerCase().includes(keyword.toLowerCase())) {
-    relevantSections.problem = fullContext.problem;
-  }
-  
-  if (fullContext.approach.toLowerCase().includes(keyword.toLowerCase())) {
-    relevantSections.approach = fullContext.approach;
-  }
-  
-  // Check failed approaches
-  const relevantFailedApproaches = fullContext.failedApproaches.filter(
-    approach => approach.approach.toLowerCase().includes(keyword.toLowerCase()) || 
-               approach.reason.toLowerCase().includes(keyword.toLowerCase())
-  );
-  
-  if (relevantFailedApproaches.length > 0) {
-    relevantSections.failedApproaches = relevantFailedApproaches;
-  }
-  
-  // Check questions
-  const relevantQuestions = fullContext.questions.filter(
-    question => question.text.toLowerCase().includes(keyword.toLowerCase())
-  );
-  
-  if (relevantQuestions.length > 0) {
-    relevantSections.questions = relevantQuestions;
-  }
-  
-  // Check tasks
-  const relevantTasks = fullContext.tasks.filter(
-    task => task.text.toLowerCase().includes(keyword.toLowerCase())
-  );
-  
-  if (relevantTasks.length > 0) {
-    relevantSections.tasks = relevantTasks;
-  }
-  
-  if (fullContext.instructions.toLowerCase().includes(keyword.toLowerCase())) {
-    relevantSections.instructions = fullContext.instructions;
-  }
-  
-  if (fullContext.nextSteps.toLowerCase().includes(keyword.toLowerCase())) {
-    relevantSections.nextSteps = fullContext.nextSteps;
-  }
+  // Simple text matching on section contents
+  Object.entries(context).forEach(([name, content]) => {
+    if (typeof content === 'string' && content.toLowerCase().includes(searchTextLower)) {
+      relevantSections[name] = content;
+    }
+  });
   
   return relevantSections;
 }
 
-/**
- * Check if text is relevant to a task
- * 
- * @param {string} text - Text to check
- * @param {string} taskText - Task text
- * @returns {boolean} True if relevant
- */
-function isRelevantToTask(text, taskText) {
-  // This is a simple relevance check based on common words
-  // In a real implementation, this could use more sophisticated NLP
-  const taskWords = getSignificantWords(taskText);
-  const textWords = getSignificantWords(text);
-  
-  // Check for word overlap
-  return taskWords.some(word => textWords.includes(word));
-}
-
-/**
- * Get significant words from text (excluding common words)
- * 
- * @param {string} text - Text to process
- * @returns {Array<string>} List of significant words
- */
-function getSignificantWords(text) {
-  // Common words to ignore
-  const commonWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
-    'with', 'by', 'about', 'like', 'as', 'from', 'of', 'this', 'that',
-    'be', 'is', 'are', 'was', 'were', 'been', 'being', 'do', 'does', 'did',
-    'have', 'has', 'had', 'having', 'can', 'could', 'will', 'would', 'should',
-    'it', 'its', 'they', 'them', 'their', 'we', 'our', 'you', 'your'
-  ]);
-  
-  return text.toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')  // Remove punctuation
-    .split(/\s+/)  // Split by whitespace
-    .filter(word => word.length > 2 && !commonWords.has(word));  // Filter common words
-}
-
 module.exports = {
   extractContext,
-  getContextForTask,
-  getRelevantSections
+  // Provide backwards compatibility aliases
+  getContextForTask: getBasicTaskContext,
+  getRelevantSections: async function(content, keyword) {
+    const context = await extractContext(content);
+    return findSectionsWithText(context, keyword);
+  }
 };

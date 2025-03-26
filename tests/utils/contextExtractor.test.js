@@ -1,7 +1,7 @@
 // ABOUTME: Unit tests for context extraction utility
 // ABOUTME: Tests extracting relevant context from issue content
 
-const { extractContext, getRelevantSections } = require('../../src/utils/contextExtractor');
+const { extractContext, getContextForTask, getRelevantSections } = require('../../src/utils/contextExtractor');
 const { getSections } = require('../../src/utils/sectionManager');
 const { extractTasks } = require('../../src/utils/taskParser');
 
@@ -44,41 +44,18 @@ describe('Context Extractor', () => {
 
   describe('extractContext', () => {
     it('extracts context from issue content', async () => {
-      // Mock issue sections
-      const mockSections = [
-        { name: 'Problem to be solved', content: 'Test problem' },
-        { name: 'Planned approach', content: 'Test approach' },
-        { name: 'Failed approaches', content: '### Failed attempt\nApproach 1\n\n**Reason:** Reason 1' },
-        { name: 'Questions to resolve', content: '- [ ] Question 1?\n- [x] Question 2?' },
-        { name: 'Instructions', content: 'Test instructions' },
-        { name: 'Next steps', content: 'Next step 1' }
-      ];
-
-      // Mock tasks
-      const mockTasks = [
-        { text: 'Task 1', completed: false, index: 0 },
-        { text: 'Task 2', completed: false, index: 1 }
-      ];
-
-      // Set up mocks
-      getSections.mockReturnValue(mockSections);
-      extractTasks.mockResolvedValue(mockTasks);
-
       // Call function
       const context = await extractContext('Test content');
 
-      // Verify results
+      // Verify results - now just the raw section content
       expect(context).toEqual({
-        problem: 'Test problem',
-        approach: 'Test approach',
-        failedApproaches: [{ approach: 'Approach 1', reason: 'Reason 1' }],
-        questions: [
-          { text: 'Question 1?', completed: false },
-          { text: 'Question 2?', completed: true }
-        ],
         tasks: mockTasks,
-        instructions: 'Test instructions',
-        nextSteps: 'Next step 1'
+        'Problem to be solved': 'Test problem with keyword',
+        'Planned approach': 'Test approach',
+        'Failed approaches': '### Failed attempt\nApproach 1 with keyword\n\n**Reason:** Reason 1',
+        'Questions to resolve': '- [ ] Question about keyword?\n- [x] Another question?',
+        'Instructions': 'Test instructions contain keyword',
+        'Next steps': 'Next step 1'
       });
 
       // Verify mocks were called correctly
@@ -94,63 +71,59 @@ describe('Context Extractor', () => {
       // Call function
       const context = await extractContext('');
 
-      // Verify results
+      // Verify results - should just be an object with tasks
       expect(context).toEqual({
-        problem: '',
-        approach: '',
-        failedApproaches: [],
-        questions: [],
-        tasks: [],
-        instructions: '',
-        nextSteps: ''
+        tasks: []
       });
-    });
-
-    it('parses failed approaches correctly', async () => {
-      // Mock sections with complex failed approaches
-      const mockSections = [
-        { name: 'Failed approaches', content: '### Failed attempt\nApproach 1\n\n**Reason:** Reason 1\n\n### Failed attempt\nApproach 2\n\n**Reason:** Reason 2' }
-      ];
-      
-      getSections.mockReturnValue(mockSections);
-      extractTasks.mockResolvedValue([]);
-
-      // Call function
-      const context = await extractContext('Test content');
-
-      // Verify failed approaches are parsed correctly
-      expect(context.failedApproaches).toEqual([
-        { approach: 'Approach 1', reason: 'Reason 1' },
-        { approach: 'Approach 2', reason: 'Reason 2' }
-      ]);
-    });
-
-    it('parses questions correctly', async () => {
-      // Mock sections with questions
-      const mockSections = [
-        { name: 'Questions to resolve', content: '- [ ] Uncompleted question?\n- [x] Completed question?' }
-      ];
-      
-      getSections.mockReturnValue(mockSections);
-      extractTasks.mockResolvedValue([]);
-
-      // Call function
-      const context = await extractContext('Test content');
-
-      // Verify questions are parsed correctly
-      expect(context.questions).toEqual([
-        { text: 'Uncompleted question?', completed: false },
-        { text: 'Completed question?', completed: true }
-      ]);
     });
   });
 
-  describe('parseFailedApproaches and parseQuestions', () => {
-    // These are indirectly tested via extractContext, which gives us good coverage
-    it('handles various formats correctly', async () => {
-      // This test is covered by the previous tests for extractContext
-      // Just adding an explicit test to recognize the coverage
-      expect(true).toBe(true);
+  describe('getContextForTask', () => {
+    it('finds context containing a specific task', async () => {
+      // Call function
+      const context = await getContextForTask('Test content', 'Task 1');
+
+      // Should return full context plus the specific task
+      expect(context).toHaveProperty('tasks');
+      expect(context).toHaveProperty('task');
+      expect(context.task).toEqual(mockTasks[0]);
+      
+      // Should include all section content
+      expect(context['Problem to be solved']).toBe('Test problem with keyword');
+      expect(context['Instructions']).toBe('Test instructions contain keyword');
+    });
+
+    it('returns null if task is not found', async () => {
+      // Call function with non-existent task
+      const context = await getContextForTask('Test content', 'Non-existent task');
+
+      // Should return null
+      expect(context).toBeNull();
+    });
+  });
+
+  describe('getRelevantSections', () => {
+    it('finds sections containing keyword', async () => {
+      // Call function
+      const relevantSections = await getRelevantSections('Test content', 'keyword');
+
+      // Should return only sections containing the keyword
+      expect(relevantSections).toHaveProperty('Problem to be solved');
+      expect(relevantSections).toHaveProperty('Failed approaches');
+      expect(relevantSections).toHaveProperty('Questions to resolve');
+      expect(relevantSections).toHaveProperty('Instructions');
+      
+      // Should not include sections without the keyword
+      expect(relevantSections).not.toHaveProperty('Planned approach');
+      expect(relevantSections).not.toHaveProperty('Next steps');
+    });
+
+    it('returns empty object if no sections contain keyword', async () => {
+      // Call function with keyword not in any section
+      const relevantSections = await getRelevantSections('Test content', 'nonexistent');
+
+      // Should return empty object (except potentially tasks, which are handled separately)
+      expect(Object.keys(relevantSections).filter(key => key !== 'tasks')).toHaveLength(0);
     });
   });
 });

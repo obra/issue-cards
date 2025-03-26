@@ -11,30 +11,30 @@ Simplify the contextExtractor module to focus on basic section extraction withou
 ### Tasks
 
 1. **Remove Unnecessary Functions**:
-   - [ ] Remove `getContextForTask` function (lines 127-160)
-   - [ ] Remove `getRelevantSections` function (lines 169-219) 
-   - [ ] Remove `isRelevantToTask` function (lines 228-236)
-   - [ ] Remove `getSignificantWords` function (lines 244-258)
-   - [ ] Simplify `parseQuestions` and `parseFailedApproaches` functions
+   - [x] Remove `getContextForTask` function (lines 127-160)
+   - [x] Remove `getRelevantSections` function (lines 169-219) 
+   - [x] Remove `isRelevantToTask` function (lines 228-236)
+   - [x] Remove `getSignificantWords` function (lines 244-258)
+   - [x] Simplify `parseQuestions` and `parseFailedApproaches` functions
 
 2. **Simplify extractContext Function**:
-   - [ ] Modify to return raw section content rather than attempting complex parsing
-   - [ ] Return a simple object with section names as keys and their content as values
-   - [ ] Keep basic task extraction but avoid complex relevance determination
+   - [x] Modify to return raw section content rather than attempting complex parsing
+   - [x] Return a simple object with section names as keys and their content as values
+   - [x] Keep basic task extraction but avoid complex relevance determination
 
 3. **Update Dependent Code**:
-   - [ ] Update any code that calls `getContextForTask` to use `extractContext` instead
-   - [ ] Update any code that calls `getRelevantSections` to use `extractContext` instead and do simple text matching if needed
-   - [ ] For sections like "Questions to resolve" and "Failed approaches," return simple text content rather than structured objects
+   - [x] Update any code that calls `getContextForTask` to use `extractContext` instead
+   - [x] Update any code that calls `getRelevantSections` to use `extractContext` instead and do simple text matching if needed
+   - [x] For sections like "Questions to resolve" and "Failed approaches," return simple text content rather than structured objects
 
 4. **Update Tests**:
-   - [ ] Update `contextExtractor.test.js` to test the simplified functionality
-   - [ ] Remove tests for the eliminated functions
-   - [ ] Add tests for the simplified `extractContext` function
+   - [x] Update `contextExtractor.test.js` to test the simplified functionality
+   - [x] Remove tests for the eliminated functions
+   - [x] Add tests for the simplified `extractContext` function
 
 5. **Documentation Updates**:
-   - [ ] Update inline documentation to reflect the simplified approach
-   - [ ] Update any user documentation that mentions the removed functionality
+   - [x] Update inline documentation to reflect the simplified approach
+   - [x] Update any user documentation that mentions the removed functionality
 
 ### Implementation Approach
 
