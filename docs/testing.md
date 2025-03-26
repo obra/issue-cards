@@ -49,14 +49,22 @@ npm run test:e2e-coverage
 
 ### Code Coverage for E2E Tests
 
-E2E tests execute the CLI as a separate process, which makes it challenging to collect coverage information. To address this, we've added a special E2E coverage collection mode:
+E2E tests execute the CLI as a separate process, which makes it challenging to collect coverage information. The project offers two approaches to handle this:
 
-1. The `test:e2e-coverage` script sets the `E2E_COLLECT_COVERAGE` environment variable
-2. When this variable is set, our `runQuietly` helper switches to use `runWithCoverage`
-3. `runWithCoverage` uses Node's source map support to improve coverage reporting
-4. This allows us to collect coverage information from code run in subprocesses
+#### Standard Coverage with Jest
 
-Note that E2E coverage collection might report lower numbers than unit tests since E2E tests typically don't exercise all code paths and edge cases.
+When running `npm run test:e2e-coverage`, Jest's standard coverage instrumentation is used. However, since the CLI code runs in separate processes, this coverage report will typically show low numbers. This is because Jest cannot instrument code in child processes.
+
+#### NYC Coverage for Subprocesses
+
+For more accurate E2E coverage, we've integrated NYC (Istanbul):
+
+1. Run `npm run coverage:e2e-with-nyc` to execute E2E tests with NYC coverage collection
+2. This uses the `runWithCoverage` helper in e2eHelpers.js which wraps commands with NYC
+3. After tests complete, run `npm run coverage:report` to generate an HTML report
+4. View the report in `./coverage/index.html`
+
+NYC is specifically designed to handle subprocess instrumentation, providing more accurate coverage for E2E tests. Note that even with NYC, E2E tests might still show lower coverage than unit tests since they don't typically exercise all edge cases.
 
 ## E2E Testing Best Practices
 

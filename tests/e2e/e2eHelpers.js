@@ -42,16 +42,15 @@ function runQuietly(command, options = {}) {
 }
 
 /**
- * Run a CLI command with coverage instrumentation
- * This is an advanced function that should only be used when trying to collect coverage
- * from subprocess execution.
+ * Run a CLI command with coverage instrumentation using nyc (Istanbul)
+ * This function collects coverage data from subprocesses by wrapping the command with nyc
  * 
  * @param {string} command - The CLI command to run (must be a Node.js command)
  * @param {Object} options - Command options
  * @returns {Object} The result with stdout, stderr, and status
  */
 function runWithCoverage(command, options = {}) {
-  // Parse the command to extract the Node.js part and the script to run
+  // Parse the command to extract the Node.js part and the args
   const parts = command.split(' ');
   const nodeIndex = parts.findIndex(part => part.includes('node'));
   
@@ -60,34 +59,20 @@ function runWithCoverage(command, options = {}) {
     return runQuietly(command, options);
   }
   
-  // Get the actual script path (should be the part after 'node')
-  const scriptPath = parts[nodeIndex + 1];
-  const args = parts.slice(nodeIndex + 2);
+  // Get the script part (everything after 'node')
+  const scriptWithArgs = parts.slice(nodeIndex + 1).join(' ');
   
-  // Always override stdio to ensure we capture but don't display output
-  const execOptions = {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    ...options,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  };
-
-  try {
-    // Use Node's --enable-source-maps flag for better coverage reporting
-    const result = spawnSync('node', ['--enable-source-maps', scriptPath, ...args], execOptions);
-    
-    return {
-      stdout: result.stdout ? result.stdout.toString() : '',
-      stderr: result.stderr ? result.stderr.toString() : '',
-      status: result.status || 0
-    };
-  } catch (error) {
-    return {
-      stdout: '',
-      stderr: error.message || 'Error running command',
-      status: 1
-    };
-  }
+  // Create the nyc command
+  // --silent to avoid nyc output
+  // --no-clean to avoid removing coverage between test runs
+  // --temp-dir to use a temp directory for nyc caches
+  // --report-dir to direct reports to the Jest coverage directory
+  const nycBin = path.resolve(__dirname, '../../node_modules/.bin/nyc');
+  
+  const nycCommand = `${nycBin} --silent --no-clean --temp-dir=./coverage/.nyc_output --report-dir=./coverage -- ${scriptWithArgs}`;
+  
+  // Run the command with nyc
+  return runQuietly(nycCommand, options);
 }
 
 /**
