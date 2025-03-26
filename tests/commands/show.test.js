@@ -3,7 +3,7 @@
 
 const { Command } = require('commander');
 const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError, IssueNotFoundError } = require('../../src/utils/errors');
+const { UninitializedError, IssueNotFoundError, UserError, SystemError } = require('../../src/utils/errors');
 
 // Mock dependencies first
 jest.mock('../../src/utils/directory', () => ({
@@ -19,6 +19,9 @@ jest.mock('../../src/utils/issueManager', () => ({
 const mockOutput = mockOutputManager();
 jest.mock('../../src/utils/outputManager', () => mockOutput);
 
+// Import the mocked module
+const outputManager = require('../../src/utils/outputManager');
+
 // Mock process.exit to prevent tests from exiting
 const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
 
@@ -32,7 +35,11 @@ describe('Show command', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
-    mockOutput._reset();
+    // Reset mock output functions
+    outputManager.success.mockClear();
+    outputManager.error.mockClear();
+    outputManager.info.mockClear();
+    outputManager.raw.mockClear();
   });
   
   describe('createCommand', () => {
@@ -65,47 +72,60 @@ describe('Show command', () => {
       expect(mockOutput._captured.stdout).toHaveLength(1);
     });
     
-    test('shows error when issue not found', async () => {
+    test('throws error when issue not found', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock issueManager.getIssue to throw error
       issueManager.getIssue.mockRejectedValue(new Error('Issue #0001 not found'));
       
-      await showAction('0001');
-      
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 not found'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
+      try {
+        await showAction('0001');
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(IssueNotFoundError);
+        expect(error.message).toContain('Issue #0001 not found');
+        expect(error.displayMessage).toContain('Issue #0001 not found');
+      }
     });
     
-    test('shows error when issue tracking is not initialized', async () => {
+    test('throws error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await showAction('0001');
+      try {
+        await showAction('0001');
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UninitializedError);
+        expect(error.displayMessage).toContain('not initialized');
+        expect(error.displayMessage).toContain('Run `issue-cards init` first');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(issueManager.getIssue).not.toHaveBeenCalled();
     });
     
-    test('handles errors during issue display', async () => {
+    test('throws wrapped error for unexpected errors during issue display', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock issueManager.getIssue to throw unexpected error
       issueManager.getIssue.mockRejectedValue(new Error('Failed to read issue'));
       
-      await showAction('0001');
-      
-      // Verify error message was logged - matches the message in the IssueNotFoundError class
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 not found'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
+      try {
+        await showAction('0001');
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        // The error is caught and wrapped in IssueNotFoundError in the code
+        expect(error).toBeInstanceOf(IssueNotFoundError);
+        expect(error.displayMessage).toContain('Issue #0001 not found');
+      }
     });
     
     test('shows current issue when no number provided', async () => {
+      // Reset mock output
+      mockOutput._reset();
+      
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
@@ -124,18 +144,21 @@ describe('Show command', () => {
       expect(mockOutput._captured.stdout).toHaveLength(1);
     });
     
-    test('shows error when no issues exist', async () => {
+    test('throws error when no issues exist', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock issueManager.listIssues to return empty list
       issueManager.listIssues.mockResolvedValue([]);
       
-      await showAction();
-      
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith('No open issues found.');
-      expect(mockOutput._captured.stderr).toHaveLength(1);
+      try {
+        await showAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UserError);
+        expect(error.message).toContain('No open issues found');
+        expect(error.displayMessage).toContain('No open issues found');
+      }
     });
   });
 });

@@ -181,13 +181,22 @@ Next steps for current issue
     fs.readFile.mockResolvedValue(mockIssueContent);
 
     // Call with invalid section
-    await addNoteAction('Note for invalid section', { 
-      issueNumber: 1, 
-      section: 'non-existent-section' 
-    }).catch(() => {});  // Catch and ignore errors for testing
-
-    // Verify error was output
-    expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Section "non-existent-section" not found in issue'));
+    try {
+      await addNoteAction('Note for invalid section', { 
+        issueNumber: 1, 
+        section: 'non-existent-section' 
+      });
+      fail('Should have thrown an error');
+    } catch (error) {
+      // Check error properties
+      expect(error.name).toBe('SectionNotFoundError');
+      expect(error.message).toContain('non-existent-section');
+      expect(error.displayMessage).toBeDefined();
+      
+      // We don't verify outputManager.error was called because with the new approach,
+      // the command only formats the error message but doesn't display it.
+      // The error display is handled at the top level.
+    }
   });
 
   test('should normalize section names', async () => {

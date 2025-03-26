@@ -12,7 +12,7 @@ const {
   findSectionByName 
 } = require('../utils/sectionManager');
 const output = require('../utils/outputManager');
-const { UserError, SectionNotFoundError } = require('../utils/errors');
+const { UserError, SystemError, SectionNotFoundError } = require('../utils/errors');
 
 /**
  * Add a question to an issue
@@ -30,7 +30,9 @@ async function addQuestionAction(questionText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
+        throw new UserError('No current issue found')
+          .withRecoveryHint('Specify an issue number or set a current issue')
+          .withDisplayMessage('No current issue found (Specify an issue number or set a current issue)');
       }
       issueNumber = currentIssue.number;
     }
@@ -46,7 +48,8 @@ async function addQuestionAction(questionText, options = {}) {
     const section = findSectionByName(content, sectionName);
     
     if (!section) {
-      throw new SectionNotFoundError(sectionName);
+      throw new SectionNotFoundError(sectionName)
+        .withDisplayMessage(`Section "${sectionName}" not found in issue`);
     }
     
     // Ensure the text ends with a question mark
@@ -68,9 +71,15 @@ async function addQuestionAction(questionText, options = {}) {
     output.success(`Added question to issue #${issueNumber}`);
   } catch (err) {
     if (err instanceof UserError || err instanceof SectionNotFoundError) {
-      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+      // Add formatted display message if not already set
+      if (!err.displayMessage) {
+        err.withDisplayMessage(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+      }
     } else {
-      output.error(`Failed to add question: ${err.message}`);
+      // Wrap non-IssueCardsError errors
+      const errorMsg = `Failed to add question: ${err.message}`;
+      const wrappedError = new SystemError(errorMsg).withDisplayMessage(errorMsg);
+      throw wrappedError;
     }
     throw err;
   }

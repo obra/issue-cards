@@ -12,7 +12,7 @@ const {
   normalizeSectionName 
 } = require('../utils/sectionManager');
 const output = require('../utils/outputManager');
-const { UserError, SectionNotFoundError } = require('../utils/errors');
+const { UserError, SystemError, SectionNotFoundError } = require('../utils/errors');
 
 /**
  * Add a note to a specific section of an issue
@@ -32,7 +32,9 @@ async function addNoteAction(noteText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
+        throw new UserError('No current issue found')
+          .withRecoveryHint('Specify an issue number or set a current issue')
+          .withDisplayMessage('No current issue found (Specify an issue number or set a current issue)');
       }
       issueNumber = currentIssue.number;
     }
@@ -63,15 +65,23 @@ async function addNoteAction(noteText, options = {}) {
     } catch (sectionErr) {
       // Handle section not found specifically
       if (sectionErr.message.includes('not found')) {
-        throw new SectionNotFoundError(normalizedSection);
+        const error = new SectionNotFoundError(normalizedSection);
+        error.withDisplayMessage(`Section "${normalizedSection}" not found in issue`);
+        throw error;
       }
       throw sectionErr;
     }
   } catch (err) {
     if (err instanceof UserError || err instanceof SectionNotFoundError) {
-      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+      // Add formatted display message if not already set
+      if (!err.displayMessage) {
+        err.withDisplayMessage(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+      }
     } else {
-      output.error(`Failed to add note: ${err.message}`);
+      // Wrap non-IssueCardsError errors
+      const errorMsg = `Failed to add note: ${err.message}`;
+      const wrappedError = new SystemError(errorMsg).withDisplayMessage(errorMsg);
+      throw wrappedError;
     }
     throw err;
   }

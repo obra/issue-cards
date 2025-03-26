@@ -30,9 +30,11 @@ function configureCommander(program) {
       }
       
       if (err.code === 'commander.unknownCommand') {
-        const outputManager = require('./utils/outputManager');
-        outputManager.error(`Unknown command: ${err.message}`);
-        process.exit(1);
+        // Create a proper IssueCardsError
+        const { UserError } = require('./utils/errors');
+        const error = new UserError(`Unknown command: ${err.message}`);
+        error.withDisplayMessage(`Unknown command: ${err.message}`);
+        throw error;
       }
       
       throw err;

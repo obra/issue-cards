@@ -5,7 +5,7 @@ const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
 const { getIssue, listIssues } = require('../utils/issueManager');
 const output = require('../utils/outputManager');
-const { UninitializedError, IssueNotFoundError } = require('../utils/errors');
+const { UninitializedError, IssueNotFoundError, UserError, SystemError } = require('../utils/errors');
 
 /**
  * Action handler for the show command
@@ -18,7 +18,8 @@ async function showAction(issueNumber) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // If issue number provided, show that specific issue
@@ -29,7 +30,8 @@ async function showAction(issueNumber) {
         const issueContent = await getIssue(paddedNumber);
         output.raw(issueContent);
       } catch (error) {
-        throw new IssueNotFoundError(issueNumber);
+        throw new IssueNotFoundError(issueNumber)
+          .withDisplayMessage(`Issue #${issueNumber} not found`);
       }
       return;
     }
@@ -38,17 +40,22 @@ async function showAction(issueNumber) {
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      output.error('No open issues found.');
-      return;
+      throw new UserError('No open issues found')
+        .withDisplayMessage('No open issues found.');
     }
     
     // Display the first (current) issue
     output.raw(issues[0].content);
   } catch (error) {
-    if (error instanceof UninitializedError || error instanceof IssueNotFoundError) {
-      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+    if (error instanceof UninitializedError || 
+        error instanceof IssueNotFoundError || 
+        error instanceof UserError) {
+      // Just re-throw the error with display message already set
+      throw error;
     } else {
-      output.error(`Failed to show issue: ${error.message}`);
+      // Wrap generic errors in a SystemError
+      throw new SystemError(`Failed to show issue: ${error.message}`)
+        .withDisplayMessage(`Failed to show issue: ${error.message}`);
     }
   }
 }

@@ -6,7 +6,7 @@ const { isInitialized } = require('../utils/directory');
 const { getTemplateList, loadTemplate, validateTemplate } = require('../utils/template');
 const { validateTemplateStructure } = require('../utils/templateValidation');
 const output = require('../utils/outputManager');
-const { UninitializedError, TemplateNotFoundError, UserError, IssueCardsError } = require('../utils/errors');
+const { UninitializedError, TemplateNotFoundError, UserError, IssueCardsError, SystemError } = require('../utils/errors');
 
 /**
  * Create the templates command
@@ -38,7 +38,8 @@ async function templatesAction(options) {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // If a specific template name is provided, show that template
@@ -51,12 +52,16 @@ async function templatesAction(options) {
     await listTemplates(options.type, options.validate);
   } catch (error) {
     if (error instanceof IssueCardsError) {
-      const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
-      output.error(`${error.message}${hint}`);
-      process.exit(error.code);
+      // If error already has a display message, use it; otherwise create one
+      if (!error.displayMessage) {
+        const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
+        error.withDisplayMessage(`${error.message}${hint}`);
+      }
+      throw error;
     } else {
-      output.error(`Error: ${error.message}`);
-      process.exit(1);
+      // Wrap generic errors in a SystemError
+      throw new SystemError(`Failed to list templates: ${error.message}`)
+        .withDisplayMessage(`Failed to list templates: ${error.message}`);
     }
   }
 }
@@ -121,7 +126,13 @@ async function listTemplates(type, validate) {
     // Show usage information
     showUsageInfo(type);
   } catch (error) {
-    throw new UserError(`Failed to list templates: ${error.message}`);
+    if (error instanceof IssueCardsError) {
+      throw error; // Rethrow IssueCardsError with existing context
+    } else {
+      // Wrap other errors in SystemError with display message
+      throw new SystemError(`Failed to list templates: ${error.message}`)
+        .withDisplayMessage(`Failed to list templates: ${error.message}`);
+    }
   }
 }
 
@@ -147,6 +158,8 @@ async function printTemplateWithValidation(name, type) {
       });
     }
   } catch (error) {
+    // Only catch and log validation errors here since this is a subfunction
+    // used within listTemplates. Validation failures are not critical errors.
     output.error(`${name} validation failed: ${error.message}`);
   }
 }
@@ -163,7 +176,8 @@ async function showTemplate(name, type, validate) {
   // Require type to be specified
   if (!type) {
     throw new UserError('You must specify type when viewing a template')
-      .withRecoveryHint('Use --type issue or --type tag');
+      .withRecoveryHint('Use --type issue or --type tag')
+      .withDisplayMessage('You must specify type when viewing a template (Use --type issue or --type tag)');
   }
   
   try {
@@ -171,7 +185,8 @@ async function showTemplate(name, type, validate) {
     const exists = await validateTemplate(name, type);
     if (!exists) {
       throw new TemplateNotFoundError(`${name} (${type})`)
-        .withRecoveryHint(`Run 'issue-cards templates' to see available templates`);
+        .withRecoveryHint(`Run 'issue-cards templates' to see available templates`)
+        .withDisplayMessage(`Template not found: ${name} (${type}) (Run 'issue-cards templates' to see available templates)`);
     }
     
     // Load and display the template
@@ -205,9 +220,12 @@ async function showTemplate(name, type, validate) {
     }
   } catch (error) {
     if (error instanceof IssueCardsError) {
+      // Just rethrow IssueCardsError (it will already have display message set)
       throw error;
     } else {
-      throw new UserError(`Failed to show template: ${error.message}`);
+      // Wrap other errors in UserError with display message
+      throw new UserError(`Failed to show template: ${error.message}`)
+        .withDisplayMessage(`Failed to show template: ${error.message}`);
     }
   }
 }

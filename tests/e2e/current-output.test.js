@@ -96,8 +96,9 @@ describe('Current Command Output Format', () => {
     // COMMAND line should not be present
     expect(output).not.toContain('COMMAND: issue-cards current');
     
-    // Should have task header
-    expect(output).toContain('TASK: Task 1');
+    // Should have task header in the CURRENT TASK section
+    expect(output).toContain('CURRENT TASK:')
+    expect(output).toContain('Task 1');
     
     // Should have current task section
     expect(output).toContain('CURRENT TASK:');

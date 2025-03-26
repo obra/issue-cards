@@ -12,7 +12,7 @@ const { gitStage } = require('../utils/gitOperations');
 const { expandTask } = require('../utils/taskExpander');
 const { displayTaskWithContext } = require('../utils/taskDisplay');
 const output = require('../utils/outputManager');
-const { UninitializedError, UserError } = require('../utils/errors');
+const { UninitializedError, UserError, SystemError } = require('../utils/errors');
 
 // Importing the extractContext function
 const { extractContext } = require('./current');
@@ -52,14 +52,16 @@ async function completeTaskAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      throw new UserError('No open issues found');
+      throw new UserError('No open issues found')
+        .withDisplayMessage('No open issues found');
     }
     
     // Use the first issue as the current one
@@ -72,7 +74,8 @@ async function completeTaskAction() {
     const currentTask = findCurrentTask(tasks);
     
     if (!currentTask) {
-      throw new UserError('No tasks found or all tasks are already completed');
+      throw new UserError('No tasks found or all tasks are already completed')
+        .withDisplayMessage('No tasks found or all tasks are already completed');
     }
     
     // Update the task status
@@ -116,10 +119,16 @@ async function completeTaskAction() {
     }
   } catch (error) {
     if (error instanceof UninitializedError || error instanceof UserError) {
-      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+      // Add formatted display message if not already set
+      if (!error.displayMessage) {
+        error.withDisplayMessage(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+      }
     } else {
-      output.error(`Failed to complete task: ${error.message}`);
+      // Wrap non-IssueCardsError errors
+      const errorMsg = `Failed to complete task: ${error.message}`;
+      error = new SystemError(errorMsg).withDisplayMessage(errorMsg);
     }
+    throw error;
   }
 }
 

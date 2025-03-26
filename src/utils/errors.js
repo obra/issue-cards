@@ -16,6 +16,8 @@ class IssueCardsError extends Error {
     this.name = 'IssueCardsError';
     this.code = code;
     this.recoveryHint = '';
+    this.displayMessage = null; // New property to store formatted message
+    this.displayed = false;     // Flag to track if error was already displayed
   }
 
   /**
@@ -26,6 +28,27 @@ class IssueCardsError extends Error {
    */
   withRecoveryHint(hint) {
     this.recoveryHint = hint;
+    return this;
+  }
+  
+  /**
+   * Add a formatted display message to the error
+   * 
+   * @param {string} message - Formatted message for display
+   * @returns {IssueCardsError} The error instance for chaining
+   */
+  withDisplayMessage(message) {
+    this.displayMessage = message;
+    return this;
+  }
+  
+  /**
+   * Mark the error as having been displayed to avoid duplicates
+   * 
+   * @returns {IssueCardsError} The error instance for chaining
+   */
+  markDisplayed() {
+    this.displayed = true;
     return this;
   }
 }

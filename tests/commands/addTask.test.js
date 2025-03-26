@@ -348,28 +348,27 @@ describe('add-task command', () => {
       
       template.getTemplateList.mockResolvedValue(['unit-test']);
       
-      await addTaskAction('New task #non-existent', { issue: '1' });
+      await expect(addTaskAction('New task #non-existent', { issue: '1' }))
+        .rejects.toThrow('Invalid tags in task');
       
-      // Verify error message was displayed
-      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('Invalid tags'));
       expect(issueManager.writeIssue).not.toHaveBeenCalled();
     });
     
     test('handles uninitialized state', async () => {
       directory.isInitialized.mockResolvedValue(false);
       
-      await addTaskAction('New task', {});
+      await expect(addTaskAction('New task', {}))
+        .rejects.toThrow('Issue tracking is not initialized');
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
       expect(issueManager.listIssues).not.toHaveBeenCalled();
     });
     
     test('handles no open issues', async () => {
       issueManager.listIssues.mockResolvedValue([]);
       
-      await addTaskAction('New task', {});
+      await expect(addTaskAction('New task', {}))
+        .rejects.toThrow('No open issues found');
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
       expect(issueManager.readIssue).not.toHaveBeenCalled();
     });
     
@@ -378,9 +377,9 @@ describe('add-task command', () => {
         { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
 
-      await addTaskAction('New task', { issue: '999' });
+      await expect(addTaskAction('New task', { issue: '999' }))
+        .rejects.toThrow('Issue #999 not found');
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
       expect(issueManager.readIssue).not.toHaveBeenCalled();
     });
   });

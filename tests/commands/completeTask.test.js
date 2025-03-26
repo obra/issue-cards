@@ -1,21 +1,20 @@
 // ABOUTME: Tests for the complete-task command
 // ABOUTME: Verifies task completion functionality
 
-const { Command } = require('commander');
-const { createCommand, completeTaskAction } = require('../../src/commands/completeTask');
-const directory = require('../../src/utils/directory');
-const issueManager = require('../../src/utils/issueManager');
-const taskParser = require('../../src/utils/taskParser');
-const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError, UserError } = require('../../src/utils/errors');
+// Mock dependencies first
+jest.mock('../../src/utils/outputManager', () => {
+  // Create a mock implementation
+  return {
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    blank: jest.fn(),
+    section: jest.fn(),
+    _reset: jest.fn(),
+  };
+});
 
-// Mock the output manager
-const outputManager = mockOutputManager();
-
-// Manually mock the outputManager module
-jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
-
-// Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn(),
   getIssueDirectoryPath: jest.fn(),
@@ -51,15 +50,22 @@ jest.mock('../../src/utils/taskExpander', () => ({
   expandTask: jest.fn().mockResolvedValue(['Expanded task step']),
 }));
 
+// Import the mocked dependencies
+const { Command } = require('commander');
+const { createCommand, completeTaskAction } = require('../../src/commands/completeTask');
+const directory = require('../../src/utils/directory');
+const issueManager = require('../../src/utils/issueManager');
+const taskParser = require('../../src/utils/taskParser');
+const outputManager = require('../../src/utils/outputManager');
 const gitDetection = require('../../src/utils/gitDetection');
 const gitOperations = require('../../src/utils/gitOperations');
+const { UninitializedError, UserError, SystemError } = require('../../src/utils/errors');
 
 describe('Complete Task command', () => {
   let commandInstance;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    outputManager._reset();
     
     // Setup directory mock
     directory.getIssueDirectoryPath.mockImplementation((subdir) => {
@@ -93,14 +99,25 @@ describe('Complete Task command', () => {
       ]);
       
       // Mock taskParser.extractTasks to return tasks
-      const tasks = [
+      const initialTasks = [
         { text: 'First task', completed: false, index: 0 },
         { text: 'Second task', completed: false, index: 1 }
       ];
-      taskParser.extractTasks.mockResolvedValue(tasks);
       
-      // Mock taskParser.findCurrentTask to return the current task
-      taskParser.findCurrentTask.mockReturnValue(tasks[0]);
+      const updatedTasks = [
+        { text: 'First task', completed: true, index: 0 },
+        { text: 'Second task', completed: false, index: 1 }
+      ];
+      
+      // First call returns initial tasks, second call returns updated tasks with first task completed
+      taskParser.extractTasks
+        .mockResolvedValueOnce(initialTasks)
+        .mockResolvedValueOnce(updatedTasks);
+      
+      // First call returns first task, second call returns second task
+      taskParser.findCurrentTask
+        .mockReturnValueOnce(initialTasks[0])
+        .mockReturnValueOnce(updatedTasks[1]);
       
       // Mock taskParser.updateTaskStatus to return updated content
       const updatedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [x] First task\n- [ ] Second task';
@@ -184,15 +201,10 @@ describe('Complete Task command', () => {
       // Mock issueManager.listIssues to return empty list
       issueManager.listIssues.mockResolvedValue([]);
       
-      await completeTaskAction();
+      await expect(completeTaskAction()).rejects.toThrow('No open issues');
       
-      // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
-      
-      // Check for UserError in the stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('No open issues');
+      // Verify issueManager.saveIssue was not called
+      expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
     test('shows error when no current task exists', async () => {
@@ -210,33 +222,23 @@ describe('Complete Task command', () => {
       // Mock taskParser.findCurrentTask to return null (no current task)
       taskParser.findCurrentTask.mockReturnValue(null);
       
-      await completeTaskAction();
+      await expect(completeTaskAction()).rejects.toThrow('No tasks found or all tasks are already completed');
       
-      // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No tasks found'));
-      
-      // Check for UserError in the stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('No tasks found');
+      // Verify taskParser.updateTaskStatus was not called
+      expect(taskParser.updateTaskStatus).not.toHaveBeenCalled();
     });
     
     test('shows error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await completeTaskAction();
+      await expect(completeTaskAction()).rejects.toThrow('Issue tracking is not initialized');
       
-      // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('Issue tracking is not initialized'));
-      
-      // Check for UninitializedError in the stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
+      // Verify issueManager.listIssues was not called
+      expect(issueManager.listIssues).not.toHaveBeenCalled();
     });
     
-    test('skips git staging if git is not available', async () => {
+    test('logs debug message if git operation fails', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
@@ -258,8 +260,12 @@ describe('Complete Task command', () => {
       const updatedContent = '# Issue 0001: Test Issue\n\n## Tasks\n- [x] First task';
       taskParser.updateTaskStatus.mockResolvedValue(updatedContent);
       
-      // Mock git not available
-      gitDetection.isGitAvailable.mockReturnValue(false);
+      // Make git available but throw an error during gitStage
+      gitDetection.isGitAvailable.mockReturnValue(true);
+      
+      // Mock git error during staging
+      const gitError = new Error('Git operation failed');
+      gitOperations.gitStage.mockRejectedValue(gitError);
       
       // Mock getIssue for context
       issueManager.getIssue.mockResolvedValue(updatedContent);
@@ -276,8 +282,8 @@ describe('Complete Task command', () => {
       // Verify debug log shows git operation skipped
       expect(outputManager.debug).toHaveBeenCalledWith(expect.stringContaining('Git operation skipped'));
       
-      // Verify git staging was not attempted
-      expect(gitOperations.gitStage).not.toHaveBeenCalled();
+      // Verify git staging was attempted and failed
+      expect(gitOperations.gitStage).toHaveBeenCalled();
     });
   });
 });

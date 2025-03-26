@@ -9,7 +9,7 @@ const { extractTasks, findCurrentTask, extractTagsFromTask } = require('../utils
 const { validateTagTemplate } = require('../utils/taskExpander');
 const { getTemplateList } = require('../utils/template');
 const output = require('../utils/outputManager');
-const { UninitializedError, UserError, IssueNotFoundError } = require('../utils/errors');
+const { UninitializedError, UserError, SystemError, IssueNotFoundError } = require('../utils/errors');
 
 /**
  * Insert a task into a list of tasks at the specified position
@@ -196,14 +196,16 @@ async function addTaskAction(taskText, options) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      throw new UserError('No open issues found');
+      throw new UserError('No open issues found')
+        .withDisplayMessage('No open issues found');
     }
     
     // Default to the first issue
@@ -214,7 +216,8 @@ async function addTaskAction(taskText, options) {
     const issue = issues.find(i => i.number === paddedNumber);
     
     if (!issue) {
-      throw new IssueNotFoundError(issueNumber);
+      throw new IssueNotFoundError(issueNumber)
+        .withDisplayMessage(`Issue #${issueNumber} not found`);
     }
     
     // Make sure issue.path exists or construct it
@@ -231,7 +234,8 @@ async function addTaskAction(taskText, options) {
     const tagErrors = await validateTags(tags);
     
     if (tagErrors.length > 0) {
-      throw new UserError(`Invalid tags in task: ${tagErrors.join(', ')}`);
+      throw new UserError(`Invalid tags in task: ${tagErrors.join(', ')}`)
+        .withDisplayMessage(`Invalid tags in task: ${tagErrors.join(', ')}`);
     }
     
     // Determine position
@@ -253,10 +257,16 @@ async function addTaskAction(taskText, options) {
     if (error instanceof UninitializedError || 
         error instanceof UserError || 
         error instanceof IssueNotFoundError) {
-      output.error(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+      // Add formatted display message if not already set
+      if (!error.displayMessage) {
+        error.withDisplayMessage(`${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`);
+      }
     } else {
-      output.error(`Failed to add task: ${error.message}`);
+      // Wrap non-IssueCardsError errors
+      const errorMsg = `Failed to add task: ${error.message}`;
+      error = new SystemError(errorMsg).withDisplayMessage(errorMsg);
     }
+    throw error;
   }
 }
 

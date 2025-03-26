@@ -27,9 +27,16 @@ async function main() {
   } catch (error) {
     // Handle different error types
     if (error instanceof IssueCardsError) {
-      // Use our structured error handling
-      const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
-      outputManager.error(`${error.message}${hint}`);
+      // Use the pre-formatted display message if available
+      const message = error.displayMessage || 
+                  `${error.message}${error.recoveryHint ? ` (${error.recoveryHint})` : ''}`;
+      
+      // Only display the error if it hasn't been displayed already
+      if (!error.displayed) {
+        outputManager.error(message);
+        error.markDisplayed();
+      }
+      
       process.exit(error.code);
     } else {
       // For unexpected errors

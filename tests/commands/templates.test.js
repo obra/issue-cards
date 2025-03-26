@@ -3,7 +3,7 @@
 
 const { Command } = require('commander');
 const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError, TemplateNotFoundError } = require('../../src/utils/errors');
+const { UninitializedError, TemplateNotFoundError, UserError, SystemError } = require('../../src/utils/errors');
 
 // Mock dependencies first
 jest.mock('../../src/utils/directory', () => ({
@@ -189,7 +189,7 @@ describe('Templates command', () => {
       expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('issue-cards create'));
     });
     
-    test('shows error when template does not exist', async () => {
+    test('throws error when template does not exist', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
@@ -197,53 +197,72 @@ describe('Templates command', () => {
       template.validateTemplate.mockResolvedValue(false);
       
       const options = { type: 'issue', name: 'nonexistent' };
-      await templatesAction(options);
       
-      // Verify error was displayed
+      try {
+        await templatesAction(options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(TemplateNotFoundError);
+        expect(error.message).toContain('nonexistent (issue)');
+        expect(error.displayMessage).toContain('Template not found');
+        expect(error.displayMessage).toContain('Run \'issue-cards templates\'');
+      }
+      
       expect(template.validateTemplate).toHaveBeenCalledWith('nonexistent', 'issue');
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
     
-    test('requires type when template name is specified', async () => {
+    test('throws error when template name is specified without type', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       const options = { name: 'feature' };
-      await templatesAction(options);
       
-      // Verify error was displayed
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('must specify type'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
+      try {
+        await templatesAction(options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UserError);
+        expect(error.message).toContain('must specify type');
+        expect(error.displayMessage).toContain('must specify type');
+        expect(error.displayMessage).toContain('Use --type issue or --type tag');
+      }
+      
       expect(template.validateTemplate).not.toHaveBeenCalled();
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
     
-    test('shows error when issue tracking is not initialized', async () => {
+    test('throws error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await templatesAction({});
+      try {
+        await templatesAction({});
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UninitializedError);
+        expect(error.displayMessage).toContain('not initialized');
+        expect(error.displayMessage).toContain('Run `issue-cards init` first');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('not initialized'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
       expect(template.getTemplateList).not.toHaveBeenCalled();
     });
     
-    test('handles errors during template listing', async () => {
+    test('throws wrapped error for errors during template listing', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock template.getTemplateList to throw error
       template.getTemplateList.mockRejectedValue(new Error('Failed to list templates'));
       
-      await templatesAction({});
-      
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to list templates'));
-      expect(mockOutput._captured.stderr).toHaveLength(1);
+      try {
+        await templatesAction({});
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SystemError);
+        expect(error.message).toContain('Failed to list templates');
+        expect(error.displayMessage).toContain('Failed to list templates');
+      }
     });
     
     test('validates template structure when validate option is provided', async () => {
@@ -357,22 +376,20 @@ describe('Templates command', () => {
       const mockTemplateContent = '# Template Content';
       template.loadTemplate.mockResolvedValue(mockTemplateContent);
       
-      // Mock templateValidation.validateTemplateStructure to throw error
-      templateValidation.validateTemplateStructure.mockRejectedValue(
-        new Error('Validation error')
-      );
+      // Mock validateTemplateStructure to throw error
+      templateValidation.validateTemplateStructure.mockRejectedValue(new Error('Validation error'));
       
-      const options = { type: 'issue', name: 'feature', validate: true };
-      await templatesAction(options);
+      try {
+        const options = { type: 'issue', name: 'feature', validate: true };
+        await templatesAction(options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UserError);
+        expect(error.message).toContain('Failed to show template');
+        expect(error.displayMessage).toContain('Failed to show template: Validation error');
+      }
       
-      // Verify template content is still displayed despite validation error
       expect(templateValidation.validateTemplateStructure).toHaveBeenCalledWith('feature', 'issue');
-      
-      // Check for template title in output
-      const hasTitle = mockOutput._captured.stdout.some(
-        entry => entry.type === 'section' && entry.message && entry.message.includes('Template: feature (issue)')
-      );
-      expect(hasTitle).toBe(true);
     });
   });
 });
