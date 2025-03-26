@@ -14,7 +14,8 @@ jest.mock('../../src/utils/outputManager', () => ({
   error: jest.fn(),
   info: jest.fn(),
   section: jest.fn(),
-  debug: jest.fn()
+  debug: jest.fn(),
+  configure: jest.fn()
 }));
 
 // Import the mocked module
@@ -66,7 +67,8 @@ describe('List command', () => {
       ];
       issueManager.listIssues.mockResolvedValue(mockIssues);
       
-      await listAction();
+      // Pass empty options object to match the updated function signature
+      await listAction({});
       
       // Verify issues were listed using the section method
       expect(outputManager.section).toHaveBeenCalledWith(
@@ -92,7 +94,8 @@ describe('List command', () => {
       // Mock issueManager.listIssues to return empty list
       issueManager.listIssues.mockResolvedValue([]);
       
-      await listAction();
+      // Pass empty options object to match the updated function signature
+      await listAction({});
       
       // Verify message about no issues was shown
       expect(outputManager.info).toHaveBeenCalledWith('No open issues found.');
@@ -103,7 +106,7 @@ describe('List command', () => {
       directory.isInitialized.mockResolvedValue(false);
       
       try {
-        await listAction();
+        await listAction({});
         fail('Expected an error to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(UninitializedError);
@@ -122,12 +125,42 @@ describe('List command', () => {
       issueManager.listIssues.mockRejectedValue(new Error('Failed to list issues'));
       
       try {
-        await listAction();
+        await listAction({});
         fail('Expected an error to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(SystemError);
         expect(error.message).toContain('Failed to list issues');
         expect(error.displayMessage).toContain('Failed to list issues');
+      }
+    });
+    
+    test('outputs issues in JSON format when json option is true', async () => {
+      // Mock console.log to capture JSON output
+      const originalConsoleLog = console.log;
+      console.log = jest.fn();
+      
+      try {
+        // Mock directory.isInitialized to return true
+        directory.isInitialized.mockResolvedValue(true);
+        
+        // Mock issueManager.listIssues to return issue list
+        const mockIssues = [
+          { number: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
+          { number: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
+        ];
+        issueManager.listIssues.mockResolvedValue(mockIssues);
+        
+        // Call with json option set to true
+        await listAction({ json: true });
+        
+        // Verify JSON was output
+        expect(console.log).toHaveBeenCalledWith(JSON.stringify(mockIssues));
+        
+        // Verify output manager was configured for JSON
+        expect(outputManager.configure).toHaveBeenCalledWith({ json: true });
+      } finally {
+        // Restore console.log
+        console.log = originalConsoleLog;
       }
     });
   });

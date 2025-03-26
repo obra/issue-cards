@@ -9,8 +9,11 @@ const { UninitializedError, SystemError } = require('../utils/errors');
 
 /**
  * Action handler for the list command
+ * 
+ * @param {Object} options - Command options
+ * @param {boolean} options.json - Output in JSON format
  */
-async function listAction() {
+async function listAction(options) {
   try {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
@@ -23,14 +26,24 @@ async function listAction() {
     // Get all open issues
     const issues = await listIssues();
     
+    // Configure JSON output if requested
+    if (options.json) {
+      output.configure({ json: true });
+    }
+    
     if (issues.length === 0) {
       output.info('No open issues found.');
       return;
     }
     
-    // Display issues
-    output.section('Open Issues', issues.map(issue => `#${issue.number}: ${issue.title}`));
-    output.info(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
+    if (options.json) {
+      // For JSON output, just print the raw JSON
+      console.log(JSON.stringify(issues));
+    } else {
+      // Display issues in standard format
+      output.section('Open Issues', issues.map(issue => `#${issue.number}: ${issue.title}`));
+      output.info(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
+    }
   } catch (error) {
     if (error instanceof UninitializedError) {
       // Just re-throw the error with display message already set
@@ -51,6 +64,7 @@ async function listAction() {
 function createCommand() {
   return new Command('list')
     .description('List all open issues')
+    .option('--json', 'Output in JSON format')
     .action(listAction);
 }
 

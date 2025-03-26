@@ -15,9 +15,31 @@ jest.mock('../../src/utils/sectionManager', () => ({
 }));
 
 describe('Context Extractor', () => {
+  const mockContent = 'Test content';
+  
+  // Common mocks
+  const mockTasks = [
+    { text: 'Task 1', completed: false, index: 0 },
+    { text: 'Task 2', completed: false, index: 1 },
+    { text: 'Task with keyword', completed: false, index: 2 }
+  ];
+
+  const mockSections = [
+    { name: 'Problem to be solved', content: 'Test problem with keyword' },
+    { name: 'Planned approach', content: 'Test approach' },
+    { name: 'Failed approaches', content: '### Failed attempt\nApproach 1 with keyword\n\n**Reason:** Reason 1' },
+    { name: 'Questions to resolve', content: '- [ ] Question about keyword?\n- [x] Another question?' },
+    { name: 'Instructions', content: 'Test instructions contain keyword' },
+    { name: 'Next steps', content: 'Next step 1' }
+  ];
+
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
+    
+    // Default mock setup for most tests
+    getSections.mockReturnValue(mockSections);
+    extractTasks.mockResolvedValue(mockTasks);
   });
 
   describe('extractContext', () => {

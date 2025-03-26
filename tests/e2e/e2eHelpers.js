@@ -6,18 +6,14 @@ const fs = require('fs');
 const { execSync, spawnSync } = require('child_process');
 
 /**
- * Run a CLI command quietly, capturing output but not displaying it
+ * Base function for running commands quietly without coverage
+ * This is used internally to avoid recursion issues
  * 
  * @param {string} command - The CLI command to run
  * @param {Object} options - Options for execSync
  * @returns {Object} The result with stdout, stderr, and status
  */
-function runQuietly(command, options = {}) {
-  // Check if we should collect coverage (can be enabled via E2E_COLLECT_COVERAGE env var)
-  if (process.env.E2E_COLLECT_COVERAGE === 'true' && command.includes('node')) {
-    return runWithCoverage(command, options);
-  }
-
+function runQuietlyBase(command, options = {}) {
   // Always override stdio to ensure we capture but don't display output
   const execOptions = {
     encoding: 'utf8',
@@ -42,6 +38,22 @@ function runQuietly(command, options = {}) {
 }
 
 /**
+ * Run a CLI command quietly, capturing output but not displaying it
+ * 
+ * @param {string} command - The CLI command to run
+ * @param {Object} options - Options for execSync
+ * @returns {Object} The result with stdout, stderr, and status
+ */
+function runQuietly(command, options = {}) {
+  // Check if we should collect coverage (can be enabled via E2E_COLLECT_COVERAGE env var)
+  if (process.env.E2E_COLLECT_COVERAGE === 'true' && command.includes('node')) {
+    return runWithCoverage(command, options);
+  }
+
+  return runQuietlyBase(command, options);
+}
+
+/**
  * Run a CLI command with coverage instrumentation using nyc (Istanbul)
  * This function collects coverage data from subprocesses by wrapping the command with nyc
  * 
@@ -56,7 +68,13 @@ function runWithCoverage(command, options = {}) {
   
   if (nodeIndex === -1) {
     console.warn('runWithCoverage can only be used with Node.js commands, falling back to runQuietly');
-    return runQuietly(command, options);
+    // Use execSync directly to avoid infinite recursion
+    return runQuietlyBase(command, options);
+  }
+  
+  // Check if this command already includes nyc to avoid infinite recursion
+  if (command.includes('nyc ')) {
+    return runQuietlyBase(command, options);
   }
   
   // Get the script part (everything after 'node')
@@ -71,8 +89,8 @@ function runWithCoverage(command, options = {}) {
   
   const nycCommand = `${nycBin} --silent --no-clean --temp-dir=./coverage/.nyc_output --report-dir=./coverage -- ${scriptWithArgs}`;
   
-  // Run the command with nyc
-  return runQuietly(nycCommand, options);
+  // Run the command with nyc, using the base function to avoid recursion
+  return runQuietlyBase(nycCommand, options);
 }
 
 /**
@@ -90,6 +108,7 @@ function expectCommand(command, validator, options = {}) {
 
 module.exports = {
   runQuietly,
+  runQuietlyBase,
   expectCommand,
   runWithCoverage
 };
