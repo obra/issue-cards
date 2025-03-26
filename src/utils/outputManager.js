@@ -115,6 +115,7 @@ function formatSectionMsg(title, content, options = {}) {
     : `${title}:`;
   
   if (!content || (Array.isArray(content) && content.length === 0)) {
+    // For empty sections, just add a newline after the header
     return `${header}\n`;
   }
   
