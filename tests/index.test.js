@@ -3,6 +3,15 @@
 
 const main = require('../src/index');
 const cli = require('../src/cli');
+const { IssueCardsError } = require('../src/utils/errors');
+
+// Mock outputManager
+jest.mock('../src/utils/outputManager', () => ({
+  configure: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  success: jest.fn()
+}));
 
 // Mock cli.createProgram
 jest.mock('../src/cli', () => ({
@@ -10,16 +19,15 @@ jest.mock('../src/cli', () => ({
 }));
 
 describe('Main Entry Point', () => {
-  let originalConsoleError;
   let originalProcessExit;
   let mockProgram;
+  let outputManager;
   
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock console.error
-    originalConsoleError = console.error;
-    console.error = jest.fn();
+    // Get reference to outputManager mock
+    outputManager = require('../src/utils/outputManager');
     
     // Mock process.exit
     originalProcessExit = process.exit;
@@ -36,7 +44,6 @@ describe('Main Entry Point', () => {
   
   afterEach(() => {
     // Restore mocks
-    console.error = originalConsoleError;
     process.exit = originalProcessExit;
   });
   
@@ -45,7 +52,7 @@ describe('Main Entry Point', () => {
     
     expect(cli.createProgram).toHaveBeenCalled();
     expect(mockProgram.parseAsync).toHaveBeenCalledWith(process.argv);
-    expect(console.error).not.toHaveBeenCalled();
+    expect(outputManager.error).not.toHaveBeenCalled();
     expect(process.exit).not.toHaveBeenCalled();
   });
   
@@ -57,7 +64,7 @@ describe('Main Entry Point', () => {
     await main();
     
     expect(cli.createProgram).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith('❌ Unexpected error: Program creation error');
+    expect(outputManager.error).toHaveBeenCalledWith('Unexpected error: Program creation error');
     expect(process.exit).toHaveBeenCalledWith(1);
   });
   
@@ -70,7 +77,51 @@ describe('Main Entry Point', () => {
     
     expect(cli.createProgram).toHaveBeenCalled();
     expect(mockProgram.parseAsync).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith('❌ Unexpected error: Parse error');
+    expect(outputManager.error).toHaveBeenCalledWith('Unexpected error: Parse error');
     expect(process.exit).toHaveBeenCalledWith(1);
+  });
+  
+  test('handles IssueCardsError with display message', async () => {
+    // Create a custom error with display message
+    const customError = new IssueCardsError('Internal error');
+    customError.withDisplayMessage('User-friendly error message');
+    customError.code = 2; // Set a custom exit code
+    
+    mockProgram.parseAsync.mockRejectedValue(customError);
+    
+    await main();
+    
+    expect(outputManager.error).toHaveBeenCalledWith('User-friendly error message');
+    expect(process.exit).toHaveBeenCalledWith(2);
+  });
+  
+  test('handles IssueCardsError without display message', async () => {
+    // Create a custom error without display message but with recovery hint
+    const customError = new IssueCardsError('Internal error');
+    customError.withRecoveryHint('Try again later');
+    customError.code = 3; // Set a custom exit code
+    
+    mockProgram.parseAsync.mockRejectedValue(customError);
+    
+    await main();
+    
+    expect(outputManager.error).toHaveBeenCalledWith('Internal error (Try again later)');
+    expect(process.exit).toHaveBeenCalledWith(3);
+  });
+  
+  test('prevents duplicate error display', async () => {
+    // Create a custom error that was already displayed
+    const customError = new IssueCardsError('Internal error');
+    customError.withDisplayMessage('Already displayed error');
+    customError.markDisplayed(); // Mark as already displayed
+    customError.code = 4; // Set a custom exit code
+    
+    mockProgram.parseAsync.mockRejectedValue(customError);
+    
+    await main();
+    
+    // Should not call error method again
+    expect(outputManager.error).not.toHaveBeenCalled();
+    expect(process.exit).toHaveBeenCalledWith(4);
   });
 });
