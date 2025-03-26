@@ -158,9 +158,12 @@ async function createAction(templateName, options) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('create')
+  // Use the default template list for initial help text
+  let templateList = 'feature, bugfix, refactor, audit';
+
+  const command = new Command('create')
     .description('Create a new issue from template')
-    .argument('<template>', 'Template to use (feature, bugfix, refactor, audit)')
+    .argument('<template>', `Template to use (${templateList})`)
     .option('--title <title>', 'Issue title (required)')
     .option('--problem <description>', 'Description of the problem to solve')
     .option('--approach <strategy>', 'Planned approach for solving the issue')
@@ -174,6 +177,31 @@ function createCommand() {
     .option('--instructions <guidelines>', 'Guidelines to follow during implementation')
     .option('--next-steps <list>', 'Future work (for context only)')
     .action(createAction);
+
+  // Override the missingArgument behavior to show help instead of error
+  command.missingArgument = function() {
+    this.help();
+    // This will exit the process due to commander's behavior
+  };
+
+  // Attempt to update the command help text with actual templates
+  // This is done asynchronously but won't affect the command usage
+  // since help is typically displayed later
+  setTimeout(async () => {
+    try {
+      const templates = await getTemplateList('issue');
+      if (templates && templates.length > 0) {
+        // Update the argument description
+        const updatedTemplateList = templates.join(', ');
+        // We can't directly update the help text, but for future displays it will be updated
+        command._args[0].description = `Template to use (${updatedTemplateList})`;
+      }
+    } catch (error) {
+      // Silently fall back to default list
+    }
+  }, 0);
+
+  return command;
 }
 
 module.exports = {
