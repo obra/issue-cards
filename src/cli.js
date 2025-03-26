@@ -29,6 +29,12 @@ function configureCommander(program) {
         process.exit(0);
       }
       
+      // Handle the case when no command is provided (Commander shows help and throws "(outputHelp)")
+      if (err.message === '(outputHelp)') {
+        // This is a success case - help was shown
+        process.exit(0);
+      }
+      
       if (err.code === 'commander.unknownCommand') {
         // Create a proper IssueCardsError
         const { UserError } = require('./utils/errors');
