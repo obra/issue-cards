@@ -2,6 +2,7 @@
 // ABOUTME: Verifies initialization of the issue tracking system
 
 const { mockOutputManager } = require('../utils/testHelpers');
+const { SystemError } = require('../../src/utils/errors');
 const directory = require('../../src/utils/directory');
 const templateInit = require('../../src/utils/templateInit');
 
@@ -92,7 +93,7 @@ describe('Init command', () => {
       );
     });
     
-    test('handles errors during initialization', async () => {
+    test('throws error when initialization fails', async () => {
       // Mock isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
@@ -100,16 +101,18 @@ describe('Init command', () => {
       const error = new Error('Failed to create directories');
       directory.createDirectoryStructure.mockRejectedValue(error);
       
-      await initAction();
+      // Expect the action to throw a SystemError
+      try {
+        await initAction();
+        fail('Expected an error to be thrown');
+      } catch (thrownError) {
+        expect(thrownError).toBeInstanceOf(SystemError);
+        expect(thrownError.message).toContain('Failed to initialize issue tracking');
+        expect(thrownError.displayMessage).toContain('Failed to initialize issue tracking');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize'));
-      expect(mockOutput._captured.stderr).toContainEqual(
-        expect.objectContaining({
-          type: 'error',
-          message: expect.stringContaining('Failed to initialize')
-        })
-      );
+      // Directory creation should have been attempted
+      expect(directory.createDirectoryStructure).toHaveBeenCalled();
     });
   });
 });

@@ -13,7 +13,7 @@ const {
   normalizeSectionName 
 } = require('../utils/sectionManager');
 const output = require('../utils/outputManager');
-const { UserError, SectionNotFoundError } = require('../utils/errors');
+const { UserError, SectionNotFoundError, SystemError } = require('../utils/errors');
 
 /**
  * Log a failed approach to an issue
@@ -32,7 +32,9 @@ async function logFailureAction(approachText, options = {}) {
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
       if (!currentIssue) {
-        throw new UserError('No current issue found').withRecoveryHint('Specify an issue number or set a current issue');
+        throw new UserError('No current issue found')
+          .withRecoveryHint('Specify an issue number or set a current issue')
+          .withDisplayMessage('No current issue found (Specify an issue number or set a current issue)');
       }
       issueNumber = currentIssue.number;
     }
@@ -48,7 +50,8 @@ async function logFailureAction(approachText, options = {}) {
     const section = findSectionByName(content, sectionName);
     
     if (!section) {
-      throw new SectionNotFoundError(sectionName);
+      throw new SectionNotFoundError(sectionName)
+        .withDisplayMessage(`Section "${sectionName}" not found in issue`);
     }
     
     // Add the failed approach to the section
@@ -66,11 +69,13 @@ async function logFailureAction(approachText, options = {}) {
     output.success(`Logged failed approach to issue #${issueNumber}`);
   } catch (err) {
     if (err instanceof UserError || err instanceof SectionNotFoundError) {
-      output.error(`${err.message}${err.recoveryHint ? ` (${err.recoveryHint})` : ''}`);
+      // Just re-throw the error with display message already set
+      throw err;
     } else {
-      output.error(`Failed to log approach: ${err.message}`);
+      // Wrap generic errors in a SystemError
+      throw new SystemError(`Failed to log approach: ${err.message}`)
+        .withDisplayMessage(`Failed to log approach: ${err.message}`);
     }
-    throw err;
   }
 }
 

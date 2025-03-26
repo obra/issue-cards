@@ -5,14 +5,20 @@ const { Command } = require('commander');
 const { createCommand, listAction } = require('../../src/commands/list');
 const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
-const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError } = require('../../src/utils/errors');
+// No need for mockOutputManager since we're mocking directly
+const { UninitializedError, SystemError } = require('../../src/utils/errors');
 
-// Mock the output manager
-const outputManager = mockOutputManager();
+// Mock outputManager
+jest.mock('../../src/utils/outputManager', () => ({
+  success: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  section: jest.fn(),
+  debug: jest.fn()
+}));
 
-// Manually mock the outputManager module
-jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
+// Import the mocked module
+const outputManager = require('../../src/utils/outputManager');
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -28,7 +34,11 @@ describe('List command', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
-    outputManager._reset();
+    // Reset mock output functions
+    outputManager.success.mockClear();
+    outputManager.error.mockClear();
+    outputManager.info.mockClear();
+    outputManager.section.mockClear();
   });
   
   describe('createCommand', () => {
@@ -67,10 +77,12 @@ describe('List command', () => {
       // Verify total count info message
       expect(outputManager.info).toHaveBeenCalledWith('Total: 2 open issues');
       
-      // Check the captured stdout for sections
-      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
-      expect(sectionCalls.length).toBe(1);
-      expect(sectionCalls[0].message).toContain('Open Issues');
+      // Verify the section was called correctly
+      expect(outputManager.section.mock.calls.length).toBe(1);
+      expect(outputManager.section).toHaveBeenCalledWith(
+        'Open Issues',
+        expect.arrayContaining(['#0001: First Issue', '#0002: Second Issue'])
+      );
     });
     
     test('shows message when no issues exist', async () => {
@@ -84,47 +96,39 @@ describe('List command', () => {
       
       // Verify message about no issues was shown
       expect(outputManager.info).toHaveBeenCalledWith('No open issues found.');
-      
-      // Check the captured stdout
-      const infoCalls = outputManager._captured.stdout.filter(entry => entry.type === 'info');
-      expect(infoCalls.length).toBe(1);
-      expect(infoCalls[0].message).toContain('No open issues');
     });
     
-    test('shows error when issue tracking is not initialized', async () => {
+    test('throws error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await listAction();
-      
-      // Verify error message was logged using the error method
-      expect(outputManager.error).toHaveBeenCalledWith('Issue tracking is not initialized (Run `issue-cards init` first)');
-      
-      // Check the captured stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
+      try {
+        await listAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UninitializedError);
+        expect(error.displayMessage).toContain('Issue tracking is not initialized');
+      }
       
       // Verify the listIssues method wasn't called
       expect(issueManager.listIssues).not.toHaveBeenCalled();
     });
     
-    test('handles errors during issue listing', async () => {
+    test('wraps and throws errors during issue listing', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock issueManager.listIssues to throw error
       issueManager.listIssues.mockRejectedValue(new Error('Failed to list issues'));
       
-      await listAction();
-      
-      // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith('Failed to list issues: Failed to list issues');
-      
-      // Check the captured stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('Failed to list issues');
+      try {
+        await listAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SystemError);
+        expect(error.message).toContain('Failed to list issues');
+        expect(error.displayMessage).toContain('Failed to list issues');
+      }
     });
   });
 });

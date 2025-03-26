@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { Command } = require('commander');
 const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError, TemplateNotFoundError, UserError } = require('../../src/utils/errors');
+const { UninitializedError, TemplateNotFoundError, UserError, SystemError } = require('../../src/utils/errors');
 
 // Mock dependencies first
 jest.mock('fs', () => ({
@@ -171,7 +171,7 @@ describe('Create command', () => {
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
-    test('shows error when issue tracking is not initialized', async () => {
+    test('throws error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
@@ -180,15 +180,18 @@ describe('Create command', () => {
         title: 'Test Issue'
       };
       
-      await createAction(templateName, options);
+      try {
+        await createAction(templateName, options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UninitializedError);
+        expect(error.displayMessage).toContain('not initialized');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/not initialized/i));
-      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
-    test('shows error when template is invalid', async () => {
+    test('throws error when template is invalid', async () => {
       // Mock template validation to fail
       template.validateTemplate.mockResolvedValue(false);
       
@@ -197,25 +200,31 @@ describe('Create command', () => {
         title: 'Test Issue'
       };
       
-      await createAction(templateName, options);
+      try {
+        await createAction(templateName, options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(TemplateNotFoundError);
+        expect(error.displayMessage).toContain('Template not found');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/template not found/i));
-      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
-    test('shows error when title is missing', async () => {
+    test('throws error when title is missing', async () => {
       const templateName = 'feature';
       const options = {
         // No title provided
       };
       
-      await createAction(templateName, options);
+      try {
+        await createAction(templateName, options);
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UserError);
+        expect(error.displayMessage).toContain('title is required');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringMatching(/title is required/i));
-      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     
@@ -271,7 +280,7 @@ describe('Create command', () => {
       expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/open/issue-0001.md');
     });
     
-    test('handles errors during issue creation', async () => {
+    test('wraps and throws system errors during issue creation', async () => {
       // Mock loadTemplate to throw error
       template.loadTemplate.mockRejectedValue(new Error('Failed to load template'));
       
@@ -280,11 +289,16 @@ describe('Create command', () => {
         title: 'Test Issue'
       };
       
-      await createAction(templateName, options);
+      try {
+        await createAction(templateName, options);
+        // If we get here, the test should fail because an error should have been thrown
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SystemError);
+        expect(error.message).toContain('Failed to create issue');
+        expect(error.displayMessage).toContain('Failed to create issue');
+      }
       
-      // Verify error message was logged
-      expect(mockOutput.error).toHaveBeenCalledWith(expect.stringContaining('Failed to create issue'));
-      expect(mockOutput._captured.stderr.length).toBeGreaterThan(0);
       expect(issueManager.saveIssue).not.toHaveBeenCalled();
     });
     

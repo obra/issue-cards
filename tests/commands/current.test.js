@@ -3,18 +3,22 @@
 
 const { Command } = require('commander');
 const { createCommand, currentAction } = require('../../src/commands/current');
+// Get our mocked versions after setting up the mocks
+const outputManager = require('../../src/utils/outputManager');
 const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
 const taskParser = require('../../src/utils/taskParser');
 const taskExpander = require('../../src/utils/taskExpander');
-const { mockOutputManager } = require('../utils/testHelpers');
-const { UninitializedError } = require('../../src/utils/errors');
+const { UninitializedError, UserError, SystemError } = require('../../src/utils/errors');
 
-// Mock the output manager
-const outputManager = mockOutputManager();
-
-// Manually mock the outputManager module
-jest.mock('../../src/utils/outputManager', () => outputManager, { virtual: true });
+// Mock outputManager and other dependencies
+jest.mock('../../src/utils/outputManager', () => ({
+  success: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  section: jest.fn(),
+  debug: jest.fn()
+}));
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -40,7 +44,6 @@ describe('Current command', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
-    outputManager._reset();
   });
   
   describe('createCommand', () => {
@@ -91,40 +94,34 @@ describe('Current command', () => {
       expect(taskParser.findCurrentTask).toHaveBeenCalledWith(tasks);
       expect(taskExpander.expandTask).toHaveBeenCalledWith(tasks[0]);
       
-      // Check section output
-      expect(outputManager.section).toHaveBeenCalledWith('TASK', 'First task');
+      // Check section output - the display utility uses 'CURRENT TASK' format
       expect(outputManager.section).toHaveBeenCalledWith('CURRENT TASK', 'First task');
       expect(outputManager.section).toHaveBeenCalledWith('TASKS', expandedSteps.map((step, idx) => `${idx + 1}. ${step}`));
       expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
       
-      // Verify the output manager recorded the outputs
-      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
-      expect(sectionCalls.length).toBeGreaterThanOrEqual(3);
+      // Verify the output manager was called enough times
+      expect(outputManager.section.mock.calls.length).toBeGreaterThanOrEqual(3);
       
-      // Check for specific content
-      const sectionTexts = sectionCalls.map(call => call.message);
-      expect(sectionTexts.some(text => text.includes('TASK'))).toBe(true);
-      expect(sectionTexts.some(text => text.includes('First task'))).toBe(true);
-      expect(sectionTexts.some(text => text.includes('NEXT TASK'))).toBe(true);
-      expect(sectionTexts.some(text => text.includes('Second task'))).toBe(true);
+      // Check for specific content in the calls
+      expect(outputManager.section).toHaveBeenCalledWith(expect.stringContaining('TASK'), expect.any(String));
+      expect(outputManager.section).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('First task'));
+      expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
     });
     
-    test('shows error when no open issues exist', async () => {
+    test('throws error when no open issues exist', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
       // Mock issueManager.listIssues to return empty list
       issueManager.listIssues.mockResolvedValue([]);
       
-      await currentAction();
-      
-      // Verify error message was logged
-      expect(outputManager.error).toHaveBeenCalledWith(expect.stringContaining('No open issues'));
-      
-      // Verify the error is in the captured stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('No open issues');
+      try {
+        await currentAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UserError);
+        expect(error.displayMessage).toContain('No open issues');
+      }
     });
     
     test('shows success when all tasks are completed', async () => {
@@ -148,28 +145,39 @@ describe('Current command', () => {
       
       await currentAction();
       
-      // Verify completion message was logged
+      // Verify success was called once with the right message
+      expect(outputManager.success).toHaveBeenCalledTimes(1);
       expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('All tasks completed'));
-      
-      // Verify the success message is in the captured stdout
-      const successCalls = outputManager._captured.stdout.filter(entry => entry.type === 'success');
-      expect(successCalls.length).toBe(1);
-      expect(successCalls[0].message).toContain('All tasks completed');
     });
     
-    test('shows error when issue tracking is not initialized', async () => {
+    test('throws error when issue tracking is not initialized', async () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await currentAction();
+      try {
+        await currentAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UninitializedError);
+        expect(error.displayMessage).toContain('Issue tracking is not initialized');
+      }
+    });
+    
+    test('wraps and throws system errors', async () => {
+      // Mock directory.isInitialized to return true
+      directory.isInitialized.mockResolvedValue(true);
       
-      // Verify error message was logged using the new UninitializedError
-      expect(outputManager.error).toHaveBeenCalledWith('Issue tracking is not initialized', expect.anything());
+      // Mock listIssues to throw a generic error
+      issueManager.listIssues.mockRejectedValue(new Error('Database error'));
       
-      // Verify the error message is in the captured stderr
-      const errorCalls = outputManager._captured.stderr.filter(entry => entry.type === 'error');
-      expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0].message).toContain('Issue tracking is not initialized');
+      try {
+        await currentAction();
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SystemError);
+        expect(error.message).toContain('Failed to show current task');
+        expect(error.displayMessage).toContain('Failed to show current task: Database error');
+      }
     });
     
     test('extracts context from issue and displays it', async () => {
@@ -217,14 +225,6 @@ Follow these instructions.
       expect(outputManager.section).toHaveBeenCalledWith('Problem to be solved', 'This is a test problem.');
       expect(outputManager.section).toHaveBeenCalledWith('Failed approaches', ['Failed approach 1', 'Failed approach 2']);
       expect(outputManager.section).toHaveBeenCalledWith('Instructions', 'Follow these instructions.');
-      
-      // Check that all necessary sections were output
-      const sectionCalls = outputManager._captured.stdout.filter(entry => entry.type === 'section');
-      const sectionTitles = sectionCalls.map(call => call.message);
-      
-      expect(sectionTitles.some(title => title.includes('Problem to be solved'))).toBe(true);
-      expect(sectionTitles.some(title => title.includes('Failed approaches'))).toBe(true);
-      expect(sectionTitles.some(title => title.includes('Instructions'))).toBe(true);
     });
   });
 });

@@ -4,6 +4,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { logFailureAction } = require('../../src/commands/logFailure');
+const { UserError, SectionNotFoundError, SystemError } = require('../../src/utils/errors');
 // Import after mocking
 const { getIssueFilePath } = require('../../src/utils/issueManager');
 
@@ -195,9 +196,42 @@ Next steps for current issue
     
     fs.readFile.mockResolvedValue(contentWithoutSection);
 
-    // Should throw an error
-    await expect(logFailureAction('This will fail', { 
-      issueNumber: 1 
-    })).rejects.toThrow('Section "Failed approaches" not found in issue');
+    // Should throw a SectionNotFoundError with displayMessage
+    try {
+      await logFailureAction('This will fail', { issueNumber: 1 });
+      fail('Expected an error to be thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SectionNotFoundError);
+      expect(error.displayMessage).toContain('Section "Failed approaches" not found');
+    }
+  });
+  
+  test('should throw UserError if no current issue and no issue number', async () => {
+    // Mock getCurrentIssue to return null
+    getCurrentIssue.mockResolvedValue(null);
+    
+    try {
+      await logFailureAction('This will fail', {});
+      fail('Expected an error to be thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(UserError);
+      expect(error.displayMessage).toContain('No current issue found');
+      expect(error.recoveryHint).toContain('Specify an issue number');
+    }
+  });
+  
+  test('should wrap and throw system errors', async () => {
+    // Mock fs.readFile to throw a generic error
+    const fsError = new Error('File system error');
+    fs.readFile.mockRejectedValue(fsError);
+    
+    try {
+      await logFailureAction('This will fail', { issueNumber: 1 });
+      fail('Expected an error to be thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SystemError);
+      expect(error.message).toContain('Failed to log approach');
+      expect(error.displayMessage).toContain('Failed to log approach: File system error');
+    }
   });
 });

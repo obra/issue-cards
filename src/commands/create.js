@@ -9,7 +9,7 @@ const { getNextIssueNumber, saveIssue } = require('../utils/issueManager');
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
 const output = require('../utils/outputManager');
-const { UninitializedError, TemplateNotFoundError, UserError } = require('../utils/errors');
+const { UninitializedError, TemplateNotFoundError, UserError, SystemError } = require('../utils/errors');
 
 /**
  * Format multi-line input as a list
@@ -89,19 +89,23 @@ async function createAction(templateName, options) {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // Validate template exists
     const validTemplate = await validateTemplate(templateName, 'issue');
     
     if (!validTemplate) {
-      throw new TemplateNotFoundError(templateName);
+      throw new TemplateNotFoundError(templateName)
+        .withDisplayMessage(`Template not found: ${templateName}`);
     }
     
     // Require title
     if (!options.title) {
-      throw new UserError('A title is required').withRecoveryHint('Use --title "Your issue title"');
+      throw new UserError('A title is required')
+        .withRecoveryHint('Use --title "Your issue title"')
+        .withDisplayMessage('A title is required (Use --title "Your issue title")');
     }
     
     // Get next issue number
@@ -138,11 +142,12 @@ async function createAction(templateName, options) {
     if (error instanceof UninitializedError || 
         error instanceof TemplateNotFoundError || 
         error instanceof UserError) {
-      // Use structured error with recovery hint if available
-      const hint = error.recoveryHint ? ` (${error.recoveryHint})` : '';
-      output.error(`${error.message}${hint}`);
+      // Just re-throw the error with display message already set
+      throw error;
     } else {
-      output.error(`Failed to create issue: ${error.message}`);
+      // Wrap generic errors in a SystemError with display message
+      throw new SystemError(`Failed to create issue: ${error.message}`)
+        .withDisplayMessage(`Failed to create issue: ${error.message}`);
     }
   }
 }

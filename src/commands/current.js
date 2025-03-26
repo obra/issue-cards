@@ -9,7 +9,7 @@ const { expandTask } = require('../utils/taskExpander');
 const { displayTaskWithContext } = require('../utils/taskDisplay');
 // Output manager is used for all output
 const output = require('../utils/outputManager');
-const { UninitializedError } = require('../utils/errors');
+const { UninitializedError, UserError, SystemError } = require('../utils/errors');
 
 /**
  * Extract context from an issue's content
@@ -99,15 +99,16 @@ async function currentAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // Get open issues
     const issues = await listIssues();
     
     if (issues.length === 0) {
-      output.error('No open issues found.');
-      return;
+      throw new UserError('No open issues found.')
+        .withDisplayMessage('No open issues found.');
     }
     
     // Use the first issue as the current one
@@ -149,10 +150,13 @@ async function currentAction() {
       output.info('Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.');
     }
   } catch (error) {
-    if (error instanceof UninitializedError) {
-      output.error(error.message, error.recoveryHint);
+    if (error instanceof UninitializedError || error instanceof UserError) {
+      // Re-throw the error with display message already set
+      throw error;
     } else {
-      output.error(`Failed to show current task: ${error.message}`);
+      // Wrap generic errors in a SystemError
+      throw new SystemError(`Failed to show current task: ${error.message}`)
+        .withDisplayMessage(`Failed to show current task: ${error.message}`);
     }
   }
 }

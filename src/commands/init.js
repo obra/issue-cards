@@ -5,6 +5,7 @@ const { Command } = require('commander');
 const { isInitialized, createDirectoryStructure } = require('../utils/directory');
 const { copyDefaultTemplates } = require('../utils/templateInit');
 const output = require('../utils/outputManager');
+const { SystemError } = require('../utils/errors');
 
 /**
  * Action handler for the init command
@@ -29,7 +30,8 @@ async function initAction() {
     output.success('Created config templates');
     output.success('Ready to create your first issue');
   } catch (error) {
-    output.error(`Failed to initialize issue tracking: ${error.message}`);
+    throw new SystemError(`Failed to initialize issue tracking: ${error.message}`)
+      .withDisplayMessage(`Failed to initialize issue tracking: ${error.message}`);
   }
 }
 

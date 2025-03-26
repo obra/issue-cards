@@ -5,7 +5,7 @@ const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
 const { listIssues } = require('../utils/issueManager');
 const output = require('../utils/outputManager');
-const { UninitializedError } = require('../utils/errors');
+const { UninitializedError, SystemError } = require('../utils/errors');
 
 /**
  * Action handler for the list command
@@ -16,7 +16,8 @@ async function listAction() {
     const initialized = await isInitialized();
     
     if (!initialized) {
-      throw new UninitializedError();
+      throw new UninitializedError()
+        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
     
     // Get all open issues
@@ -32,9 +33,12 @@ async function listAction() {
     output.info(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
   } catch (error) {
     if (error instanceof UninitializedError) {
-      output.error(`${error.message} (${error.recoveryHint})`);
+      // Just re-throw the error with display message already set
+      throw error;
     } else {
-      output.error(`Failed to list issues: ${error.message}`);
+      // Wrap generic errors in a SystemError
+      throw new SystemError(`Failed to list issues: ${error.message}`)
+        .withDisplayMessage(`Failed to list issues: ${error.message}`);
     }
   }
 }
