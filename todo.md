@@ -1,4 +1,101 @@
-# Issue Cards Error Handling Refactoring
+# Issue Cards TODO List
+
+## 1. Context Extractor Simplification
+
+### Overview
+The current implementation of contextExtractor.js contains unnecessary complexity with features that attempt to do smart parsing, "relevance" detection, and complex section processing. These features have low test coverage and add complexity without providing substantial value.
+
+### Goal
+Simplify the contextExtractor module to focus on basic section extraction without attempting to do smart parsing or relevance detection.
+
+### Tasks
+
+1. **Remove Unnecessary Functions**:
+   - [ ] Remove `getContextForTask` function (lines 127-160)
+   - [ ] Remove `getRelevantSections` function (lines 169-219) 
+   - [ ] Remove `isRelevantToTask` function (lines 228-236)
+   - [ ] Remove `getSignificantWords` function (lines 244-258)
+   - [ ] Simplify `parseQuestions` and `parseFailedApproaches` functions
+
+2. **Simplify extractContext Function**:
+   - [ ] Modify to return raw section content rather than attempting complex parsing
+   - [ ] Return a simple object with section names as keys and their content as values
+   - [ ] Keep basic task extraction but avoid complex relevance determination
+
+3. **Update Dependent Code**:
+   - [ ] Update any code that calls `getContextForTask` to use `extractContext` instead
+   - [ ] Update any code that calls `getRelevantSections` to use `extractContext` instead and do simple text matching if needed
+   - [ ] For sections like "Questions to resolve" and "Failed approaches," return simple text content rather than structured objects
+
+4. **Update Tests**:
+   - [ ] Update `contextExtractor.test.js` to test the simplified functionality
+   - [ ] Remove tests for the eliminated functions
+   - [ ] Add tests for the simplified `extractContext` function
+
+5. **Documentation Updates**:
+   - [ ] Update inline documentation to reflect the simplified approach
+   - [ ] Update any user documentation that mentions the removed functionality
+
+### Implementation Approach
+
+1. Create a simplified version of `extractContext` that could look like:
+   ```javascript
+   async function extractContext(content) {
+     // Extract tasks using existing task parser
+     const tasks = await extractTasks(content);
+     
+     // Get all sections
+     const sections = getSections(content);
+     
+     // Initialize context object with tasks
+     const context = { tasks };
+     
+     // Fill in context from sections - just use raw content
+     for (const section of sections) {
+       // Use section name as key, content as value
+       context[section.name] = section.content;
+     }
+     
+     return context;
+   }
+   ```
+
+2. For any code using the more complex functions, provide simple alternatives:
+   ```javascript
+   // Instead of getContextForTask
+   async function getBasicTaskContext(content, taskText) {
+     const context = await extractContext(content);
+     const task = context.tasks.find(t => t.text.includes(taskText));
+     return { ...context, task };
+   }
+   
+   // Instead of getRelevantSections - simple text search
+   function findSectionsWithText(context, searchText) {
+     const searchTextLower = searchText.toLowerCase();
+     const relevantSections = {};
+     
+     // Simple text matching on section contents
+     Object.entries(context).forEach(([name, content]) => {
+       if (typeof content === 'string' && content.toLowerCase().includes(searchTextLower)) {
+         relevantSections[name] = content;
+       }
+     });
+     
+     return relevantSections;
+   }
+   ```
+
+### Expected Benefits
+
+1. **Reduced Complexity**: Eliminating "smart" parsing features that aren't needed
+2. **Improved Maintainability**: Simpler code is easier to understand and modify
+3. **Better Test Coverage**: Easier to achieve high coverage on simpler functions
+4. **Focus on Core Functionality**: Concentrate on the essential purpose of extracting section content
+
+### Timeline
+Aim to complete this simplification within one sprint, as it primarily involves removing code rather than adding new functionality.
+
+## 2. Issue Cards Error Handling Refactoring
 
 ## Overview
 
