@@ -12,26 +12,29 @@ describe('Current Command Output Format', () => {
   let originalIssuesDir;
 
   // Helper function to run CLI commands and capture output
+  const { runQuietly } = require('./e2eHelpers');
+  
   const runCommand = (command) => {
-    try {
-      return execSync(`node ${binPath} ${command}`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { 
-          ...process.env, 
-          ISSUE_CARDS_DIR: path.join(testDir, '.issues'),
-          // Force colors off to ensure consistent output in all environments
-          FORCE_COLOR: '0',
-          NO_COLOR: '1' 
-        }
-      });
-    } catch (error) {
-      console.error(`Command failed: ${command}`);
-      console.error(`Error: ${error.message}`);
-      console.error(`Stdout: ${error.stdout}`);
-      console.error(`Stderr: ${error.stderr}`);
+    const result = runQuietly(`node ${binPath} ${command}`, {
+      cwd: testDir,
+      env: { 
+        ...process.env, 
+        ISSUE_CARDS_DIR: path.join(testDir, '.issues'),
+        // Force colors off to ensure consistent output in all environments
+        FORCE_COLOR: '0',
+        NO_COLOR: '1' 
+      }
+    });
+    
+    // If it's an error result (non-zero status), throw with the stderr
+    if (result.status !== 0) {
+      const error = new Error(`Command failed: ${command}`);
+      error.stderr = result.stderr;
+      error.stdout = result.stdout;
       throw error;
     }
+    
+    return result.stdout;
   };
 
   beforeAll(() => {

@@ -13,12 +13,14 @@ const { execSync } = require('child_process');
  * @returns {Object} The result with stdout, stderr, and status
  */
 function runQuietly(command, options = {}) {
+  // Always override stdio to ensure we capture but don't display output
   const execOptions = {
     encoding: 'utf8',
     // Capture stdio but don't output to the console
     stdio: ['ignore', 'pipe', 'pipe'],
-    // Merge with provided options
-    ...options
+    // Merge with provided options, but don't allow stdio to be overridden
+    ...options,
+    stdio: ['ignore', 'pipe', 'pipe']
   };
 
   try {

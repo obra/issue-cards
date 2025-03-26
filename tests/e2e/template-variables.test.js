@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { runQuietly } = require('./e2eHelpers');
 
 describe('Template Variable Rendering E2E', () => {
   let testDir;
@@ -49,51 +49,46 @@ describe('Template Variable Rendering E2E', () => {
   });
   
   test('template variables are correctly replaced (double braces syntax)', () => {
-    try {
-      // 1. Initialize issue tracking
-      execSync(`node ${binPath} init`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env }
-      });
-      
-      // Verify template was created with double braces
-      const featureTemplatePath = path.join(testDir, '.issues/config/templates/issue/feature.md');
-      const templateContent = fs.readFileSync(featureTemplatePath, 'utf8');
-      
-      // Check that the template uses double braces
-      expect(templateContent).toContain('{{NUMBER}}');
-      expect(templateContent).toContain('{{TITLE}}');
-      expect(templateContent).toContain('{{PROBLEM}}');
-      
-      // 2. Create a new issue
-      execSync(`node ${binPath} create feature --title "Template Variables Test" --problem "Testing variable replacement" --approach "Using double braces"`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env }
-      });
-      
-      // Find the created issue file
-      const openDir = path.join(testDir, '.issues/open');
-      const issueFiles = fs.readdirSync(openDir);
-      expect(issueFiles.length).toBeGreaterThan(0);
-      
-      const issueFile = path.join(openDir, issueFiles[0]);
-      const issueContent = fs.readFileSync(issueFile, 'utf8');
-      
-      // 3. Verify variables were replaced properly
-      expect(issueContent).toContain('# Issue 0001: Template Variables Test');
-      expect(issueContent).toContain('Testing variable replacement');
-      expect(issueContent).toContain('Using double braces');
-      
-      // No double-brace variables should remain
-      expect(issueContent).not.toContain('{{NUMBER}}');
-      expect(issueContent).not.toContain('{{TITLE}}');
-      expect(issueContent).not.toContain('{{PROBLEM}}');
-      expect(issueContent).not.toContain('{{APPROACH}}');
-    } catch (error) {
-      console.error('Test failed:', error);
-      throw error;
-    }
+    // 1. Initialize issue tracking
+    const initResult = runQuietly(`node ${binPath} init`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    expect(initResult.status).toBe(0);
+    
+    // Verify template was created with double braces
+    const featureTemplatePath = path.join(testDir, '.issues/config/templates/issue/feature.md');
+    const templateContent = fs.readFileSync(featureTemplatePath, 'utf8');
+    
+    // Check that the template uses double braces
+    expect(templateContent).toContain('{{NUMBER}}');
+    expect(templateContent).toContain('{{TITLE}}');
+    expect(templateContent).toContain('{{PROBLEM}}');
+    
+    // 2. Create a new issue
+    const createResult = runQuietly(`node ${binPath} create feature --title "Template Variables Test" --problem "Testing variable replacement" --approach "Using double braces"`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    expect(createResult.status).toBe(0);
+    
+    // Find the created issue file
+    const openDir = path.join(testDir, '.issues/open');
+    const issueFiles = fs.readdirSync(openDir);
+    expect(issueFiles.length).toBeGreaterThan(0);
+    
+    const issueFile = path.join(openDir, issueFiles[0]);
+    const issueContent = fs.readFileSync(issueFile, 'utf8');
+    
+    // 3. Verify variables were replaced properly
+    expect(issueContent).toContain('# Issue 0001: Template Variables Test');
+    expect(issueContent).toContain('Testing variable replacement');
+    expect(issueContent).toContain('Using double braces');
+    
+    // No double-brace variables should remain
+    expect(issueContent).not.toContain('{{NUMBER}}');
+    expect(issueContent).not.toContain('{{TITLE}}');
+    expect(issueContent).not.toContain('{{PROBLEM}}');
+    expect(issueContent).not.toContain('{{APPROACH}}');
   });
 });

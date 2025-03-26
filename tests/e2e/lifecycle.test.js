@@ -13,28 +13,21 @@ describe('Issue Cards E2E Lifecycle', () => {
   let originalCwd;
 
   // Helper function to run CLI commands and capture output
+  const { runQuietly } = require('./e2eHelpers');
+  
   const runCommand = (command) => {
-    try {
-      return execSync(`node ${binPath} ${command}`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-    } catch (error) {
-      // Instead of throwing, return the error output for assertion
-      console.error(`Command failed: ${command}`);
-      console.error(`Error: ${error.message}`);
-      console.error(`Stdout: ${error.stdout || ''}`);
-      console.error(`Stderr: ${error.stderr || ''}`);
-      
+    const result = runQuietly(`node ${binPath} ${command}`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // For the lifecycle tests, we want to capture both success and error outputs
+    if (result.status !== 0) {
       // Return the error output so tests can check it
-      if (error.stderr) return error.stderr;
-      if (error.stdout) return error.stdout;
-      if (error.message) return error.message;
-      
-      // Last resort - return a generic error message
-      return "Error running command";
+      return result.stderr || result.stdout || "Error running command";
     }
+    
+    return result.stdout;
   };
 
   beforeAll(() => {
@@ -325,11 +318,11 @@ describe('Issue Cards E2E Lifecycle', () => {
     const customDir = path.join(testDir, 'custom-issues-dir');
     
     // Run init with custom directory
-    execSync(`node ${binPath} init`, {
+    const initResult = runQuietly(`node ${binPath} init`, {
       cwd: testDir,
-      encoding: 'utf8',
       env: { ...process.env, ISSUE_CARDS_DIR: customDir }
     });
+    expect(initResult.status).toBe(0);
     
     // Verify custom directory was used
     expect(fs.existsSync(customDir)).toBe(true);
@@ -337,11 +330,11 @@ describe('Issue Cards E2E Lifecycle', () => {
     expect(fs.existsSync(path.join(customDir, 'closed'))).toBe(true);
     
     // Create an issue in the custom directory
-    execSync(`node ${binPath} create feature --title "Custom Dir Test"`, {
+    const createResult = runQuietly(`node ${binPath} create feature --title "Custom Dir Test"`, {
       cwd: testDir,
-      encoding: 'utf8',
       env: { ...process.env, ISSUE_CARDS_DIR: customDir }
     });
+    expect(createResult.status).toBe(0);
     
     // Verify issue was created in custom directory
     expect(fs.existsSync(path.join(customDir, 'open/issue-0001.md'))).toBe(true);

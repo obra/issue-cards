@@ -12,20 +12,23 @@ describe('Issue Cards E2E Commands', () => {
   let originalIssuesDir;
 
   // Helper function to run CLI commands and capture output
+  const { runQuietly } = require('./e2eHelpers');
+  
   const runCommand = (command) => {
-    try {
-      return execSync(`node ${binPath} ${command}`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-    } catch (error) {
-      console.error(`Command failed: ${command}`);
-      console.error(`Error: ${error.message}`);
-      console.error(`Stdout: ${error.stdout}`);
-      console.error(`Stderr: ${error.stderr}`);
+    const result = runQuietly(`node ${binPath} ${command}`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // If it's an error result (non-zero status), throw with the stderr
+    if (result.status !== 0) {
+      const error = new Error(`Command failed: ${command}`);
+      error.stderr = result.stderr;
+      error.stdout = result.stdout;
       throw error;
     }
+    
+    return result.stdout;
   };
 
   beforeAll(() => {
@@ -297,41 +300,30 @@ describe('Issue Cards E2E Commands', () => {
 
   // Test the version flag
   test('version flag', () => {
-    try {
-      const output = execSync(`node ${binPath} --version`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        stdio: 'pipe'
-      });
-      
-      // Should match semver pattern
-      expect(output.trim()).toMatch(/^\d+\.\d+\.\d+$/);
-    } catch (error) {
-      // In case the version is output to stderr
-      if (error.stdout) {
-        expect(error.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
-      } else if (error.stderr) {
-        expect(error.stderr.trim()).toMatch(/^\d+\.\d+\.\d+$/);
-      } else {
-        throw error;
-      }
-    }
+    const result = runQuietly(`node ${binPath} --version`, {
+      cwd: testDir,
+      env: { ...process.env }
+    });
+    
+    // Should match semver pattern regardless of where it's output
+    const output = result.stdout || result.stderr;
+    expect(output.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   // Test the help flag
   test('help flag', () => {
-    const output = execSync(`node ${binPath} --help`, {
+    const result = runQuietly(`node ${binPath} --help`, {
       cwd: testDir,
-      encoding: 'utf8'
+      env: { ...process.env }
     });
     
-    expect(output).toContain('Usage:');
-    expect(output).toContain('Options:');
-    expect(output).toContain('Commands:');
-    expect(output).toContain('create');
-    expect(output).toContain('list');
-    expect(output).toContain('show');
-    expect(output).toContain('current');
-    expect(output).toContain('complete-task');
+    expect(result.stdout).toContain('Usage:');
+    expect(result.stdout).toContain('Options:');
+    expect(result.stdout).toContain('Commands:');
+    expect(result.stdout).toContain('create');
+    expect(result.stdout).toContain('list');
+    expect(result.stdout).toContain('show');
+    expect(result.stdout).toContain('current');
+    expect(result.stdout).toContain('complete-task');
   });
 });

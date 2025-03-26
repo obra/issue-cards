@@ -12,20 +12,23 @@ describe('Issue Cards Comprehensive E2E', () => {
   let originalIssuesDir;
 
   // Helper function to run CLI commands and capture output
+  const { runQuietly } = require('./e2eHelpers');
+  
   const runCommand = (command) => {
-    try {
-      return execSync(`node ${binPath} ${command}`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-    } catch (error) {
-      console.error(`Command failed: ${command}`);
-      console.error(`Error: ${error.message}`);
-      console.error(`Stdout: ${error.stdout}`);
-      console.error(`Stderr: ${error.stderr}`);
+    const result = runQuietly(`node ${binPath} ${command}`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // If it's an error result (non-zero status), throw with the stderr
+    if (result.status !== 0) {
+      const error = new Error(`Command failed: ${command}`);
+      error.stderr = result.stderr;
+      error.stdout = result.stdout;
       throw error;
     }
+    
+    return result.stdout;
   };
 
   beforeAll(() => {
@@ -267,100 +270,79 @@ describe('Issue Cards Comprehensive E2E', () => {
   // Test error conditions and edge cases
   test('error conditions and edge cases', () => {
     // 1. Try commands before initialization
-    try {
-      execSync(`node ${binPath} list`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error when not initialized
-      expect(error).toBeDefined();
-    }
+    const listResult = runQuietly(`node ${binPath} list`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Verify it failed
+    expect(listResult.status).not.toBe(0);
+    expect(listResult.stderr).toBeTruthy();
     
     // Initialize
     runCommand('init');
     
     // 2. Try show with non-existent issue
-    try {
-      execSync(`node ${binPath} show 999`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const showResult = runQuietly(`node ${binPath} show 999`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(showResult.status).not.toBe(0);
+    expect(showResult.stderr).toContain('not found');
     
     // 3. Try to create issue without title
-    try {
-      execSync(`node ${binPath} create feature`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const createResult = runQuietly(`node ${binPath} create feature`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(createResult.status).not.toBe(0);
+    expect(createResult.stderr).toContain('title is required');
     
     // 4. Try current when no issues exist
-    try {
-      execSync(`node ${binPath} current`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const currentResult = runQuietly(`node ${binPath} current`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(currentResult.status).not.toBe(0);
+    expect(currentResult.stderr).toContain('No open issues');
     
     // 5. Try to add task when no issues exist
-    try {
-      execSync(`node ${binPath} add-task "Test task"`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const taskResult = runQuietly(`node ${binPath} add-task "Test task"`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(taskResult.status).not.toBe(0);
+    expect(taskResult.stderr).toContain('No open issues');
     
     // 6. Create issue then try to add note to non-existent section
     runCommand('create feature --title "Error Test" --task "Task 1"');
     
-    try {
-      execSync(`node ${binPath} add-note "Test note" --section "Non-existent section"`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const noteResult = runQuietly(`node ${binPath} add-note "Test note" --section "Non-existent section"`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(noteResult.status).not.toBe(0);
+    expect(noteResult.stderr).toContain('Non-existent section');
     
     // 7. Try to add task with invalid tag
-    try {
-      execSync(`node ${binPath} add-task "Task with invalid tag #invalid-tag"`, {
-        cwd: testDir,
-        encoding: 'utf8',
-        env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-      });
-      fail('Expected command to throw');
-    } catch (error) {
-      // Just verify that it threw an error
-      expect(error).toBeDefined();
-    }
+    const invalidTagResult = runQuietly(`node ${binPath} add-task "Task with invalid tag #invalid-tag"`, {
+      cwd: testDir,
+      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
+    });
+    
+    // Should fail with non-zero exit code
+    expect(invalidTagResult.status).not.toBe(0);
+    expect(invalidTagResult.stderr).toContain('invalid-tag');
   });
 
   // Test multiline parameters and newline handling
