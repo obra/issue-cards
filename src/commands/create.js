@@ -10,6 +10,8 @@ const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
 const { gitStage } = require('../utils/gitOperations');
 const output = require('../utils/outputManager');
 const { UninitializedError, TemplateNotFoundError, UserError, SystemError } = require('../utils/errors');
+const { extractExpandTagsFromTask, isTagAtEnd } = require('../utils/taskParser');
+const { expandTask } = require('../utils/taskExpander');
 
 /**
  * Format multi-line input as a list
@@ -28,27 +30,68 @@ function formatAsList(input) {
 }
 
 /**
- * Format tasks with checkboxes
+ * Format tasks with checkboxes and expand tags
  * 
  * @param {string[]} input - Array of tasks
- * @returns {string} Input formatted as markdown task list
+ * @returns {Promise<string>} Input formatted as markdown task list with expanded tags
  */
-function formatAsTasks(input) {
+async function formatAsTasks(input) {
   if (!input) return '';
   
   // Handle array of tasks (from multiple --task options)
-  return input
-    .filter(task => task && task.trim())
-    .map(task => {
-      // If already formatted as a task, leave it as is
-      if (task.trim().startsWith('- [ ]')) {
-        return task.trim();
-      }
+  const formattedTasks = [];
+  
+  for (const task of input) {
+    if (!task || !task.trim()) continue;
+    
+    // If already formatted as a task, leave it as is
+    let formattedTask = task.trim();
+    if (!formattedTask.startsWith('- [ ]')) {
+      formattedTask = `- [ ] ${formattedTask}`;
+    }
+    
+    // Create a task object (similar to what extractTasks returns)
+    const taskObj = {
+      text: formattedTask.substring(6), // Remove '- [ ] ' prefix
+      completed: false,
+      index: 0
+    };
+    
+    // Check if task has +tags that need to be expanded
+    // Extract expansion tags (+tag)
+    const expandTags = extractExpandTagsFromTask(taskObj);
+    
+    // Check if any expandable tags are found and they are at the end of the task
+    if (expandTags && expandTags.length > 0) {
+      // Verify each tag is at the end of the task text
+      const validTags = expandTags.filter(tag => {
+        const tagString = `+${tag.name}`;
+        const tagWithParams = tag.params && Object.keys(tag.params).length > 0 
+          ? `+${tag.name}(${Object.entries(tag.params).map(([k, v]) => `${k}=${v}`).join(',')})`
+          : tagString;
+        
+        return isTagAtEnd(taskObj.text, tagWithParams);
+      });
       
-      // Otherwise, add the checkbox
-      return `- [ ] ${task.trim()}`;
-    })
-    .join('\n');
+      if (validTags.length > 0) {
+        // Expand the task
+        const expandedSteps = await expandTask(taskObj);
+        
+        // If expansion was successful, replace the single task with expanded steps
+        if (expandedSteps && expandedSteps.length > 0) {
+          // Format expanded steps as a task list
+          const expandedTasks = expandedSteps.map(step => `- [ ] ${step}`);
+          formattedTasks.push(...expandedTasks);
+          continue; // Skip adding the original task
+        }
+      }
+    }
+    
+    // If no tags, tags not at the end, or expansion failed, just add the original task
+    formattedTasks.push(formattedTask);
+  }
+  
+  return formattedTasks.join('\n');
 }
 
 /**
@@ -122,7 +165,7 @@ async function createAction(templateName, options) {
       APPROACH: options.approach || '',
       FAILED_APPROACHES: formatAsList(options.failedApproaches),
       QUESTIONS: formatAsList(options.questions),
-      TASKS: formatAsTasks(options.task),
+      TASKS: await formatAsTasks(options.task),
       INSTRUCTIONS: options.instructions || '',
       NEXT_STEPS: formatAsList(options.nextSteps)
     };
@@ -158,8 +201,28 @@ async function createAction(templateName, options) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  // Use the default template list for initial help text
+  // Synchronously get the template list - blocking but reliable
   let templateList = 'feature, bugfix, refactor, audit';
+  
+  try {
+    // We're using the sync version of fs to avoid async complexity
+    const fs = require('fs');
+    const path = require('path');
+    const { getIssueDirectoryPath } = require('../utils/directory');
+    
+    const templateDir = getIssueDirectoryPath('config/templates/issue');
+    if (fs.existsSync(templateDir)) {
+      const templates = fs.readdirSync(templateDir)
+        .filter(file => file.endsWith('.md'))
+        .map(file => path.basename(file, '.md'));
+      
+      if (templates.length > 0) {
+        templateList = templates.join(', ');
+      }
+    }
+  } catch (error) {
+    // Silently fall back to the default list
+  }
 
   const command = new Command('create')
     .description('Create a new issue from template')
@@ -184,22 +247,44 @@ function createCommand() {
     // This will exit the process due to commander's behavior
   };
 
-  // Attempt to update the command help text with actual templates
-  // This is done asynchronously but won't affect the command usage
-  // since help is typically displayed later
-  setTimeout(async () => {
-    try {
-      const templates = await getTemplateList('issue');
-      if (templates && templates.length > 0) {
-        // Update the argument description
-        const updatedTemplateList = templates.join(', ');
-        // We can't directly update the help text, but for future displays it will be updated
-        command._args[0].description = `Template to use (${updatedTemplateList})`;
+  // Correct the command usage to show template before options
+  command.usage('<template> [options]');
+
+  // Add a longer help description with examples
+  command.addHelpText('after', `
+Examples:
+  $ issue-cards create feature --title "New login system"
+  $ issue-cards create bugfix --title "Fix login redirect" --problem "Redirect fails on mobile"
+  $ issue-cards create refactor --title "Refactor authentication" --task "Extract auth logic" --task "Add tests"
+  `);
+  
+  // Optionally add a more detailed list of templates to the help
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const { getIssueDirectoryPath } = require('../utils/directory');
+    
+    const templateDir = getIssueDirectoryPath('config/templates/issue');
+    if (fs.existsSync(templateDir)) {
+      const templates = fs.readdirSync(templateDir)
+        .filter(file => file.endsWith('.md'))
+        .map(file => path.basename(file, '.md'));
+      
+      if (templates.length > 0) {
+        const templateListFormatted = templates.map(t => `  - ${t}`).join('\n');
+        command.addHelpText('after', `
+Available issue templates:
+${templateListFormatted}
+        `);
       }
-    } catch (error) {
-      // Silently fall back to default list
     }
-  }, 0);
+  } catch (error) {
+    // Fall back to generic help if we can't list templates
+    command.addHelpText('after', `
+Available templates:
+  Run 'issue-cards templates' to see all available templates
+    `);
+  }
 
   return command;
 }

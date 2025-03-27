@@ -144,7 +144,7 @@ All issue templates use these standard placeholders:
 
 ## Tag Templates
 
-Tag templates define additional steps that "wrap around" a task when it includes a specific tag (e.g., `#unit-test`). They are stored in `.issues/config/templates/tag/`.
+Tag templates define additional steps that "wrap around" a task when it includes a specific expansion tag (using the `+` prefix) at the end of the task (e.g., `+unit-test`). They are stored in `.issues/config/templates/tag/`.
 
 ### Available Tag Templates
 
@@ -212,9 +212,15 @@ Expands a task to include documentation updates.
 
 Each tag template must:
 
-1. Have a name matching the tag used (e.g., "unit-test" for the `#unit-test` tag)
+1. Have a name matching the tag used (e.g., "unit-test" for the `+unit-test` tag)
 2. Contain a "Steps" section with steps listed as markdown list items
 3. Include the placeholder `[ACTUAL TASK GOES HERE]` where the original task description should be inserted
+
+Important requirements for using tag templates:
+
+1. Expansion tags must use the `+` prefix (not `#`)
+2. Expansion tags must appear at the end of the task text
+3. Multiple expansion tags can be combined (e.g., `+unit-test +update-docs`)
 
 ## Using Templates
 
@@ -234,8 +240,8 @@ issue-cards templates feature
 ### Using Tag Templates
 
 ```bash
-# Add a task with a tag that uses a template
-issue-cards add-task "Create user model" --tags "unit-test"
+# Add a task with an expansion tag
+issue-cards add-task "Create user model +unit-test"
 
 # When viewing the current task, the tag steps will be expanded:
 issue-cards current
@@ -245,6 +251,9 @@ issue-cards current
 # 3. Create user model
 # 4. Run the unit tests and verify they now pass
 # 5. Make sure test coverage meets project requirements
+
+# Combine multiple expansion tags
+issue-cards add-task "Create user model +unit-test +update-docs"
 
 # View available tag templates
 issue-cards templates --type tag
@@ -265,10 +274,10 @@ issue-cards templates unit-test
 ### Custom Tag Templates
 
 1. Create a new markdown file in `.issues/config/templates/tag/`
-2. Include a heading with the tag name
+2. Include a heading with the tag name (without the `+` prefix)
 3. Add a "Steps" section with a list of steps
 4. Include `[ACTUAL TASK GOES HERE]` where the original task should be inserted
-5. Use the new tag with `issue-cards add-task "..." --tags "your-tag"`
+5. Use the new tag at the end of your task text: `issue-cards add-task "Do something +your-tag"`
 
 ## Template Validation
 

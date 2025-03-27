@@ -13,9 +13,6 @@
 {{QUESTIONS}}
 
 ## Tasks
-- [ ] Reproduce the bug with a test #unit-test
-- [ ] Fix the bug
-- [ ] Verify the fix
 {{TASKS}}
 
 ## Instructions

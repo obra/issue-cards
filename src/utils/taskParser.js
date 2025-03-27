@@ -221,6 +221,43 @@ function extractTagsFromTask(task) {
 }
 
 /**
+ * Extract expansion tags (with + prefix) from a task
+ * 
+ * @param {Object} task - Task object
+ * @returns {Array<Object>} List of expansion tag objects with name and parameters
+ */
+function extractExpandTagsFromTask(task) {
+  const tags = [];
+  const tagRegex = /\+([a-zA-Z0-9-]+(?:\([^)]+\))?)/g;
+  let match;
+  
+  while ((match = tagRegex.exec(task.text)) !== null) {
+    tags.push(parseTag(match[1]));
+  }
+  
+  return tags;
+}
+
+/**
+ * Check if a tag appears at the end of the task text
+ * 
+ * @param {string} taskText - The task text to check
+ * @param {string} tag - The tag to check for (including + prefix)
+ * @returns {boolean} True if the tag is at the end of the task text
+ */
+function isTagAtEnd(taskText, tag) {
+  // Remove the tag from the task text
+  const textWithoutTag = taskText.replace(tag, '').trim();
+  
+  // If the resulting text is shorter and the tag was at the end,
+  // then the tag was the last thing in the text
+  return (
+    textWithoutTag.length < taskText.length && 
+    taskText.trim().endsWith(tag)
+  );
+}
+
+/**
  * Extract tag names (without parameters) from a task
  * 
  * @param {Object} task - Task object
@@ -262,8 +299,13 @@ function getTagParameters(task, tagName) {
  * @returns {string} Task text without tags
  */
 function getCleanTaskText(task) {
-  // Remove all tags from the task text
-  return task.text.replace(/#[a-zA-Z0-9-]+(?:\([^)]+\))?/g, '').trim();
+  // Remove only +tags (expansion tags)
+  // We keep #tags as they're now treated as regular text and not special expansion tags
+  let cleanText = task.text
+    .replace(/\+[a-zA-Z0-9-]+(?:\([^)]+\))?/g, '')
+    .trim();
+  
+  return cleanText;
 }
 
 /**
@@ -336,10 +378,12 @@ module.exports = {
   findTaskByIndex,
   findCurrentTask,
   extractTagsFromTask,
+  extractExpandTagsFromTask,
   extractTagNamesFromTask,
   parseTag,
   hasTag,
   getTagParameters,
   getCleanTaskText,
   updateTaskStatus,
+  isTagAtEnd,
 };

@@ -1,7 +1,7 @@
 // ABOUTME: Task expansion utilities
 // ABOUTME: Expands tasks based on their tags
 
-const { extractTagsFromTask } = require('./taskParser');
+const { extractExpandTagsFromTask, isTagAtEnd } = require('./taskParser');
 const { loadTemplate, validateTemplate, getTemplateList } = require('./template');
 const Handlebars = require('handlebars');
 
@@ -227,27 +227,42 @@ async function getMergedTagSteps(tags) {
 }
 
 /**
- * Expand a task based on its tags
+ * Expand a task based on its expansion tags (+tag)
  * 
  * @param {Object} task - Task object with text, completed, and index
  * @returns {Promise<Array<string>>} Expanded steps for the task
  */
 async function expandTask(task) {
-  // Extract tags from the task
-  const tags = extractTagsFromTask(task);
+  // Extract expansion tags (with +prefix) from the task
+  const tags = extractExpandTagsFromTask(task);
   
-  // If no tags, just return the task text
+  // If no expansion tags, just return the task text
   if (!tags || tags.length === 0) {
     return [task.text];
   }
   
-  // Get a clean version of the task text (without tags)
-  // Remove all tags from the task text (format: #tagname or #tagname(params))
-  const cleanTaskText = task.text.replace(/#[a-zA-Z0-9-]+(?:\([^)]+\))?/g, '').trim();
+  // Filter tags to only include those at the end of the task text
+  const tagsAtEnd = tags.filter(tag => {
+    const tagString = `+${tag.name}`;
+    const tagWithParams = tag.params && Object.keys(tag.params).length > 0 
+      ? `+${tag.name}(${Object.entries(tag.params).map(([k, v]) => `${k}=${v}`).join(',')})`
+      : tagString;
+    
+    return isTagAtEnd(task.text, tagWithParams);
+  });
+  
+  // If no valid expansion tags at the end, just return the task text
+  if (tagsAtEnd.length === 0) {
+    return [task.text];
+  }
+  
+  // Get a clean version of the task text (without +tags)
+  // Remove all expansion tags from the task text (format: +tagname or +tagname(params))
+  const cleanTaskText = task.text.replace(/\+[a-zA-Z0-9-]+(?:\([^)]+\))?/g, '').trim();
   
   // If there's only one tag, handle it directly
-  if (tags.length === 1) {
-    const tag = tags[0];
+  if (tagsAtEnd.length === 1) {
+    const tag = tagsAtEnd[0];
     
     // Validate the tag template exists
     const tagExists = await validateTemplate(tag.name, 'tag');
@@ -267,12 +282,12 @@ async function expandTask(task) {
   }
   
   // Handle multiple tags
-  const tagNames = tags.map(tag => tag.name);
+  const tagNames = tagsAtEnd.map(tag => tag.name);
   const mergedSteps = await getMergedTagSteps(tagNames);
   
   // Combine parameters from all tags
   const combinedParams = {};
-  tags.forEach(tag => {
+  tagsAtEnd.forEach(tag => {
     Object.assign(combinedParams, tag.params);
   });
   

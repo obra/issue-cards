@@ -21,6 +21,8 @@ jest.mock('../../src/utils/template', () => ({
 
 jest.mock('../../src/utils/taskParser', () => ({
   extractTagsFromTask: jest.fn(),
+  extractExpandTagsFromTask: jest.fn(),
+  isTagAtEnd: jest.fn().mockReturnValue(true),
 }));
 
 describe('Task Expander utilities', () => {
@@ -164,9 +166,9 @@ Some content without a Steps section.
   });
   
   describe('expandTask', () => {
-    test('expands task with single tag', async () => {
-      // Mock extractTagsFromTask to return a single tag
-      taskParser.extractTagsFromTask.mockReturnValue([{name: 'unit-test', params: {}}]);
+    test('expands task with single +tag at the end', async () => {
+      // Mock extractExpandTagsFromTask to return a single tag
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{name: 'unit-test', params: {}}]);
       
       // Mock the tag template content
       const mockTemplateContent = `# unit-test
@@ -182,7 +184,7 @@ Some content without a Steps section.
       template.loadTemplate.mockResolvedValue(mockTemplateContent);
       template.validateTemplate.mockResolvedValue(true);
       
-      const task = { text: 'Implement feature X #unit-test', completed: false, index: 0 };
+      const task = { text: 'Implement feature X +unit-test', completed: false, index: 0 };
       
       const expandedSteps = await expandTask(task);
       
@@ -193,14 +195,14 @@ Some content without a Steps section.
       expect(expandedSteps[3]).toBe('Run tests and verify they pass');
       expect(expandedSteps[4]).toBe('Check test coverage');
       
-      expect(taskParser.extractTagsFromTask).toHaveBeenCalledWith(task);
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalledWith(task);
       expect(template.validateTemplate).toHaveBeenCalledWith('unit-test', 'tag');
       expect(template.loadTemplate).toHaveBeenCalledWith('unit-test', 'tag');
     });
     
-    test('expands task with multiple tags', async () => {
-      // Mock extractTagsFromTask to return multiple tags
-      taskParser.extractTagsFromTask.mockReturnValue([
+    test('expands task with multiple +tags at the end', async () => {
+      // Mock extractExpandTagsFromTask to return multiple tags
+      taskParser.extractExpandTagsFromTask.mockReturnValue([
         {name: 'unit-test', params: {}},
         {name: 'update-docs', params: {}}
       ]);
@@ -232,7 +234,7 @@ Some content without a Steps section.
       template.validateTemplate.mockResolvedValue(true);
       
       const task = { 
-        text: 'Implement feature X #unit-test #update-docs', 
+        text: 'Implement feature X +unit-test +update-docs', 
         completed: false, 
         index: 0 
       };
@@ -248,9 +250,9 @@ Some content without a Steps section.
       expect(expandedSteps).toContain('Implement feature X');
     });
     
-    test('returns original task for task without tags', async () => {
-      // Mock extractTagsFromTask to return no tags
-      taskParser.extractTagsFromTask.mockReturnValue([]);
+    test('returns original task for task without +tags', async () => {
+      // Mock extractExpandTagsFromTask to return no tags
+      taskParser.extractExpandTagsFromTask.mockReturnValue([]);
       
       const task = { text: 'Implement feature X', completed: false, index: 0 };
       
@@ -259,19 +261,19 @@ Some content without a Steps section.
       expect(expandedSteps).toHaveLength(1);
       expect(expandedSteps[0]).toBe('Implement feature X');
       
-      expect(taskParser.extractTagsFromTask).toHaveBeenCalledWith(task);
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalledWith(task);
       expect(template.validateTemplate).not.toHaveBeenCalled();
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
     
     test('handles invalid tag templates', async () => {
-      // Mock extractTagsFromTask to return a tag
-      taskParser.extractTagsFromTask.mockReturnValue([{name: 'nonexistent-tag', params: {}}]);
+      // Mock extractExpandTagsFromTask to return a tag
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{name: 'nonexistent-tag', params: {}}]);
       
       // Mock validateTemplate to return false (tag doesn't exist)
       template.validateTemplate.mockResolvedValue(false);
       
-      const task = { text: 'Implement feature X #nonexistent-tag', completed: false, index: 0 };
+      const task = { text: 'Implement feature X +nonexistent-tag', completed: false, index: 0 };
       
       const expandedSteps = await expandTask(task);
       
@@ -279,14 +281,14 @@ Some content without a Steps section.
       expect(expandedSteps).toHaveLength(1);
       expect(expandedSteps[0]).toBe('Implement feature X');
       
-      expect(taskParser.extractTagsFromTask).toHaveBeenCalledWith(task);
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalledWith(task);
       expect(template.validateTemplate).toHaveBeenCalledWith('nonexistent-tag', 'tag');
       expect(template.loadTemplate).not.toHaveBeenCalled();
     });
     
     test('handles tag parameters', async () => {
       // Mock a task with tag parameters
-      taskParser.extractTagsFromTask.mockReturnValue([{name: 'unit-test', params: {component: 'UserService'}}]);
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{name: 'unit-test', params: {component: 'UserService'}}]);
       
       // Mock tag template with placeholders
       const mockTemplateContent = `# unit-test
@@ -302,7 +304,7 @@ Some content without a Steps section.
       template.validateTemplate.mockResolvedValue(true);
       
       const task = { 
-        text: 'Implement feature X #unit-test(component=UserService)', 
+        text: 'Implement feature X +unit-test(component=UserService)', 
         completed: false, 
         index: 0 
       };
@@ -314,6 +316,40 @@ Some content without a Steps section.
       expect(expandedSteps[1]).toBe('Run tests and verify they fail');
       expect(expandedSteps[2]).toBe('Implement feature X');
       expect(expandedSteps[3]).toBe('Run tests and verify they pass');
+    });
+
+    test('does not expand #tags anymore', async () => {
+      // Mock extractExpandTagsFromTask to return no tags
+      taskParser.extractExpandTagsFromTask.mockReturnValue([]);
+      
+      const task = { text: 'Implement feature X #unit-test', completed: false, index: 0 };
+      
+      const expandedSteps = await expandTask(task);
+      
+      expect(expandedSteps).toHaveLength(1);
+      expect(expandedSteps[0]).toBe('Implement feature X #unit-test');
+      
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalledWith(task);
+      expect(template.validateTemplate).not.toHaveBeenCalled();
+      expect(template.loadTemplate).not.toHaveBeenCalled();
+    });
+
+    test('does not expand +tags in the middle of text', async () => {
+      // In this case, we'll mock that the extract function returns tags, but
+      // they should be filtered out by position checking
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{name: 'unit-test', params: {}}]);
+      
+      // Mock isTagAtEnd to return false for this specific test - tag is NOT at end
+      taskParser.isTagAtEnd.mockReturnValue(false);
+      
+      const task = { text: 'Implement +unit-test feature X', completed: false, index: 0 };
+      
+      const expandedSteps = await expandTask(task);
+      
+      expect(expandedSteps).toHaveLength(1);
+      expect(expandedSteps[0]).toBe('Implement +unit-test feature X');
+      
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalledWith(task);
     });
   });
   
@@ -448,15 +484,18 @@ Some content but no Steps section
     test('creates list of tasks with expansions', async () => {
       const tasks = [
         { text: 'Task 1', completed: false, index: 0 },
-        { text: 'Task 2 #unit-test', completed: false, index: 1 },
+        { text: 'Task 2 +unit-test', completed: false, index: 1 },
         { text: 'Task 3', completed: true, index: 2 }
       ];
       
-      // Mock tasks without and with tags
-      taskParser.extractTagsFromTask.mockImplementation((task) => {
-        if (task.text.includes('#unit-test')) return ['unit-test'];
+      // Mock tasks with +tags - using the new extractExpandTagsFromTask
+      taskParser.extractExpandTagsFromTask.mockImplementation((task) => {
+        if (task.text.includes('+unit-test')) return [{name: 'unit-test', params: {}}];
         return [];
       });
+      
+      // Always return true for isTagAtEnd in this test
+      taskParser.isTagAtEnd.mockReturnValue(true);
       
       // Mock template loading
       const unitTestTemplate = `# unit-test

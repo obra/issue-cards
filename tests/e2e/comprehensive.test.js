@@ -335,7 +335,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     expect(noteResult.stderr).toContain('Non-existent section');
     
     // 7. Try to add task with invalid tag
-    const invalidTagResult = runQuietly(`node ${binPath} add-task "Task with invalid tag #invalid-tag"`, {
+    const invalidTagResult = runQuietly(`node ${binPath} add-task "Task with invalid tag +invalid-tag"`, {
       cwd: testDir,
       env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
     });

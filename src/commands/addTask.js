@@ -5,8 +5,8 @@ const { Command } = require('commander');
 const fs = require('fs');
 const { isInitialized } = require('../utils/directory');
 const { listIssues, readIssue, writeIssue, getIssueFilePath } = require('../utils/issueManager');
-const { extractTasks, findCurrentTask, extractTagsFromTask } = require('../utils/taskParser');
-const { validateTagTemplate } = require('../utils/taskExpander');
+const { extractTasks, findCurrentTask, extractTagsFromTask, extractExpandTagsFromTask, isTagAtEnd } = require('../utils/taskParser');
+const { validateTagTemplate, expandTask } = require('../utils/taskExpander');
 const { getTemplateList } = require('../utils/template');
 const output = require('../utils/outputManager');
 const { UninitializedError, UserError, SystemError, IssueNotFoundError } = require('../utils/errors');
@@ -44,12 +44,58 @@ async function insertTaskIntoContent(content, taskText, position) {
     throw new Error('Could not determine insertion point');
   }
   
-  // Prepare the new task line
-  const newTaskLine = `- [ ] ${taskText}`;
-  
-  // Insert the task at the determined position
+  // Check if task has expansion tags (+tag) that need to be expanded
   const lines = content.split('\n');
-  lines.splice(insertionIndex, 0, newTaskLine);
+  const tasksToInsert = [];
+  
+  // Create a task object (similar to what extractTasks returns)
+  const mockTask = {
+    text: taskText,
+    completed: false,
+    index: 0
+  };
+  
+  // Check if the task has +tags for expansion
+  const expandTags = extractExpandTagsFromTask(mockTask);
+  
+  if (expandTags && expandTags.length > 0) {
+    // Check if each tag is at the end of the task
+    const tagsAtEnd = expandTags.filter(tag => {
+      const tagString = `+${tag.name}`;
+      const tagWithParams = tag.params && Object.keys(tag.params).length > 0 
+        ? `+${tag.name}(${Object.entries(tag.params).map(([k, v]) => `${k}=${v}`).join(',')})`
+        : tagString;
+      
+      return isTagAtEnd(mockTask.text, tagWithParams);
+    });
+    
+    if (tagsAtEnd.length > 0) {
+      // Expand the task
+      const expandedSteps = await expandTask(mockTask);
+      
+      // If expansion was successful, prepare expanded tasks
+      if (expandedSteps && expandedSteps.length > 0) {
+        // Format expanded steps as task lines
+        expandedSteps.forEach(step => {
+          tasksToInsert.push(`- [ ] ${step}`);
+        });
+      } else {
+        // If expansion failed, just add the original task
+        tasksToInsert.push(`- [ ] ${taskText}`);
+      }
+    } else {
+      // Tags found but not at the end of the task, just add the original task
+      tasksToInsert.push(`- [ ] ${taskText}`);
+    }
+  } else {
+    // No expansion tags, just add the original task
+    tasksToInsert.push(`- [ ] ${taskText}`);
+  }
+  
+  // Insert the tasks at the determined position
+  for (let i = 0; i < tasksToInsert.length; i++) {
+    lines.splice(insertionIndex + i, 0, tasksToInsert[i]);
+  }
   
   return lines.join('\n');
 }
@@ -226,11 +272,11 @@ async function addTaskAction(taskText, options) {
     // Read the issue content
     const issueContent = await readIssue(issuePath);
     
-    // Create a mock task object to extract tags
+    // Create a mock task object to extract expansion tags
     const mockTask = { text: taskText, completed: false, index: -1 };
-    const tags = extractTagsFromTask(mockTask);
+    const tags = extractExpandTagsFromTask(mockTask);
     
-    // Validate tags
+    // Validate expansion tags
     const tagErrors = await validateTags(tags);
     
     if (tagErrors.length > 0) {
@@ -246,13 +292,31 @@ async function addTaskAction(taskText, options) {
       position = 'after-current';
     }
     
-    // Insert the task
+    // Insert the task (and any expanded subtasks)
     const updatedContent = await insertTaskIntoContent(issueContent, taskText, position);
     
     // Write the updated issue
     await writeIssue(issuePath, updatedContent);
     
-    output.success(`Task added to issue ${issue.number} at position: ${position}`);
+    // Check if the task had expansion tags for a more informative message
+    const tagCheckTask = { text: taskText, completed: false, index: -1 };
+    const taskTags = extractExpandTagsFromTask(tagCheckTask);
+    
+    // Check if the tags are at the end of the task text
+    const tagsAtEnd = taskTags.filter(tag => {
+      const tagString = `+${tag.name}`;
+      const tagWithParams = tag.params && Object.keys(tag.params).length > 0 
+        ? `+${tag.name}(${Object.entries(tag.params).map(([k, v]) => `${k}=${v}`).join(',')})`
+        : tagString;
+      
+      return isTagAtEnd(tagCheckTask.text, tagWithParams);
+    });
+    
+    if (tagsAtEnd && tagsAtEnd.length > 0) {
+      output.success(`Task added to issue ${issue.number} with expanded subtasks from tags: ${tagsAtEnd.map(t => t.name).join(', ')}`);
+    } else {
+      output.success(`Task added to issue ${issue.number} at position: ${position}`);
+    }
   } catch (error) {
     if (error instanceof UninitializedError || 
         error instanceof UserError || 
@@ -278,7 +342,7 @@ async function addTaskAction(taskText, options) {
 function createCommand() {
   return new Command('add-task')
     .description('Add a new task to an issue')
-    .argument('<task-text>', 'Text of the task to add (use quotes, include tags with #)')
+    .argument('<task-text>', 'Text of the task to add (use quotes, include expansion tags with + at the end)')
     .option('-i, --issue <id>', 'Issue ID to add task to (defaults to first open issue)')
     .option('-b, --before', 'Add task before the current task')
     .option('-a, --after', 'Add task after the current task')

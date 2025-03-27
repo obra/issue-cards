@@ -49,7 +49,7 @@ async function listAction(options) {
       // Just re-throw the error with display message already set
       throw error;
     } else {
-      // Wrap generic errors in a SystemError
+      // Wrap generic errors in a SystemError with display message but don't display directly
       throw new SystemError(`Failed to list issues: ${error.message}`)
         .withDisplayMessage(`Failed to list issues: ${error.message}`);
     }

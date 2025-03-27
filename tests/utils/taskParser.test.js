@@ -11,7 +11,9 @@ const {
   hasTag,
   getTagParameters,
   getCleanTaskText,
-  updateTaskStatus
+  updateTaskStatus,
+  extractExpandTagsFromTask,
+  isTagAtEnd
 } = require('../../src/utils/taskParser');
 
 // Mock dependencies
@@ -233,6 +235,83 @@ describe('Task parser utilities', () => {
       expect(tags).toHaveLength(0);
     });
   });
+
+  describe('extractExpandTagsFromTask', () => {
+    test('extracts +tags without parameters', () => {
+      const task = { text: 'Implement feature X +unit-test +update-docs', completed: false, index: 0 };
+      
+      const tags = extractExpandTagsFromTask(task);
+      
+      expect(tags).toHaveLength(2);
+      expect(tags[0]).toEqual({ name: 'unit-test', params: {} });
+      expect(tags[1]).toEqual({ name: 'update-docs', params: {} });
+    });
+    
+    test('extracts +tags with parameters', () => {
+      const task = { 
+        text: 'Implement feature X +unit-test(component=UserService) +update-docs', 
+        completed: false, 
+        index: 0 
+      };
+      
+      const tags = extractExpandTagsFromTask(task);
+      
+      expect(tags).toHaveLength(2);
+      expect(tags[0]).toEqual({ 
+        name: 'unit-test', 
+        params: { component: 'UserService' } 
+      });
+      expect(tags[1]).toEqual({ name: 'update-docs', params: {} });
+    });
+    
+    test('returns empty array for task without +tags', () => {
+      const task = { text: 'Implement feature X #regular-tag', completed: false, index: 0 };
+      
+      const tags = extractExpandTagsFromTask(task);
+      
+      expect(tags).toHaveLength(0);
+    });
+
+    test('only extracts +tags, not #tags', () => {
+      const task = { 
+        text: 'Implement feature X #regular-tag +expand-tag', 
+        completed: false, 
+        index: 0 
+      };
+      
+      const tags = extractExpandTagsFromTask(task);
+      
+      expect(tags).toHaveLength(1);
+      expect(tags[0]).toEqual({ name: 'expand-tag', params: {} });
+    });
+  });
+  
+  describe('isTagAtEnd', () => {
+    test('returns true for tag at the end of task text', () => {
+      const result = isTagAtEnd('Implement feature X +unit-test', '+unit-test');
+      expect(result).toBe(true);
+    });
+    
+    test('returns true for tag with parameters at the end of task text', () => {
+      const result = isTagAtEnd('Implement feature X +unit-test(component=Auth)', '+unit-test(component=Auth)');
+      expect(result).toBe(true);
+    });
+    
+    test('returns false for tag in the middle of task text', () => {
+      const result = isTagAtEnd('Implement +unit-test feature X', '+unit-test');
+      expect(result).toBe(false);
+    });
+    
+    test('returns false for tag that is not at the very end', () => {
+      const result = isTagAtEnd('Implement feature X +unit-test with some text after', '+unit-test');
+      expect(result).toBe(false);
+    });
+
+    test('returns true for multiple tags at the end of task text', () => {
+      const result = isTagAtEnd('Implement feature X +unit-test +update-docs', '+update-docs');
+      expect(result).toBe(true);
+    });
+  });
   
   describe('extractTagNamesFromTask', () => {
     test('extracts tag names only', () => {
@@ -295,7 +374,7 @@ describe('Task parser utilities', () => {
   });
   
   describe('getCleanTaskText', () => {
-    test('removes all tags from task text', () => {
+    test('only removes +tags, keeps #tags in task text', () => {
       const task = { 
         text: 'Implement auth feature #unit-test(component=Auth) #update-docs', 
         completed: false, 
@@ -304,7 +383,8 @@ describe('Task parser utilities', () => {
       
       const cleanText = getCleanTaskText(task);
       
-      expect(cleanText).toBe('Implement auth feature');
+      // We now keep #tags as regular text
+      expect(cleanText).toBe('Implement auth feature #unit-test(component=Auth) #update-docs');
     });
     
     test('handles task without tags', () => {
@@ -313,6 +393,31 @@ describe('Task parser utilities', () => {
       const cleanText = getCleanTaskText(task);
       
       expect(cleanText).toBe('Implement auth feature');
+    });
+
+    test('removes +tags from task text', () => {
+      const task = { 
+        text: 'Implement auth feature +unit-test(component=Auth) +update-docs', 
+        completed: false, 
+        index: 0 
+      };
+      
+      const cleanText = getCleanTaskText(task);
+      
+      expect(cleanText).toBe('Implement auth feature');
+    });
+
+    test('removes +tags but keeps #tags in task text', () => {
+      const task = { 
+        text: 'Implement auth feature #frontend +unit-test', 
+        completed: false, 
+        index: 0 
+      };
+      
+      const cleanText = getCleanTaskText(task);
+      
+      // We now keep #tags but strip +tags
+      expect(cleanText).toBe('Implement auth feature #frontend');
     });
   });
   

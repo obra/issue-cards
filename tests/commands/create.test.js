@@ -24,6 +24,7 @@ jest.mock('../../src/utils/template', () => ({
   loadTemplate: jest.fn(),
   renderTemplate: jest.fn(),
   validateTemplate: jest.fn(),
+  getTemplateList: jest.fn().mockResolvedValue(['feature', 'bugfix', 'refactor', 'audit']),
 }));
 
 jest.mock('../../src/utils/issueManager', () => ({
@@ -44,6 +45,17 @@ jest.mock('../../src/utils/gitOperations', () => ({
   gitShowTrackedFiles: jest.fn(),
 }));
 
+// Mock task parser and expander
+jest.mock('../../src/utils/taskParser', () => ({
+  extractTagsFromTask: jest.fn().mockReturnValue([]),
+  extractExpandTagsFromTask: jest.fn().mockReturnValue([]),
+  isTagAtEnd: jest.fn().mockReturnValue(true),
+}));
+
+jest.mock('../../src/utils/taskExpander', () => ({
+  expandTask: jest.fn().mockResolvedValue([]),
+}));
+
 // Create mock output manager and then mock it
 const mockOutput = mockOutputManager();
 jest.mock('../../src/utils/outputManager', () => mockOutput);
@@ -61,6 +73,8 @@ const template = require('../../src/utils/template');
 const issueManager = require('../../src/utils/issueManager');
 const gitDetection = require('../../src/utils/gitDetection');
 const gitOperations = require('../../src/utils/gitOperations');
+const taskParser = require('../../src/utils/taskParser');
+const taskExpander = require('../../src/utils/taskExpander');
 
 describe('Create command', () => {
   let commandInstance;
@@ -110,8 +124,8 @@ describe('Create command', () => {
   });
   
   describe('createCommand', () => {
-    test('creates a properly configured command', () => {
-      const command = createCommand();
+    test('creates a properly configured command', async () => {
+      const command = await createCommand();
       
       expect(command.name()).toBe('create');
       expect(command.description()).toContain('Create a new issue');
@@ -128,6 +142,13 @@ describe('Create command', () => {
       
       expect(taskOption).toBeDefined();
       expect(taskOption.description).toContain('task');
+    });
+    
+    test('sets usage to show template before options', () => {
+      const command = createCommand();
+      
+      // Check that usage is set correctly
+      expect(command._usage).toBe('<template> [options]');
     });
   });
   
@@ -339,6 +360,121 @@ describe('Create command', () => {
       // Since the debug level output depends on verbosity, we don't test for
       // the debug method call, but verify the issue was still created successfully
       // This confirms the git error was handled gracefully without affecting the main functionality
+      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', expect.any(String));
+    });
+    
+    test('expands task with +tag at the end at creation time', async () => {
+      // Mock tag detection and expansion
+      taskParser.extractExpandTagsFromTask.mockImplementation(task => {
+        if (task.text.includes('+unit-test')) {
+          return [{ name: 'unit-test', params: {} }];
+        }
+        return [];
+      });
+      
+      taskExpander.expandTask.mockImplementation(task => {
+        if (task.text.includes('+unit-test')) {
+          return Promise.resolve([
+            'Write failing unit tests for the functionality',
+            'Run the unit tests and verify they fail for the expected reason',
+            'Fix the bug',
+            'Run unit tests and verify they now pass',
+            'Make sure test coverage meets project requirements'
+          ]);
+        }
+        return Promise.resolve([task.text.replace(/\+[a-zA-Z0-9-]+/g, '').trim()]);
+      });
+      
+      const templateName = 'bugfix';
+      const options = {
+        title: 'Test Bug Fix',
+        task: ['Fix the login issue +unit-test']
+      };
+      
+      await createAction(templateName, options);
+      
+      // Verify tag detection was called
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalled();
+      
+      // Verify tag expansion was called
+      expect(taskExpander.expandTask).toHaveBeenCalled();
+      
+      // Check the template data to ensure expanded tasks were used
+      const templateData = template.renderTemplate.mock.calls[0][1];
+      
+      // The TASKS should now contain the expanded steps instead of the original tagged task
+      expect(templateData.TASKS).toContain('- [ ] Write failing unit tests for the functionality');
+      expect(templateData.TASKS).toContain('- [ ] Run the unit tests and verify they fail for the expected reason');
+      expect(templateData.TASKS).toContain('- [ ] Fix the bug');
+      expect(templateData.TASKS).toContain('- [ ] Run unit tests and verify they now pass');
+      expect(templateData.TASKS).toContain('- [ ] Make sure test coverage meets project requirements');
+      
+      // The original task with the tag should not be present
+      expect(templateData.TASKS).not.toContain('- [ ] Fix the login issue +unit-test');
+      
+      // Verify issue was saved with expanded tasks
+      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', expect.any(String));
+    });
+    
+    test('does not expand #tags anymore', async () => {
+      // Mock that extractExpandTagsFromTask finds no expandable tags
+      taskParser.extractExpandTagsFromTask.mockReturnValue([]);
+      
+      // Force expandTask to be called even though it shouldn't be called with normal operation
+      // We just want to verify the formatted task result
+      taskExpander.expandTask.mockImplementation(task => Promise.resolve([task.text]));
+      
+      const templateName = 'bugfix';
+      const options = {
+        title: 'Test Bug Fix',
+        task: ['Fix the login issue #unit-test']
+      };
+      
+      await createAction(templateName, options);
+      
+      // Verify tag detection was called
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalled();
+      
+      // Note: expandTask might not be called if there are no tags, but we're checking the end result
+      // The key is that a task with #tag should remain unchanged in the output
+      
+      // Check the template data to ensure the original task with #tag is preserved
+      const templateData = template.renderTemplate.mock.calls[0][1];
+      
+      // The original task with the #tag should still be present
+      expect(templateData.TASKS).toContain('- [ ] Fix the login issue #unit-test');
+      
+      // Verify issue was saved with the original task
+      expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', expect.any(String));
+    });
+    
+    test('does not expand +tags in the middle of a task', async () => {
+      // Mock that extractExpandTagsFromTask finds the tag but position check fails
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{ name: 'unit-test', params: {} }]);
+      taskParser.isTagAtEnd.mockReturnValue(false);
+      
+      // Mock that expandTask just returns the original task text
+      taskExpander.expandTask.mockImplementation(task => Promise.resolve([task.text]));
+      
+      const templateName = 'bugfix';
+      const options = {
+        title: 'Test Bug Fix',
+        task: ['Fix the +unit-test login issue']
+      };
+      
+      await createAction(templateName, options);
+      
+      // Verify tag detection was called
+      expect(taskParser.extractExpandTagsFromTask).toHaveBeenCalled();
+      expect(taskParser.isTagAtEnd).toHaveBeenCalled();
+      
+      // Check the template data to ensure the original task is preserved
+      const templateData = template.renderTemplate.mock.calls[0][1];
+      
+      // The original task should be preserved
+      expect(templateData.TASKS).toContain('- [ ] Fix the +unit-test login issue');
+      
+      // Verify issue was saved with the original task
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', expect.any(String));
     });
   });

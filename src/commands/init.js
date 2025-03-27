@@ -30,6 +30,7 @@ async function initAction() {
     output.success('Created config templates');
     output.success('Ready to create your first issue');
   } catch (error) {
+    // Format the error but don't display it directly
     throw new SystemError(`Failed to initialize issue tracking: ${error.message}`)
       .withDisplayMessage(`Failed to initialize issue tracking: ${error.message}`);
   }

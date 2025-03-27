@@ -25,8 +25,8 @@ issue-cards init
 issue-cards create feature --title "Add user authentication" \
   --problem "Users need to securely log in to access their personalized content." \
   --approach "We'll implement JWT-based authentication with secure cookies." \
-  --tasks "Create User model #unit-test
-Create login endpoint #e2e-test
+  --tasks "Create User model +unit-test
+Create login endpoint +e2e-test
 Add JWT token generation
 Implement auth middleware"
 
@@ -53,7 +53,7 @@ issue-cards log-failure "Tried using localStorage but it was vulnerable to XSS a
 issue-cards add-question "What should the token expiration time be?"
 
 # Add a new task that you discovered is needed
-issue-cards add-task "Add password reset functionality" --tags "e2e-test"
+issue-cards add-task "Add password reset functionality +e2e-test"
 
 # Continue working through tasks
 issue-cards complete-task
@@ -94,7 +94,7 @@ issue-cards list
 issue-cards add-question "Should we persist the cart for logged-out users?"
 
 # Developer A answers the question and adds a task
-issue-cards add-task "Add local storage for guest carts" --tags "unit-test"
+issue-cards add-task "Add local storage for guest carts +unit-test"
 
 # Developer B takes on the work
 issue-cards current
@@ -120,7 +120,7 @@ This workflow demonstrates the process of fixing a bug using Issue Cards.
 issue-cards create bugfix --title "Fix incorrect price calculation" \
   --problem "Prices are sometimes showing incorrect totals in the shopping cart." \
   --approach "Debug the calculation logic and fix edge cases." \
-  --tasks "Add test case that reproduces the bug #unit-test
+  --tasks "Add test case that reproduces the bug +unit-test
 Fix calculation function
 Add special handling for discounted items
 Verify fix in browser"
@@ -135,7 +135,7 @@ issue-cards log-failure "Bug occurs when items have decimal quantities (e.g., 1.
 issue-cards complete-task
 
 # Add a new task that wasn't initially planned
-issue-cards add-task "Update quantity input to handle decimal values properly" --tags "unit-test"
+issue-cards add-task "Update quantity input to handle decimal values properly +unit-test"
 
 # Continue fixing tasks
 issue-cards complete-task
@@ -151,11 +151,11 @@ issue-cards create feature --title "Implement user profiles" \
   --problem "Users need to be able to view and edit their profile information." \
   --approach "Create a profile page with editable fields and avatar upload." \
   --instructions "Follow the design mockups in Figma. Ensure all fields are properly validated." \
-  --tasks "Create profile database schema #unit-test
-Implement profile API endpoints #e2e-test
-Create profile page component #unit-test
+  --tasks "Create profile database schema +unit-test
+Implement profile API endpoints +e2e-test
+Create profile page component +unit-test
 Add avatar upload functionality
-Implement form validation #unit-test
+Implement form validation +unit-test
 Connect profile page to API
 Add form error handling" \
   --next-steps "After this is complete, we'll add social media linking to profiles."
@@ -169,7 +169,7 @@ issue-cards complete-task
 issue-cards add-note "Avatar upload should support WebP format for better compression."
 
 # When discovering edge cases
-issue-cards add-task "Add handling for email change verification" --tags "e2e-test"
+issue-cards add-task "Add handling for email change verification +e2e-test"
 
 # After completing all tasks
 issue-cards complete-task
@@ -195,7 +195,7 @@ issue-cards log-failure "Initial regex-based approach was too slow for large dat
 issue-cards complete-task
 
 # Add a new task based on AI's suggestions
-issue-cards add-task "Add caching layer for search results" --tags "unit-test"
+issue-cards add-task "Add caching layer for search results +unit-test"
 
 # Continue the collaboration
 issue-cards current
@@ -209,8 +209,8 @@ AI assistants often benefit from the structured format and clear context that Is
 ### Using Multiple Tags
 
 ```bash
-# Add a task with multiple tags
-issue-cards add-task "Implement user settings page" --tags "unit-test,e2e-test,update-docs"
+# Add a task with multiple expansion tags
+issue-cards add-task "Implement user settings page +unit-test +e2e-test +update-docs"
 
 # When viewing the current task, all tags' steps will be combined
 issue-cards current
@@ -224,7 +224,7 @@ cp .issues/config/templates/tag/unit-test.md .issues/config/templates/tag/perfor
 
 # Edit the template to add performance testing steps
 # Then use it
-issue-cards add-task "Optimize database queries" --tags "performance-test"
+issue-cards add-task "Optimize database queries +performance-test"
 ```
 
 ### Integrating with CI/CD
@@ -236,6 +236,9 @@ You can use Issue Cards in CI/CD workflows:
 if [ -d ".issues" ]; then
   # Count open issues with a specific tag
   ISSUES_WITH_TODOS=$(grep -l "#todo" .issues/open/*.md | wc -l)
+  
+  # Count open issues with specific expansion tags
+  ISSUES_WITH_UNIT_TESTS=$(grep -l "+unit-test" .issues/open/*.md | wc -l)
   
   # Fail build if there are too many open TODOs
   if [ $ISSUES_WITH_TODOS -gt 10 ]; then

@@ -41,12 +41,14 @@ jest.mock('../../src/utils/taskParser', () => ({
   extractTasks: jest.fn(),
   findCurrentTask: jest.fn(),
   extractTagsFromTask: jest.fn(),
+  extractExpandTagsFromTask: jest.fn(),
+  isTagAtEnd: jest.fn().mockReturnValue(true),
   updateTaskStatus: jest.fn()
 }));
 
 jest.mock('../../src/utils/taskExpander', () => ({
   validateTagTemplate: jest.fn(),
-  expandTask: jest.fn()
+  expandTask: jest.fn().mockResolvedValue([])
 }));
 
 jest.mock('../../src/utils/template', () => ({
@@ -177,6 +179,9 @@ describe('add-task command', () => {
       
       const newTask = 'New Task';
       
+      // Mock tag extraction for this test
+      taskParser.extractTagsFromTask.mockReturnValue([]);
+      
       const result = await insertTaskIntoContent(content, newTask, 'end');
       
       // Should insert before the Notes section
@@ -186,6 +191,107 @@ describe('add-task command', () => {
       expect(result).toContain('- [ ] Task 1');
       expect(result).toContain('- [ ] Task 2');
       expect(result).toContain('- [ ] New Task');
+      expect(result).toContain('## Notes');
+      expect(result).toContain('Some notes');
+    });
+    
+    test('expands task with +tag at the end into multiple tasks', async () => {
+      const content = 
+        '# Issue\n\n' +
+        '## Tasks\n' +
+        '- [ ] Task 1\n' +
+        '- [ ] Task 2\n\n' +
+        '## Notes\n' +
+        'Some notes';
+      
+      const newTask = 'Fix the bug +unit-test';
+      
+      // Mock tag extraction for this test
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{ name: 'unit-test', params: {} }]);
+      
+      // Mock task expansion
+      taskExpander.expandTask.mockResolvedValue([
+        'Write failing unit tests for the functionality',
+        'Run the unit tests and verify they fail for the expected reason',
+        'Fix the bug',
+        'Run unit tests and verify they now pass',
+        'Make sure test coverage meets project requirements'
+      ]);
+      
+      const result = await insertTaskIntoContent(content, newTask, 'end');
+      
+      // Should insert all expanded tasks before the Notes section
+      expect(result).toContain('# Issue');
+      expect(result).toContain('## Tasks');
+      expect(result).toContain('- [ ] Task 1');
+      expect(result).toContain('- [ ] Task 2');
+      expect(result).toContain('- [ ] Write failing unit tests for the functionality');
+      expect(result).toContain('- [ ] Run the unit tests and verify they fail for the expected reason');
+      expect(result).toContain('- [ ] Fix the bug');
+      expect(result).toContain('- [ ] Run unit tests and verify they now pass');
+      expect(result).toContain('- [ ] Make sure test coverage meets project requirements');
+      expect(result).toContain('## Notes');
+      expect(result).toContain('Some notes');
+      
+      // The original task with the tag should not be present
+      expect(result).not.toContain('- [ ] Fix the bug +unit-test');
+    });
+    
+    test('does not expand #tag anymore', async () => {
+      const content = 
+        '# Issue\n\n' +
+        '## Tasks\n' +
+        '- [ ] Task 1\n' +
+        '- [ ] Task 2\n\n' +
+        '## Notes\n' +
+        'Some notes';
+      
+      const newTask = 'Fix the bug #unit-test';
+      
+      // Mock tag extraction for this test - no expand tags
+      taskParser.extractExpandTagsFromTask.mockReturnValue([]);
+      
+      // Mock task expansion to just return the original task
+      taskExpander.expandTask.mockResolvedValue([newTask]);
+      
+      const result = await insertTaskIntoContent(content, newTask, 'end');
+      
+      // Should insert the original task with the #tag
+      expect(result).toContain('# Issue');
+      expect(result).toContain('## Tasks');
+      expect(result).toContain('- [ ] Task 1');
+      expect(result).toContain('- [ ] Task 2');
+      expect(result).toContain('- [ ] Fix the bug #unit-test');
+      expect(result).toContain('## Notes');
+      expect(result).toContain('Some notes');
+    });
+    
+    test('does not expand +tag in the middle of task text', async () => {
+      const content = 
+        '# Issue\n\n' +
+        '## Tasks\n' +
+        '- [ ] Task 1\n' +
+        '- [ ] Task 2\n\n' +
+        '## Notes\n' +
+        'Some notes';
+      
+      const newTask = 'Fix the +unit-test bug';
+      
+      // Mock tag extraction for this test - tag is found but not at the end
+      taskParser.extractExpandTagsFromTask.mockReturnValue([{ name: 'unit-test', params: {} }]);
+      taskParser.isTagAtEnd.mockReturnValue(false);
+      
+      // Mock task expansion to just return the original task
+      taskExpander.expandTask.mockResolvedValue([newTask]);
+      
+      const result = await insertTaskIntoContent(content, newTask, 'end');
+      
+      // Should insert the original task with the +tag in the middle
+      expect(result).toContain('# Issue');
+      expect(result).toContain('## Tasks');
+      expect(result).toContain('- [ ] Task 1');
+      expect(result).toContain('- [ ] Task 2');
+      expect(result).toContain('- [ ] Fix the +unit-test bug');
       expect(result).toContain('## Notes');
       expect(result).toContain('Some notes');
     });
@@ -201,6 +307,9 @@ describe('add-task command', () => {
       
       // Mock to return task index 0 as current
       taskParser.findCurrentTask.mockReturnValue({ text: 'Task 1', completed: false, index: 0 });
+      
+      // Mock tag extraction for this test
+      taskParser.extractTagsFromTask.mockReturnValue([]);
       
       const result = await insertTaskIntoContent(content, newTask, 'before-current');
       
@@ -225,6 +334,9 @@ describe('add-task command', () => {
       
       // Mock to return task index 0 as current
       taskParser.findCurrentTask.mockReturnValue({ text: 'Task 1', completed: false, index: 0 });
+      
+      // Mock tag extraction for this test
+      taskParser.extractTagsFromTask.mockReturnValue([]);
       
       const result = await insertTaskIntoContent(content, newTask, 'after-current');
       
@@ -335,20 +447,20 @@ describe('add-task command', () => {
       expect(issueManager.writeIssue).toHaveBeenCalled();
     });
     
-    test('handles invalid tags', async () => {
+    test('handles invalid +tags', async () => {
       // Mock list issues
       issueManager.listIssues.mockResolvedValue([
         { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
       issueManager.getIssueFilePath.mockReturnValue('/path/to/issue1.md');
       
-      taskParser.extractTagsFromTask.mockReturnValue([
+      taskParser.extractExpandTagsFromTask.mockReturnValue([
         { name: 'non-existent', params: {} }
       ]);
       
       template.getTemplateList.mockResolvedValue(['unit-test']);
       
-      await expect(addTaskAction('New task #non-existent', { issue: '1' }))
+      await expect(addTaskAction('New task +non-existent', { issue: '1' }))
         .rejects.toThrow('Invalid tags in task');
       
       expect(issueManager.writeIssue).not.toHaveBeenCalled();

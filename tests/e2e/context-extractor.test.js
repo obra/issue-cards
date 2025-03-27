@@ -154,10 +154,10 @@ describe('Context Extractor E2E', () => {
 
   // Test tag-based context extraction
   test('context extraction with tagged tasks', () => {
-    // Create issue with tagged tasks
+    // Create issue with tagged tasks - now using the +tag syntax
     runCommand('create feature --title "Tagged Context Test" ' +
-      '--task "Task with unit-test tag #unit-test" ' +
-      '--task "Task with e2e-test tag #e2e-test"');
+      '--task "Task with unit-test tag +unit-test" ' +
+      '--task "Task with e2e-test tag +e2e-test"');
     
     // First current will show the unit-test task with expanded context
     const output = runCommand('current');

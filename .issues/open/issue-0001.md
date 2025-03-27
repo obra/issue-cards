@@ -1,10 +1,10 @@
-# Issue 0001: Shorter command aliases
+# Issue 0001: Fix Fix login redirect
 
 ## Problem to be solved
-The current command names are verbose and could be shorter for better usability
+Redirect fails on mobile
 
 ## Planned approach
-Implement shorter aliases for common commands
+
 
 ## Failed approaches
 
@@ -13,7 +13,11 @@ Implement shorter aliases for common commands
 
 
 ## Tasks
-- [ ] Create alias for complete-task -&gt; complete\nCreate alias for add-task -&gt; add\nCreate alias for add-question -&gt; question\nCreate alias for log-failure -&gt; failure\nUpdate documentation to show aliases\nAdd tests for new command aliases
+- [x] Write failing unit tests for the functionality
+- [ ] Run the unit tests and verify they fail for the expected reason
+- [ ] Fix the bug
+- [ ] Run unit tests and verify they now pass
+- [ ] Make sure test coverage meets project requirements
 
 ## Instructions
 
