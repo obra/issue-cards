@@ -74,6 +74,32 @@ async function loadCommands(program) {
 }
 
 /**
+ * Load all available command modules without registering them to a program
+ * 
+ * @returns {Array<Object>} Array of command modules
+ */
+function loadAvailableCommands() {
+  const commandsDir = path.join(__dirname, 'commands');
+  const files = fs.readdirSync(commandsDir);
+  
+  const commands = [];
+  
+  for (const file of files) {
+    if (file.endsWith('.js')) {
+      const commandPath = path.join(commandsDir, file);
+      try {
+        const commandModule = require(commandPath);
+        commands.push(commandModule);
+      } catch (error) {
+        console.error(`Error loading command module ${file}: ${error.message}`);
+      }
+    }
+  }
+  
+  return commands;
+}
+
+/**
  * Create and configure the program
  * 
  * @returns {Promise<Command>} The configured commander program
@@ -88,5 +114,6 @@ async function createProgram() {
 module.exports = {
   configureCommander,
   loadCommands,
+  loadAvailableCommands,
   createProgram,
 };

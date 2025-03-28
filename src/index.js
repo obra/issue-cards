@@ -3,7 +3,7 @@
 
 const { createProgram } = require('./cli');
 const outputManager = require('./utils/outputManager');
-const { IssueCardsError } = require('./utils/errors');
+const { IssueCardsError, SystemError } = require('./utils/errors');
 
 /**
  * Main function to run the CLI application
@@ -74,9 +74,85 @@ function parseGlobalArgs(argv) {
   return args;
 }
 
+/**
+ * Execute a CLI command programmatically
+ * 
+ * @param {string} commandName - The name of the command to execute
+ * @param {Object} args - Arguments for the command
+ * @returns {Promise<Object>} The command execution result
+ */
+async function executeCommand(commandName, args = {}) {
+  try {
+    // Force JSON output
+    const execArgs = { ...args, json: true };
+    
+    // Configure output manager to capture output
+    outputManager.configure({ 
+      json: true, 
+      quiet: true,
+      captureOutput: true 
+    });
+    
+    // Create the program
+    const program = await createProgram();
+    
+    // Find the command
+    const command = program.commands.find(cmd => cmd.name() === commandName);
+    
+    if (!command) {
+      throw new SystemError(`Unknown command: ${commandName}`)
+        .withDisplayMessage(`Unknown command: ${commandName}`);
+    }
+    
+    // Execute the command action directly
+    await command.parseOptions([]);
+    const action = command._actionHandler;
+    await action(execArgs, command);
+    
+    // Get the captured output
+    const output = outputManager.getCapturedOutput();
+    
+    // Reset output manager
+    outputManager.reset();
+    
+    return {
+      success: true,
+      data: output
+    };
+  } catch (error) {
+    // Reset output manager
+    outputManager.reset();
+    
+    if (error instanceof IssueCardsError) {
+      return {
+        success: false,
+        error: {
+          code: error.code,
+          type: error.constructor.name,
+          message: error.displayMessage || error.message,
+          hint: error.recoveryHint
+        }
+      };
+    }
+    
+    // For unexpected errors
+    return {
+      success: false,
+      error: {
+        type: 'UnexpectedError',
+        message: error.message,
+        stack: error.stack
+      }
+    };
+  }
+}
+
 // Execute the main function
 if (require.main === module) {
   main();
 }
 
+// Create a proper module.exports pattern
 module.exports = main;
+module.exports.main = main; 
+module.exports.executeCommand = executeCommand;

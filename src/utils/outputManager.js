@@ -15,7 +15,19 @@ const VERBOSITY = {
 let config = {
   verbosity: VERBOSITY.NORMAL,
   useColors: true,
-  jsonOutput: false
+  jsonOutput: false,
+  captureOutput: false
+};
+
+// Store for captured output
+let capturedOutput = {
+  success: [],
+  info: [],
+  warning: [],
+  error: [],
+  debug: [],
+  data: {},
+  raw: []
 };
 
 /**
@@ -27,6 +39,7 @@ let config = {
  * @param {boolean} options.debug - Set debug mode (maximum detail)
  * @param {boolean} options.noColor - Disable colored output
  * @param {boolean} options.json - Output in JSON format
+ * @param {boolean} options.captureOutput - Capture output for programmatic access
  */
 function configure(options = {}) {
   if (options.quiet) config.verbosity = VERBOSITY.QUIET;
@@ -34,6 +47,7 @@ function configure(options = {}) {
   if (options.debug) config.verbosity = VERBOSITY.DEBUG;
   if (options.noColor !== undefined) config.useColors = !options.noColor;
   if (options.json !== undefined) config.jsonOutput = options.json;
+  if (options.captureOutput !== undefined) config.captureOutput = options.captureOutput;
 }
 
 /**
@@ -133,6 +147,10 @@ function formatSectionMsg(title, content, options = {}) {
  * @param {Object} options - Output options
  */
 function success(message, options = {}) {
+  if (config.captureOutput) {
+    capturedOutput.success.push(message);
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'success', message }));
@@ -149,6 +167,10 @@ function success(message, options = {}) {
  * @param {Object} options - Output options
  */
 function info(message, options = {}) {
+  if (config.captureOutput) {
+    capturedOutput.info.push(message);
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'info', message }));
@@ -165,6 +187,10 @@ function info(message, options = {}) {
  * @param {Object} options - Output options
  */
 function warn(message, options = {}) {
+  if (config.captureOutput) {
+    capturedOutput.warning.push(message);
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'warning', message }));
@@ -182,6 +208,10 @@ function warn(message, options = {}) {
  * @param {Object} options - Output options
  */
 function error(message, errorType = 'Error', options = {}) {
+  if (config.captureOutput) {
+    capturedOutput.error.push({ message, type: errorType });
+  }
+
   if (config.verbosity >= VERBOSITY.QUIET) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'error', errorType, message }));
@@ -198,6 +228,10 @@ function error(message, errorType = 'Error', options = {}) {
  * @param {Object} options - Output options
  */
 function debug(message, options = {}) {
+  if (config.captureOutput) {
+    capturedOutput.debug.push(message);
+  }
+
   if (config.verbosity >= VERBOSITY.DEBUG) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'debug', message }));
@@ -215,6 +249,18 @@ function debug(message, options = {}) {
  * @param {Object} options - Output options
  */
 function section(title, content, options = {}) {
+  if (config.captureOutput) {
+    if (!capturedOutput.data[title]) {
+      capturedOutput.data[title] = [];
+    }
+    
+    if (Array.isArray(content)) {
+      capturedOutput.data[title] = capturedOutput.data[title].concat(content);
+    } else {
+      capturedOutput.data[title].push(content);
+    }
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ 
@@ -236,6 +282,11 @@ function section(title, content, options = {}) {
  * @param {boolean} options.numbered - Whether to use numbered list
  */
 function list(items, options = { numbered: false }) {
+  if (config.captureOutput && items && items.length > 0) {
+    capturedOutput.data.list = capturedOutput.data.list || [];
+    capturedOutput.data.list = capturedOutput.data.list.concat(items);
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'list', items, options }));
@@ -266,6 +317,11 @@ function list(items, options = { numbered: false }) {
  * @param {boolean} options.header - Whether the first row is a header
  */
 function table(data, options = { header: false }) {
+  if (config.captureOutput && data && data.length > 0) {
+    capturedOutput.data.table = capturedOutput.data.table || [];
+    capturedOutput.data.table.push({ data, options });
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'table', data, options }));
@@ -294,6 +350,10 @@ function table(data, options = { header: false }) {
  * @param {string} content - The raw content to output
  */
 function raw(content) {
+  if (config.captureOutput) {
+    capturedOutput.raw.push(content);
+  }
+
   if (config.verbosity >= VERBOSITY.NORMAL) {
     console.log(content);
   }
@@ -306,6 +366,40 @@ function blank() {
   if (config.verbosity >= VERBOSITY.NORMAL && !config.jsonOutput) {
     console.log('');
   }
+}
+
+/**
+ * Get the captured output
+ * 
+ * @returns {Object} The captured output data
+ */
+function getCapturedOutput() {
+  // Return a deep copy to prevent mutation
+  return JSON.parse(JSON.stringify(capturedOutput));
+}
+
+/**
+ * Reset the output manager state and clear captured output
+ */
+function reset() {
+  // Reset configuration to defaults
+  config = {
+    verbosity: VERBOSITY.NORMAL,
+    useColors: true,
+    jsonOutput: false,
+    captureOutput: false
+  };
+  
+  // Clear captured output
+  capturedOutput = {
+    success: [],
+    info: [],
+    warning: [],
+    error: [],
+    debug: [],
+    data: {},
+    raw: []
+  };
 }
 
 /**
@@ -335,6 +429,10 @@ module.exports = {
   table,
   raw,
   blank,
+  
+  // Output capture
+  getCapturedOutput,
+  reset,
   
   // Formatting helpers
   formatSuccessMsg,
