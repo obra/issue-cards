@@ -173,9 +173,11 @@ issue-cards current
 
 Example output:
 ```
-TASK: Create user model with password field #unit-test
+CURRENT TASK:
+Create user model with password field +unit-test
 
 CONTEXT:
+
 Problem to be solved:
 Users need to be able to securely log into the application.
 
@@ -186,18 +188,11 @@ Instructions:
 Follow the project's security guidelines when implementing authentication.
 The JWT should include the user's role permissions.
 
-TASKS:
-1. Write failing unit tests for the user model
-2. Run the unit tests and verify they fail for the expected reason
-3. Create user model with password field
-4. Run unit tests and verify they now pass
-5. Make sure test coverage meets project requirements
-
 UPCOMING TASKS:
 - Implement password hashing and verification
-- Create login endpoint #e2e-test
+- Create login endpoint +e2e-test
 - Add JWT token generation
-- Implement authentication middleware #unit-test
+- Implement authentication middleware +unit-test
 
 Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.
 ```
@@ -214,9 +209,11 @@ Example output:
 ```
 ✅ Completed: Create user model with password field
 
-NEXT TASK: Implement password hashing and verification
+CURRENT TASK:
+Implement password hashing and verification
 
 CONTEXT:
+
 Problem to be solved:
 Users need to be able to securely log into the application.
 
@@ -227,13 +224,10 @@ Instructions:
 Follow the project's security guidelines when implementing authentication.
 The JWT should include the user's role permissions.
 
-TASKS:
-1. Implement password hashing and verification
-
 UPCOMING TASKS:
-- Create login endpoint #e2e-test
+- Create login endpoint +e2e-test
 - Add JWT token generation
-- Implement authentication middleware #unit-test
+- Implement authentication middleware +unit-test
 
 Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.
 ```
@@ -263,7 +257,6 @@ Arguments:
 Options:
 - `--before` - Add the task before the current task
 - `--after` - Add the task after the current task (default)
-- `--tags <tags>` - Comma-separated list of tags to apply
 
 Examples:
 ```bash
@@ -273,8 +266,8 @@ issue-cards add-task "Add email verification support"
 # Add a task before the current task
 issue-cards add-task "Set up database connection" --before
 
-# Add a task with tags
-issue-cards add-task "Create login form component" --tags "unit-test,update-docs"
+# Add a task with expansion tags
+issue-cards add-task "Create login form component +unit-test +update-docs"
 ```
 
 ### add-note

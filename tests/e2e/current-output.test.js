@@ -116,10 +116,6 @@ describe('Current Command Output Format', () => {
     expect(output).toContain('CURRENT TASK:')
     expect(output).toContain('Task 1');
     
-    // Should have current task section
-    expect(output).toContain('CURRENT TASK:');
-    expect(output).toContain('Task 1');
-    
     // Should have context with proper formatting
     // Use a more flexible pattern that matches CONTEXT: followed by whitespace characters and/or newlines
     expect(output).toMatch(/CONTEXT:[\s\n]+Problem/);
@@ -136,15 +132,10 @@ describe('Current Command Output Format', () => {
     expect(output).toContain('Instructions:');
     expect(output).toContain('Test instructions');
     
-    // Should have the TASKS section with task steps
-    expect(output).toMatch(/TASKS:\s+1\. Task 1/);
-    
-    // Should have next task
-    expect(output).toContain('NEXT TASK:');
-    expect(output).toContain('Task 2');
-    
     // Should have upcoming tasks
     expect(output).toContain('UPCOMING TASKS:');
+    // Should include all tasks after current
+    expect(output).toContain('Task 2');
     expect(output).toContain('Task 3');
     
     // Should have the note about upcoming tasks

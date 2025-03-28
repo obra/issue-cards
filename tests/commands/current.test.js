@@ -96,8 +96,9 @@ describe('Current command', () => {
       
       // Check section output - the display utility uses 'CURRENT TASK' format
       expect(outputManager.section).toHaveBeenCalledWith('CURRENT TASK', 'First task');
-      expect(outputManager.section).toHaveBeenCalledWith('TASKS', expandedSteps.map((step, idx) => `${idx + 1}. ${step}`));
-      expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
+      
+      // Verify upcoming tasks section called
+      expect(outputManager.section).toHaveBeenCalledWith('UPCOMING TASKS', expect.any(Array));
       
       // Verify the output manager was called enough times
       expect(outputManager.section.mock.calls.length).toBeGreaterThanOrEqual(3);
@@ -105,7 +106,6 @@ describe('Current command', () => {
       // Check for specific content in the calls
       expect(outputManager.section).toHaveBeenCalledWith(expect.stringContaining('TASK'), expect.any(String));
       expect(outputManager.section).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('First task'));
-      expect(outputManager.section).toHaveBeenCalledWith('NEXT TASK', 'Second task');
     });
     
     test('throws error when no open issues exist', async () => {
