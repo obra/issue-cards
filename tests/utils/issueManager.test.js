@@ -8,7 +8,8 @@ const {
   getNextIssueNumber,
   saveIssue,
   listIssues,
-  getIssue
+  getIssue,
+  closeIssue
 } = require('../../src/utils/issueManager');
 const directory = require('../../src/utils/directory');
 
@@ -18,6 +19,8 @@ jest.mock('fs', () => ({
     readdir: jest.fn(),
     readFile: jest.fn(),
     writeFile: jest.fn(),
+    rename: jest.fn(),
+    unlink: jest.fn(),
   },
 }));
 
@@ -237,6 +240,48 @@ describe('Issue Manager utilities', () => {
       expect(result).toEqual([
         { number: '0001', title: 'Error: Failed to read file', content: '' }
       ]);
+    });
+  });
+  
+  describe('closeIssue', () => {
+    test('moves issue from open to closed directory', async () => {
+      // Mock readFile to return issue content
+      const issueContent = '# Issue 0001: Test Issue';
+      fs.promises.readFile.mockResolvedValue(issueContent);
+      
+      // Mock successful rename
+      fs.promises.rename.mockResolvedValue();
+      
+      await closeIssue('0001');
+      
+      // Should read issue content first
+      expect(fs.promises.readFile).toHaveBeenCalledWith(
+        path.join('/project/.issues/open', 'issue-0001.md'),
+        'utf8'
+      );
+      
+      // Should move issue file from open to closed
+      expect(fs.promises.rename).toHaveBeenCalledWith(
+        path.join('/project/.issues/open', 'issue-0001.md'),
+        path.join('/project/.issues/closed', 'issue-0001.md')
+      );
+    });
+    
+    test('handles issue not found error', async () => {
+      // Mock readFile to throw error
+      fs.promises.readFile.mockRejectedValue(new Error('Issue not found'));
+      
+      await expect(closeIssue('0001')).rejects.toThrow('Failed to close issue');
+    });
+    
+    test('handles rename error', async () => {
+      // Mock readFile to return issue content
+      fs.promises.readFile.mockResolvedValue('# Issue 0001: Test Issue');
+      
+      // Mock rename to throw error
+      fs.promises.rename.mockRejectedValue(new Error('Cannot rename file'));
+      
+      await expect(closeIssue('0001')).rejects.toThrow('Failed to close issue');
     });
   });
 });

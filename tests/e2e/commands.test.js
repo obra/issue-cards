@@ -258,13 +258,18 @@ describe('Issue Cards E2E Commands', () => {
     expect(output).toContain('✅ Task completed:');
     expect(output).toContain('All tasks complete');
     
-    // Verify all tasks are marked as completed
-    const issueFile = path.join(testDir, '.issues/open/issue-0001.md');
-    const content = fs.readFileSync(issueFile, 'utf8');
+    // Verify the issue has been closed and moved to closed directory
+    const closedIssueFile = path.join(testDir, '.issues/closed/issue-0001.md');
+    const content = fs.readFileSync(closedIssueFile, 'utf8');
     
     expect(content).toContain('[x] Task 1');
     expect(content).toContain('[x] Task 2');
     expect(content).toContain('[x] Task 3');
+    
+    // Verify there are no open issues
+    const openIssuesDir = path.join(testDir, '.issues/open');
+    const openIssueFiles = fs.readdirSync(openIssuesDir);
+    expect(openIssueFiles.length).toBe(0);
   });
 
   // Test templates command

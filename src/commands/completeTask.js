@@ -4,7 +4,7 @@
 const { Command } = require('commander');
 const path = require('path');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
-const { listIssues, saveIssue, getIssue } = require('../utils/issueManager');
+const { listIssues, saveIssue, getIssue, closeIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/taskParser');
 // Output manager is used for all output formatting
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
@@ -99,7 +99,21 @@ async function completeTaskAction() {
     const nextTask = findCurrentTask(updatedTasks);
     
     if (!nextTask) {
-      output.success('🎉 All tasks complete! Issue has been closed.');
+      // Close the issue by moving it to the closed directory
+      await closeIssue(currentIssue.number);
+      
+      // Try to stage the closed issue file in git too
+      try {
+        if (isGitAvailable() && await isGitRepository()) {
+          const closedIssuePath = path.join(getIssueDirectoryPath('closed'), `issue-${currentIssue.number}.md`);
+          await gitStage(closedIssuePath);
+        }
+      } catch (error) {
+        // Silently ignore git errors - git integration is optional
+        output.debug(`Git staging for closed issue skipped: ${error.message}`);
+      }
+      
+      output.success(`🎉 All tasks complete! Issue #${currentIssue.number} has been closed.`);
       output.blank();
       output.info('Would you like to work on another issue? Run:');
       output.info('  issue-cards list');

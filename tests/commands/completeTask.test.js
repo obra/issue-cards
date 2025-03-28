@@ -24,6 +24,7 @@ jest.mock('../../src/utils/issueManager', () => ({
   listIssues: jest.fn(),
   getIssue: jest.fn(),
   saveIssue: jest.fn(),
+  closeIssue: jest.fn(),
 }));
 
 jest.mock('../../src/utils/taskParser', () => ({
@@ -145,7 +146,7 @@ describe('Complete Task command', () => {
       expect(outputManager.success).toHaveBeenCalledWith('Changes staged in git');
     });
     
-    test('handles case when all tasks are completed', async () => {
+    test('handles case when all tasks are completed and closes the issue', async () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
@@ -180,14 +181,24 @@ describe('Complete Task command', () => {
         .mockReturnValueOnce(tasks[1]) // First call returns the last task
         .mockReturnValueOnce(null);    // Second call returns null (all completed)
       
+      // Mock successful issue closure
+      issueManager.closeIssue.mockResolvedValue();
+      
       await completeTaskAction();
       
       // Verify task was updated
       expect(taskParser.updateTaskStatus).toHaveBeenCalledWith('# Issue 0001: Test Issue', 1, true);
       expect(issueManager.saveIssue).toHaveBeenCalledWith('0001', updatedContent);
       
+      // Verify issue was closed
+      expect(issueManager.closeIssue).toHaveBeenCalledWith('0001');
+      
+      // Verify git staging was attempted for the closed issue file
+      expect(gitOperations.gitStage).toHaveBeenCalledWith('/project/.issues/closed/issue-0001.md');
+      
       // Verify completion message was logged
       expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('All tasks complete'));
+      expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 has been closed'));
       
       // Verify info message was shown
       expect(outputManager.info).toHaveBeenCalledTimes(2);

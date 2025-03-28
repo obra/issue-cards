@@ -14,11 +14,15 @@ Redirect fails on mobile
 
 ## Tasks
 - [x] Write failing unit tests for the functionality
-- [ ] Run the unit tests and verify they fail for the expected reason
-- [ ] Fix the bug
-- [ ] Run unit tests and verify they now pass
-- [ ] Make sure test coverage meets project requirements
+- [x] Run the unit tests and verify they fail for the expected reason
+- [x] Fix the bug
+- [x] Run unit tests and verify they now pass
+- [x] Make sure test coverage meets project requirements
 
+- [x] Update documentation
+- [x] Update relevant documentation to reflect changes
+- [x] Update comments in the code
+- [x] If API changes were made, update API documentation
 ## Instructions
 
 

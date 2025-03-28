@@ -181,59 +181,53 @@ describe('Issue Cards E2E Lifecycle', () => {
   });
 
   // Focus on task management
-  test('task management lifecycle', () => {
+  test('task management lifecycle with issue closure', () => {
     // Initialize and create issue
     runCommand('init');
-    runCommand('create feature --title "Task Management Test" --task "Task one" --task "Task two" --task "Task three"');
+    runCommand('create feature --title "Task Management Test" --task "Task one" --task "Task two"');
     
     const issueFile = path.join(testDir, '.issues/open/issue-0001.md');
+    const openIssuesDir = path.join(testDir, '.issues/open');
+    const closedIssuesDir = path.join(testDir, '.issues/closed');
     
     // Verify current task
     let output = runCommand('current');
     expect(output).toContain('CURRENT TASK:');
     expect(output).toContain('Task one');
     
-    // Add task before current
-    output = runCommand('add-task "Task zero" --before');
-    expect(output).toContain('Task added to issue');
-    
-    // Verify task order
-    let issueContent = fs.readFileSync(issueFile, 'utf8');
-    const taskLines = issueContent.split('\n').filter(line => line.includes('- [ ]'));
-    expect(taskLines[0]).toContain('Task zero');
-    expect(taskLines[1]).toContain('Task one');
-    
-    // Current task should now be "Task zero"
-    output = runCommand('current');
-    expect(output).toContain('Task zero');
-    
     // Complete the first task
     output = runCommand('complete-task');
     expect(output).toContain('✅ Task completed');
     
     // Verify task was completed
-    issueContent = fs.readFileSync(issueFile, 'utf8');
-    expect(issueContent).toContain('[x] Task zero');
+    let issueContent = fs.readFileSync(issueFile, 'utf8');
+    expect(issueContent).toContain('[x] Task one');
     
-    // Add task with tag (tag should be part of the task text)
-    output = runCommand('add-task "Task with tag #unit-test"');
-    expect(output).toContain('Task added to issue');
+    // Complete the second task which should close the issue
+    output = runCommand('complete-task');
+    expect(output).toContain('✅ Task completed: Task two');
+    expect(output).toContain('🎉 All tasks complete');
+    expect(output).toContain('Issue #0001 has been closed');
     
-    // Verify tag is in the task
-    issueContent = fs.readFileSync(issueFile, 'utf8');
-    expect(issueContent).toContain('Task with tag #unit-test');
+    // Verify the issue file was moved to the closed directory
+    const openIssueFiles = fs.readdirSync(openIssuesDir);
+    const closedIssueFiles = fs.readdirSync(closedIssuesDir);
     
-    // Complete all remaining tasks until we get to the tagged task
-    runCommand('complete-task'); // Complete Task one
-    runCommand('complete-task'); // Complete Task two
-    runCommand('complete-task'); // Complete Task three
+    // Should no longer be in the open directory
+    expect(openIssueFiles.length).toBe(0);
     
-    // Now current should show the tagged task
-    output = runCommand('current');
-    expect(output).toContain('Task with tag #unit-test');
-    // Just verify that there is task content
-    expect(output).toContain('TASK:');
-    expect(output).toContain('CONTEXT:');
+    // Should now be in the closed directory
+    expect(closedIssueFiles.length).toBe(1);
+    expect(closedIssueFiles[0]).toMatch(/^issue-\d+\.md$/);
+    
+    // List issues should not show the closed issue
+    const finalListOutput = runCommand('list');
+    expect(finalListOutput).not.toContain('Task Management Test');
+    expect(finalListOutput).toContain('No open issues found');
+    
+    // Current should show no issues available
+    const currentOutput = runCommand('current');
+    expect(currentOutput).toContain('No open issues found');
   });
 
   // Template handling

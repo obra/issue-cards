@@ -225,6 +225,28 @@ async function writeIssue(filePath, content) {
   }
 }
 
+/**
+ * Close an issue by moving it from open to closed directory
+ * 
+ * @param {string} issueNumber - Issue number (e.g., '0001')
+ * @returns {Promise<void>}
+ */
+async function closeIssue(issueNumber) {
+  try {
+    // Check that the issue exists in the open directory
+    const openPath = getIssueFilePath(issueNumber, 'open');
+    
+    // Read the issue content to verify it exists
+    await fs.promises.readFile(openPath, 'utf8');
+    
+    // Move the issue file from open to closed directory
+    const closedPath = getIssueFilePath(issueNumber, 'closed');
+    await fs.promises.rename(openPath, closedPath);
+  } catch (error) {
+    throw new Error(`Failed to close issue: ${error.message}`);
+  }
+}
+
 module.exports = {
   getIssueFilePath,
   getNextIssueNumber,
@@ -234,5 +256,6 @@ module.exports = {
   extractIssueTitle,
   getCurrentIssue,
   readIssue,
-  writeIssue
+  writeIssue,
+  closeIssue
 };
