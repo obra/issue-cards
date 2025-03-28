@@ -5,8 +5,6 @@ node_modules/
 coverage/
 coverage-report/
 
-# Project files
-.issues/
 
 # Lock files
 package-lock.json

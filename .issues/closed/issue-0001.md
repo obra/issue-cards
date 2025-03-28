@@ -23,6 +23,7 @@ Redirect fails on mobile
 - [x] Update relevant documentation to reflect changes
 - [x] Update comments in the code
 - [x] If API changes were made, update API documentation
+- [x] let's close this out
 ## Instructions
 
 
