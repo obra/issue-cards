@@ -86,11 +86,12 @@ async function executeCommand(commandName, args = {}) {
     // Force JSON output
     const execArgs = { ...args, json: true };
     
-    // Configure output manager to capture output
+    // Configure output manager for programmatic execution
     outputManager.configure({ 
       json: true, 
       quiet: true,
-      captureOutput: true 
+      suppressConsole: args.suppressConsole || false,
+      commandName: commandName
     });
     
     // Create the program
@@ -109,15 +110,23 @@ async function executeCommand(commandName, args = {}) {
     const action = command._actionHandler;
     await action(execArgs, command);
     
-    // Get the captured output
-    const output = outputManager.getCapturedOutput();
+    // Get the command-specific output if available, or fall back to global output
+    const output = outputManager.getCommandOutput(commandName) || outputManager.getCapturedOutput();
     
-    // Reset output manager
+    // Format the output if requested
+    const formattedOutput = args.outputFormat
+      ? outputManager.transformOutput(output, args.outputFormat)
+      : output;
+    
+    // Reset command output
+    outputManager.resetCommandOutput(commandName);
+    
+    // Reset global output manager
     outputManager.reset();
     
     return {
       success: true,
-      data: output
+      data: formattedOutput
     };
   } catch (error) {
     // Reset output manager

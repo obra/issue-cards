@@ -16,6 +16,9 @@ jest.mock('../src/utils/outputManager', () => ({
   error: jest.fn(),
   debug: jest.fn(),
   getCapturedOutput: jest.fn().mockReturnValue({ data: { result: 'test' } }),
+  getCommandOutput: jest.fn().mockReturnValue({ data: { result: 'test' } }),
+  resetCommandOutput: jest.fn(),
+  setCommandContext: jest.fn(),
   reset: jest.fn()
 }));
 
@@ -129,10 +132,12 @@ describe('Main Application', () => {
       
       expect(outputManager.configure).toHaveBeenCalledWith(expect.objectContaining({ 
         json: true,
-        captureOutput: true 
+        suppressConsole: false,
+        commandName: 'test-command'
       }));
       expect(mockAction).toHaveBeenCalled();
-      expect(outputManager.getCapturedOutput).toHaveBeenCalled();
+      expect(outputManager.getCommandOutput).toHaveBeenCalledWith('test-command');
+      expect(outputManager.resetCommandOutput).toHaveBeenCalledWith('test-command');
       expect(outputManager.reset).toHaveBeenCalled();
       expect(result).toEqual({
         success: true,

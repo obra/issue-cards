@@ -16,10 +16,10 @@ let config = {
   verbosity: VERBOSITY.NORMAL,
   useColors: true,
   jsonOutput: false,
-  captureOutput: false
+  suppressConsole: false
 };
 
-// Store for captured output
+// Store for captured output (always active)
 let capturedOutput = {
   success: [],
   info: [],
@@ -30,6 +30,12 @@ let capturedOutput = {
   raw: []
 };
 
+// Store for command-specific captured output
+let commandOutputs = {};
+
+// Command context stack for nested commands
+let commandContextStack = [];
+
 /**
  * Configure the output manager
  * 
@@ -39,7 +45,8 @@ let capturedOutput = {
  * @param {boolean} options.debug - Set debug mode (maximum detail)
  * @param {boolean} options.noColor - Disable colored output
  * @param {boolean} options.json - Output in JSON format
- * @param {boolean} options.captureOutput - Capture output for programmatic access
+ * @param {boolean} options.suppressConsole - Prevent output to console entirely
+ * @param {string} options.commandName - Set the current command context
  */
 function configure(options = {}) {
   if (options.quiet) config.verbosity = VERBOSITY.QUIET;
@@ -47,7 +54,20 @@ function configure(options = {}) {
   if (options.debug) config.verbosity = VERBOSITY.DEBUG;
   if (options.noColor !== undefined) config.useColors = !options.noColor;
   if (options.json !== undefined) config.jsonOutput = options.json;
-  if (options.captureOutput !== undefined) config.captureOutput = options.captureOutput;
+  if (options.suppressConsole !== undefined) config.suppressConsole = options.suppressConsole;
+  
+  // Legacy compatibility
+  if (options.captureOutput !== undefined) {
+    // If suppressConsole wasn't explicitly set, use !captureOutput
+    if (options.suppressConsole === undefined) {
+      config.suppressConsole = !options.captureOutput;
+    }
+  }
+  
+  // Set command context if provided
+  if (options.commandName) {
+    setCommandContext(options.commandName);
+  }
 }
 
 /**
@@ -147,11 +167,17 @@ function formatSectionMsg(title, content, options = {}) {
  * @param {Object} options - Output options
  */
 function success(message, options = {}) {
-  if (config.captureOutput) {
-    capturedOutput.success.push(message);
+  // Always capture in global store
+  capturedOutput.success.push(message);
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].success.push(message);
   }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'success', message }));
     } else {
@@ -167,11 +193,17 @@ function success(message, options = {}) {
  * @param {Object} options - Output options
  */
 function info(message, options = {}) {
-  if (config.captureOutput) {
-    capturedOutput.info.push(message);
+  // Always capture in global store
+  capturedOutput.info.push(message);
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].info.push(message);
   }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'info', message }));
     } else {
@@ -187,11 +219,17 @@ function info(message, options = {}) {
  * @param {Object} options - Output options
  */
 function warn(message, options = {}) {
-  if (config.captureOutput) {
-    capturedOutput.warning.push(message);
+  // Always capture in global store
+  capturedOutput.warning.push(message);
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].warning.push(message);
   }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'warning', message }));
     } else {
@@ -208,11 +246,17 @@ function warn(message, options = {}) {
  * @param {Object} options - Output options
  */
 function error(message, errorType = 'Error', options = {}) {
-  if (config.captureOutput) {
-    capturedOutput.error.push({ message, type: errorType });
+  // Always capture in global store
+  capturedOutput.error.push({ message, type: errorType });
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].error.push({ message, type: errorType });
   }
 
-  if (config.verbosity >= VERBOSITY.QUIET) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.QUIET) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'error', errorType, message }));
     } else {
@@ -228,11 +272,17 @@ function error(message, errorType = 'Error', options = {}) {
  * @param {Object} options - Output options
  */
 function debug(message, options = {}) {
-  if (config.captureOutput) {
-    capturedOutput.debug.push(message);
+  // Always capture in global store
+  capturedOutput.debug.push(message);
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].debug.push(message);
   }
 
-  if (config.verbosity >= VERBOSITY.DEBUG) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.DEBUG) {
     if (config.jsonOutput) {
       console.error(JSON.stringify({ type: 'debug', message }));
     } else {
@@ -249,19 +299,34 @@ function debug(message, options = {}) {
  * @param {Object} options - Output options
  */
 function section(title, content, options = {}) {
-  if (config.captureOutput) {
-    if (!capturedOutput.data[title]) {
-      capturedOutput.data[title] = [];
+  // Always capture in global store
+  if (!capturedOutput.data[title]) {
+    capturedOutput.data[title] = [];
+  }
+  
+  if (Array.isArray(content)) {
+    capturedOutput.data[title] = capturedOutput.data[title].concat(content);
+  } else {
+    capturedOutput.data[title].push(content);
+  }
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    if (!commandOutputs[currentCommand].data[title]) {
+      commandOutputs[currentCommand].data[title] = [];
     }
     
     if (Array.isArray(content)) {
-      capturedOutput.data[title] = capturedOutput.data[title].concat(content);
+      commandOutputs[currentCommand].data[title] = 
+        commandOutputs[currentCommand].data[title].concat(content);
     } else {
-      capturedOutput.data[title].push(content);
+      commandOutputs[currentCommand].data[title].push(content);
     }
   }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ 
         type: 'section', 
@@ -282,12 +347,22 @@ function section(title, content, options = {}) {
  * @param {boolean} options.numbered - Whether to use numbered list
  */
 function list(items, options = { numbered: false }) {
-  if (config.captureOutput && items && items.length > 0) {
+  // Always capture in global store
+  if (items && items.length > 0) {
     capturedOutput.data.list = capturedOutput.data.list || [];
     capturedOutput.data.list = capturedOutput.data.list.concat(items);
   }
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand] && items && items.length > 0) {
+    commandOutputs[currentCommand].data.list = commandOutputs[currentCommand].data.list || [];
+    commandOutputs[currentCommand].data.list = 
+      commandOutputs[currentCommand].data.list.concat(items);
+  }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'list', items, options }));
     } else {
@@ -317,12 +392,21 @@ function list(items, options = { numbered: false }) {
  * @param {boolean} options.header - Whether the first row is a header
  */
 function table(data, options = { header: false }) {
-  if (config.captureOutput && data && data.length > 0) {
+  // Always capture in global store
+  if (data && data.length > 0) {
     capturedOutput.data.table = capturedOutput.data.table || [];
     capturedOutput.data.table.push({ data, options });
   }
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand] && data && data.length > 0) {
+    commandOutputs[currentCommand].data.table = commandOutputs[currentCommand].data.table || [];
+    commandOutputs[currentCommand].data.table.push({ data, options });
+  }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     if (config.jsonOutput) {
       console.log(JSON.stringify({ type: 'table', data, options }));
     } else {
@@ -350,11 +434,17 @@ function table(data, options = { header: false }) {
  * @param {string} content - The raw content to output
  */
 function raw(content) {
-  if (config.captureOutput) {
-    capturedOutput.raw.push(content);
+  // Always capture in global store
+  capturedOutput.raw.push(content);
+  
+  // Also capture in command-specific store if a command context is set
+  const currentCommand = getCurrentCommand();
+  if (currentCommand && commandOutputs[currentCommand]) {
+    commandOutputs[currentCommand].raw.push(content);
   }
 
-  if (config.verbosity >= VERBOSITY.NORMAL) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
     console.log(content);
   }
 }
@@ -363,7 +453,8 @@ function raw(content) {
  * Print a blank line
  */
 function blank() {
-  if (config.verbosity >= VERBOSITY.NORMAL && !config.jsonOutput) {
+  // Only output to console if not suppressed
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL && !config.jsonOutput) {
     console.log('');
   }
 }
@@ -387,7 +478,7 @@ function reset() {
     verbosity: VERBOSITY.NORMAL,
     useColors: true,
     jsonOutput: false,
-    captureOutput: false
+    suppressConsole: false
   };
   
   // Clear captured output
@@ -400,6 +491,298 @@ function reset() {
     data: {},
     raw: []
   };
+  
+  // Reset command contexts
+  commandOutputs = {};
+  commandContextStack = [];
+}
+
+/**
+ * Set the current command context
+ * 
+ * @param {string} commandName - The name of the command
+ */
+function setCommandContext(commandName) {
+  // Clear the stack and set the new command
+  commandContextStack = [commandName];
+  
+  // Initialize command output store if needed
+  if (commandName && !commandOutputs[commandName]) {
+    commandOutputs[commandName] = {
+      success: [],
+      info: [],
+      warning: [],
+      error: [],
+      debug: [],
+      data: {},
+      raw: [],
+      children: []
+    };
+  }
+}
+
+/**
+ * Push a new command context onto the stack
+ * 
+ * @param {string} commandName - The name of the command
+ */
+function pushCommandContext(commandName) {
+  // Add to the stack
+  commandContextStack.push(commandName);
+  
+  // Initialize command output store if needed
+  if (commandName && !commandOutputs[commandName]) {
+    commandOutputs[commandName] = {
+      success: [],
+      info: [],
+      warning: [],
+      error: [],
+      debug: [],
+      data: {},
+      raw: [],
+      children: []
+    };
+  }
+  
+  // Add child reference to parent if there is one
+  const parentCommand = getCurrentParentCommand();
+  if (parentCommand && commandOutputs[parentCommand]) {
+    // Only add if not already there
+    const childExists = commandOutputs[parentCommand].children.some(
+      child => child.name === commandName
+    );
+    
+    if (!childExists) {
+      commandOutputs[parentCommand].children.push({
+        name: commandName,
+        output: null // Will be populated later
+      });
+    }
+  }
+}
+
+/**
+ * Pop the current command context from the stack
+ * 
+ * @returns {string|null} The popped command name
+ */
+function popCommandContext() {
+  if (commandContextStack.length <= 1) {
+    return null; // Don't pop the last item
+  }
+  
+  const poppedCommand = commandContextStack.pop();
+  
+  // Update parent's reference to this child's output
+  const parentCommand = getCurrentCommand();
+  if (parentCommand && poppedCommand) {
+    const childIndex = commandOutputs[parentCommand].children.findIndex(
+      child => child.name === poppedCommand
+    );
+    
+    if (childIndex !== -1) {
+      commandOutputs[parentCommand].children[childIndex].output = 
+        JSON.parse(JSON.stringify(commandOutputs[poppedCommand]));
+    }
+  }
+  
+  return poppedCommand;
+}
+
+/**
+ * Get the current command context
+ * 
+ * @returns {string|null} The current command name
+ */
+function getCurrentCommand() {
+  return commandContextStack.length > 0 
+    ? commandContextStack[commandContextStack.length - 1] 
+    : null;
+}
+
+/**
+ * Get the parent of the current command context
+ * 
+ * @returns {string|null} The parent command name
+ */
+function getCurrentParentCommand() {
+  return commandContextStack.length > 1
+    ? commandContextStack[commandContextStack.length - 2]
+    : null;
+}
+
+/**
+ * Get output for a specific command
+ * 
+ * @param {string} commandName - The name of the command
+ * @returns {Object|null} The captured output for the command
+ */
+function getCommandOutput(commandName) {
+  return commandOutputs[commandName] 
+    ? JSON.parse(JSON.stringify(commandOutputs[commandName]))
+    : null;
+}
+
+/**
+ * Reset output for a specific command
+ * 
+ * @param {string} commandName - The name of the command
+ */
+function resetCommandOutput(commandName) {
+  if (commandOutputs[commandName]) {
+    delete commandOutputs[commandName];
+  }
+}
+
+/**
+ * Convert captured output to a simple format
+ * 
+ * @param {Object} output - The captured output
+ * @returns {Array} Simple format array of messages
+ */
+function toSimpleFormat(output) {
+  const result = [];
+  
+  // Add all messages
+  output.success.forEach(msg => result.push({ type: 'success', message: msg }));
+  output.info.forEach(msg => result.push({ type: 'info', message: msg }));
+  output.warning.forEach(msg => result.push({ type: 'warning', message: msg }));
+  
+  // Handle error objects
+  output.error.forEach(err => {
+    const message = typeof err === 'object' ? err.message : err;
+    const type = typeof err === 'object' ? err.type : 'Error';
+    result.push({ type: 'error', message, errorType: type });
+  });
+  
+  output.debug.forEach(msg => result.push({ type: 'debug', message: msg }));
+  
+  // Add section data
+  Object.entries(output.data).forEach(([title, content]) => {
+    if (title !== 'list' && title !== 'table') {
+      result.push({ type: 'section', title, content });
+    }
+  });
+  
+  // Add lists
+  if (output.data.list) {
+    result.push({ type: 'list', items: output.data.list });
+  }
+  
+  // Add tables
+  if (output.data.table) {
+    output.data.table.forEach(table => {
+      result.push({ type: 'table', data: table.data, options: table.options });
+    });
+  }
+  
+  // Add raw output
+  output.raw.forEach(content => result.push({ type: 'raw', content }));
+  
+  return result;
+}
+
+/**
+ * Convert captured output to markdown
+ * 
+ * @param {Object} output - The captured output
+ * @returns {string} Markdown representation
+ */
+function toMarkdown(output) {
+  let result = '';
+  
+  // Add sections as headers
+  Object.entries(output.data).forEach(([title, content]) => {
+    if (title !== 'list' && title !== 'table') {
+      result += `## ${title}\n\n`;
+      if (Array.isArray(content)) {
+        content.forEach(line => {
+          result += `${line}\n`;
+        });
+      } else {
+        result += `${content}\n`;
+      }
+      result += '\n';
+    }
+  });
+  
+  // Add success messages
+  if (output.success.length > 0) {
+    result += '## Success\n\n';
+    output.success.forEach(msg => {
+      result += `✅ ${msg}\n`;
+    });
+    result += '\n';
+  }
+  
+  // Add info messages
+  if (output.info.length > 0) {
+    result += '## Info\n\n';
+    output.info.forEach(msg => {
+      result += `ℹ️ ${msg}\n`;
+    });
+    result += '\n';
+  }
+  
+  // Add errors and warnings
+  if (output.error.length > 0 || output.warning.length > 0) {
+    result += '## Issues\n\n';
+    output.error.forEach(err => {
+      const message = typeof err === 'object' ? err.message : err;
+      result += `❌ ${message}\n`;
+    });
+    output.warning.forEach(warn => {
+      result += `⚠️ ${warn}\n`;
+    });
+    result += '\n';
+  }
+  
+  // Add tables
+  if (output.data.table && output.data.table.length > 0) {
+    result += '## Tables\n\n';
+    output.data.table.forEach(table => {
+      if (table.data.length > 0) {
+        // Create markdown table
+        const headerRow = table.data[0];
+        result += '| ' + headerRow.join(' | ') + ' |\n';
+        result += '| ' + headerRow.map(() => '---').join(' | ') + ' |\n';
+        
+        for (let i = 1; i < table.data.length; i++) {
+          result += '| ' + table.data[i].join(' | ') + ' |\n';
+        }
+        result += '\n';
+      }
+    });
+  }
+  
+  // Add lists
+  if (output.data.list && output.data.list.length > 0) {
+    result += '## List\n\n';
+    output.data.list.forEach(item => {
+      result += `- ${item}\n`;
+    });
+    result += '\n';
+  }
+  
+  return result.trim();
+}
+
+/**
+ * Transform captured output to the specified format
+ * 
+ * @param {Object} output - The captured output
+ * @param {string} format - The desired output format ('simple', 'markdown')
+ * @returns {Object|Array|string} The transformed output
+ */
+function transformOutput(output, format = 'default') {
+  switch (format) {
+    case 'simple':
+      return toSimpleFormat(output);
+    case 'markdown':
+      return toMarkdown(output);
+    default:
+      return output;
+  }
 }
 
 /**
@@ -433,6 +816,19 @@ module.exports = {
   // Output capture
   getCapturedOutput,
   reset,
+  
+  // Command context management
+  setCommandContext,
+  pushCommandContext,
+  popCommandContext,
+  getCurrentCommand,
+  getCommandOutput,
+  resetCommandOutput,
+  
+  // Output transformation
+  toSimpleFormat,
+  toMarkdown,
+  transformOutput,
   
   // Formatting helpers
   formatSuccessMsg,
