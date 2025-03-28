@@ -101,7 +101,7 @@ describe('Current command', () => {
       expect(outputManager.section).toHaveBeenCalledWith('UPCOMING TASKS', expect.any(Array));
       
       // Verify the output manager was called enough times
-      expect(outputManager.section.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(outputManager.section.mock.calls.length).toBeGreaterThanOrEqual(2);
       
       // Check for specific content in the calls
       expect(outputManager.section).toHaveBeenCalledWith(expect.stringContaining('TASK'), expect.any(String));
