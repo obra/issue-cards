@@ -25,6 +25,7 @@ jest.mock('../../src/utils/issueManager', () => ({
   getIssue: jest.fn(),
   saveIssue: jest.fn(),
   closeIssue: jest.fn(),
+  getCurrentIssue: jest.fn(),
 }));
 
 jest.mock('../../src/utils/taskParser', () => ({
@@ -99,6 +100,11 @@ describe('Complete Task command', () => {
         { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
+      // Mock getCurrentIssue to return the current issue
+      issueManager.getCurrentIssue.mockResolvedValue(
+        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+      );
+      
       // Mock taskParser.extractTasks to return tasks
       const initialTasks = [
         { text: 'First task', completed: false, index: 0 },
@@ -154,6 +160,11 @@ describe('Complete Task command', () => {
       issueManager.listIssues.mockResolvedValue([
         { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
+      
+      // Mock getCurrentIssue to return the current issue
+      issueManager.getCurrentIssue.mockResolvedValue(
+        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+      );
       
       // Mock taskParser.extractTasks to return tasks with last task not completed
       const tasks = [
@@ -227,6 +238,11 @@ describe('Complete Task command', () => {
         { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
+      // Mock getCurrentIssue to return the current issue
+      issueManager.getCurrentIssue.mockResolvedValue(
+        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+      );
+      
       // Mock taskParser.extractTasks to return tasks
       taskParser.extractTasks.mockResolvedValue([]);
       
@@ -257,6 +273,11 @@ describe('Complete Task command', () => {
       issueManager.listIssues.mockResolvedValue([
         { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
+      
+      // Mock getCurrentIssue to return the current issue
+      issueManager.getCurrentIssue.mockResolvedValue(
+        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+      );
       
       // Mock taskParser.extractTasks to return tasks
       const tasks = [

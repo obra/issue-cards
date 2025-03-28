@@ -3,7 +3,7 @@
 
 const { Command } = require('commander');
 const { isInitialized } = require('../utils/directory');
-const { listIssues } = require('../utils/issueManager');
+const { listIssues, getCurrentIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask } = require('../utils/taskParser');
 const { expandTask } = require('../utils/taskExpander');
 const { displayTaskWithContext } = require('../utils/taskDisplay');
@@ -111,8 +111,8 @@ async function currentAction() {
         .withDisplayMessage('No open issues found.');
     }
     
-    // Use the first issue as the current one
-    const currentIssue = issues[0];
+    // Get the current issue
+    const currentIssue = await getCurrentIssue();
     
     // Extract tasks from the issue
     const tasks = await extractTasks(currentIssue.content);

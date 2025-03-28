@@ -3,8 +3,9 @@
 
 const { Command } = require('commander');
 const path = require('path');
+const fs = require('fs');
 const { isInitialized, getIssueDirectoryPath } = require('../utils/directory');
-const { listIssues, saveIssue, getIssue, closeIssue } = require('../utils/issueManager');
+const { listIssues, saveIssue, getIssue, closeIssue, getCurrentIssue } = require('../utils/issueManager');
 const { extractTasks, findCurrentTask, updateTaskStatus } = require('../utils/taskParser');
 // Output manager is used for all output formatting
 const { isGitRepository, isGitAvailable } = require('../utils/gitDetection');
@@ -64,8 +65,8 @@ async function completeTaskAction() {
         .withDisplayMessage('No open issues found');
     }
     
-    // Use the first issue as the current one
-    const currentIssue = issues[0];
+    // Get the current issue
+    const currentIssue = await getCurrentIssue();
     
     // Extract tasks from the issue
     const tasks = await extractTasks(currentIssue.content);
@@ -111,6 +112,25 @@ async function completeTaskAction() {
       } catch (error) {
         // Silently ignore git errors - git integration is optional
         output.debug(`Git staging for closed issue skipped: ${error.message}`);
+      }
+      
+      // Clear .current file if this issue was the current one
+      try {
+        const currentFilePath = path.join(getIssueDirectoryPath(), '.current');
+        const fileExists = await fs.promises.access(currentFilePath, fs.constants.F_OK)
+          .then(() => true)
+          .catch(() => false);
+          
+        if (fileExists) {
+          const currentIssueNumber = await fs.promises.readFile(currentFilePath, 'utf8');
+          // If this was the current issue, clear the .current file
+          if (currentIssueNumber.trim() === currentIssue.number) {
+            await fs.promises.unlink(currentFilePath);
+          }
+        }
+      } catch (error) {
+        // Silently ignore errors - this is just cleanup
+        output.debug(`Failed to clear .current file: ${error.message}`);
       }
       
       output.success(`🎉 All tasks complete! Issue #${currentIssue.number} has been closed.`);

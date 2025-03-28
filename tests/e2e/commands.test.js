@@ -330,5 +330,58 @@ describe('Issue Cards E2E Commands', () => {
     expect(result.stdout).toContain('show');
     expect(result.stdout).toContain('current');
     expect(result.stdout).toContain('complete-task');
+    expect(result.stdout).toContain('set-current');
+  });
+  
+  // Test set-current command
+  test('set-current command', () => {
+    // Create multiple issues
+    runCommand('create feature --title "First Issue" --task "Task 1" --task "Task 2"');
+    runCommand('create bugfix --title "Second Issue" --task "Task A" --task "Task B"');
+    runCommand('create refactor --title "Third Issue" --task "Task X" --task "Task Y"');
+    
+    // By default, first issue (#0001) should be current
+    let output = runCommand('current');
+    expect(output).toContain('Task 1');
+    
+    // Set issue #0002 as current
+    output = runCommand('set-current 2');
+    expect(output).toContain('Issue #2 is now current');
+    
+    // Check that issue #0002 is now current
+    output = runCommand('current');
+    expect(output).toContain('Task A');
+    
+    // Set issue #0003 as current
+    output = runCommand('set-current 3');
+    expect(output).toContain('Issue #3 is now current');
+    
+    // Check that issue #0003 is now current
+    output = runCommand('current');
+    expect(output).toContain('Task X');
+    
+    // Test with invalid issue number
+    try {
+      runCommand('set-current 9999');
+      fail('Expected command to fail with non-existent issue');
+    } catch (error) {
+      expect(error.stderr || error.stdout).toContain('not found');
+    }
+    
+    // Test with invalid format
+    try {
+      runCommand('set-current abc');
+      fail('Expected command to fail with invalid issue number format');
+    } catch (error) {
+      expect(error.stderr || error.stdout).toContain('Invalid issue number');
+    }
+    
+    // Verify that completing all tasks in the current issue clears .current file
+    runCommand('complete-task'); // Complete Task X
+    runCommand('complete-task'); // Complete Task Y
+    
+    // Verify current issue is now back to the first issue after completing all tasks in issue #0003
+    output = runCommand('current');
+    expect(output).toContain('Task 1');
   });
 });

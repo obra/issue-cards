@@ -11,6 +11,7 @@ This document provides detailed information on all available commands in the Iss
   - [list](#list)
   - [show](#show)
   - [current](#current)
+  - [set-current](#set-current)
   - [complete-task](#complete-task)
 - [Task Management Commands](#task-management-commands)
   - [add-task](#add-task)
@@ -195,6 +196,27 @@ UPCOMING TASKS:
 - Implement authentication middleware +unit-test
 
 Note: The above upcoming tasks are for context only. Do not work on them until they become the current task.
+```
+
+### set-current
+
+Sets a specific issue as the current issue.
+
+```bash
+issue-cards set-current <issue-number>
+```
+
+Arguments:
+- `issue-number` - The issue number to set as current
+
+Example output:
+```
+✅ Issue #0002 is now current
+```
+
+When trying to set a non-existent issue:
+```
+❌ Issue #9999 not found
 ```
 
 ### complete-task

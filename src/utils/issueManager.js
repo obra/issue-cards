@@ -170,7 +170,7 @@ async function listIssues() {
 }
 
 /**
- * Get the oldest open issue (considered the current issue)
+ * Get the current issue, either from .current file or the oldest open issue
  * 
  * @returns {Promise<Object|null>} Current issue object or null if none exists
  */
@@ -180,6 +180,39 @@ async function getCurrentIssue() {
     
     if (issues.length === 0) {
       return null;
+    }
+    
+    // First check if there's a .current file
+    const currentFilePath = path.join(getIssueDirectoryPath(), '.current');
+    try {
+      // Try to read the .current file
+      const currentIssueNumber = await fs.promises.readFile(currentFilePath, 'utf8');
+      
+      // Find the issue in the list - handle both padded and unpadded formats
+      const trimmedNumber = currentIssueNumber.trim();
+      const currentIssue = issues.find(issue => {
+        // Try different formats for comparison (padded or unpadded)
+        const issueNum = issue.number;
+        const unpadded = String(parseInt(trimmedNumber, 10));
+        
+        return issueNum === trimmedNumber || 
+               issueNum === unpadded || 
+               issueNum === unpadded.padStart(4, '0') ||
+               parseInt(issueNum, 10) === parseInt(trimmedNumber, 10);
+      });
+      
+      // If found, return it
+      if (currentIssue) {
+        return {
+          number: currentIssue.number,
+          title: currentIssue.title,
+          content: currentIssue.content,
+          path: getIssueFilePath(currentIssue.number, 'open')
+        };
+      }
+      // If not found or file is empty, fall back to default behavior
+    } catch (error) {
+      // If file doesn't exist or can't be read, just fall back to default behavior
     }
     
     // Return the oldest issue (first in the alphabetically sorted list)
@@ -247,6 +280,51 @@ async function closeIssue(issueNumber) {
   }
 }
 
+/**
+ * Check if an issue exists in the open or closed directory
+ * 
+ * @param {string} issueNumber - Issue number to check
+ * @returns {Promise<boolean>} True if the issue exists, false otherwise
+ */
+async function issueExists(issueNumber) {
+  try {
+    // Normalize issue number - ensure it's padded to 4 digits
+    const paddedIssueNumber = issueNumber.padStart(4, '0');
+    
+    // Try to get the issue, which will throw if it doesn't exist
+    await getIssue(paddedIssueNumber);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Set the current issue by writing the issue number to .current file
+ * 
+ * @param {string} issueNumber - Issue number to set as current
+ * @returns {Promise<void>}
+ */
+async function setCurrentIssue(issueNumber) {
+  try {
+    // Normalize issue number - ensure it's padded to 4 digits
+    const paddedIssueNumber = issueNumber.padStart(4, '0');
+    
+    // Verify issue exists in the open directory
+    const openPath = getIssueFilePath(paddedIssueNumber, 'open');
+    await fs.promises.access(openPath, fs.constants.F_OK);
+    
+    // Write issue number to .current file
+    const currentFilePath = path.join(getIssueDirectoryPath(), '.current');
+    await fs.promises.writeFile(currentFilePath, paddedIssueNumber, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`Issue #${issueNumber} is not an open issue`);
+    }
+    throw new Error(`Failed to set current issue: ${error.message}`);
+  }
+}
+
 module.exports = {
   getIssueFilePath,
   getNextIssueNumber,
@@ -257,5 +335,7 @@ module.exports = {
   getCurrentIssue,
   readIssue,
   writeIssue,
-  closeIssue
+  closeIssue,
+  issueExists,
+  setCurrentIssue
 };
