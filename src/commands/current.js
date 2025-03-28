@@ -140,9 +140,9 @@ async function currentAction() {
       output.section('NEXT TASK', nextTask.text);
     }
     
-    // Show upcoming tasks
+    // Show upcoming tasks (excluding the current task)
     const upcomingTasks = tasks
-      .filter(task => task.index > currentTask.index + 1)
+      .filter(task => task.index > currentTask.index)
       .map(task => task.text);
       
     if (upcomingTasks.length > 0) {
