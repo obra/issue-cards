@@ -134,12 +134,6 @@ async function currentAction() {
     // Use the shared task display utility
     displayTaskWithContext(currentTask, context, expandedSteps, { headerPrefix: 'CURRENT' });
     
-    // Show next task
-    const nextTask = tasks.find(task => task.index === currentTask.index + 1);
-    if (nextTask) {
-      output.section('NEXT TASK', nextTask.text);
-    }
-    
     // Show upcoming tasks (excluding the current task)
     const upcomingTasks = tasks
       .filter(task => task.index > currentTask.index)
