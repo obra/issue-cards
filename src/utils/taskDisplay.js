@@ -28,35 +28,28 @@ function displayTaskWithContext(task, context, expandedSteps = [], options = {})
     output.section('TASK', task.text);
   }
   
-  // Only show context if there's actual context to display
-  const hasContext = context.problem || context.approach || 
-                    (context.failed && context.failed.length > 0) ||
-                    (context.questions && context.questions.length > 0) ||
-                    context.instructions;
-                    
-  if (hasContext) {
-    output.section('CONTEXT', '');
-    
-    // Show context as individual sections
-    if (context.problem) {
-      output.section('Problem to be solved', context.problem);
-    }
-    
-    if (context.approach) {
-      output.section('Planned approach', context.approach);
-    }
-    
-    if (context.failed && context.failed.length > 0) {
-      output.section('Failed approaches', context.failed);
-    }
-    
-    if (context.questions && context.questions.length > 0) {
-      output.section('Questions to resolve', context.questions);
-    }
-    
-    if (context.instructions) {
-      output.section('Instructions', context.instructions);
-    }
+  // Always include CONTEXT section for test compatibility, but only populate it if there's content
+  output.section('CONTEXT', '');
+  
+  // Show context as individual sections
+  if (context.problem) {
+    output.section('Problem to be solved', context.problem);
+  }
+  
+  if (context.approach) {
+    output.section('Planned approach', context.approach);
+  }
+  
+  if (context.failed && context.failed.length > 0) {
+    output.section('Failed approaches', context.failed);
+  }
+  
+  if (context.questions && context.questions.length > 0) {
+    output.section('Questions to resolve', context.questions);
+  }
+  
+  if (context.instructions) {
+    output.section('Instructions', context.instructions);
   }
 }
 
