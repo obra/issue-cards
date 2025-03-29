@@ -29,7 +29,11 @@ describe('Binary executable', () => {
     // Run the binary with --version flag
     let output;
     try {
-      output = execSync(`node ${binaryPath} --version`, { encoding: 'utf8' });
+      // Use cwd option to set the working directory to the project root
+      output = execSync(`node ${binaryPath} --version`, { 
+        encoding: 'utf8',
+        cwd: path.resolve(__dirname, '../..')
+      });
     } catch (error) {
       // If the version is returned as an error, use the error message as output
       output = error.message || '';
@@ -43,7 +47,10 @@ describe('Binary executable', () => {
     // Run the binary with --help flag
     let output;
     try {
-      output = execSync(`node ${binaryPath} --help`, { encoding: 'utf8' });
+      output = execSync(`node ${binaryPath} --help`, { 
+        encoding: 'utf8',
+        cwd: path.resolve(__dirname, '../..')
+      });
     } catch (error) {
       throw new Error(`Failed to run binary with --help flag: ${error.message}`);
     }

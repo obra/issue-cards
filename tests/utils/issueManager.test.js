@@ -198,8 +198,8 @@ describe('Issue Manager utilities', () => {
       const result = await listIssues();
       
       expect(result).toEqual([
-        { number: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
-        { number: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
+        { number: '0001', title: 'First Issue', content: '# Issue 0001: First Issue', state: 'open' },
+        { number: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue', state: 'open' }
       ]);
       
       expect(fs.promises.readdir).toHaveBeenCalledWith('/project/.issues/open');
@@ -216,7 +216,7 @@ describe('Issue Manager utilities', () => {
       const result = await listIssues();
       
       expect(result).toEqual([
-        { number: '0001', title: 'Untitled Issue', content: 'Invalid content' }
+        { number: '0001', title: 'Untitled Issue', content: 'Invalid content', state: 'open' }
       ]);
     });
     
@@ -238,7 +238,7 @@ describe('Issue Manager utilities', () => {
       
       // Should still return an array, but with error information
       expect(result).toEqual([
-        { number: '0001', title: 'Error: Failed to read file', content: '' }
+        { number: '0001', title: 'Error: Failed to read file', content: '', state: 'open' }
       ]);
     });
   });

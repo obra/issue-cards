@@ -92,7 +92,7 @@ describe('MCP Error Handler', () => {
         success: false,
         error: {
           type: 'NotFoundError',
-          message: 'Issue not found: 0001'
+          message: 'Issue #0001 not found'
         }
       });
     });

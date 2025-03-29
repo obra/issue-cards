@@ -37,7 +37,10 @@ jest.mock('../../src/mcp/validator', () => {
   const validator = jest.fn().mockReturnValue(null);
   return {
     validateArgs: validator,
-    withValidation: jest.fn(fn => fn),
+    withValidation: jest.fn((nameOrFn, fn) => {
+      // Handle both function or string+function signature
+      return typeof fn === 'function' ? fn : nameOrFn;
+    }),
     schemas: {}
   };
 });
@@ -159,7 +162,7 @@ describe('MCP Tools', () => {
         success: false,
         error: expect.objectContaining({
           type: 'NotFoundError',
-          message: expect.stringContaining('Issue not found')
+          message: expect.stringContaining('Issue #9999 not found')
         })
       });
     });
