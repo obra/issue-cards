@@ -160,6 +160,22 @@ function startServer(options) {
     }
   });
   
+  // Add ability to forcefully destroy connections (for testing)
+  const connections = new Set();
+  server.on('connection', (connection) => {
+    connections.add(connection);
+    connection.on('close', () => {
+      connections.delete(connection);
+    });
+  });
+  
+  server.destroy = function() {
+    for (const connection of connections) {
+      connection.destroy();
+    }
+    connections.clear();
+  };
+  
   // Start listening
   server.listen(options.port, options.host, () => {
     const addr = server.address();
@@ -176,34 +192,52 @@ function startServer(options) {
  * @returns {Promise<void>} Promise that resolves when server is stopped
  */
 function stopServer(server) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!server) {
       return resolve();
     }
     
-    // Force close all connections
-    const sockets = [];
-    server.on('connection', socket => {
-      sockets.push(socket);
-    });
+    // Check if server is already closed
+    if (!server.listening) {
+      return resolve();
+    }
     
-    server.close((err) => {
-      if (err) {
-        console.error('Error stopping server:', err.message);
-        // Still resolve to avoid hanging tests
-        return resolve();
-      }
+    // Use a hard timeout to prevent test hanging
+    const forceTimeout = setTimeout(() => {
+      process.removeListener('uncaughtException', uncaughtExceptionHandler);
       resolve();
-    });
+    }, 1000);
     
-    // Force close any remaining connections
-    sockets.forEach(socket => {
-      try {
-        socket.destroy();
-      } catch (err) {
-        // Ignore errors during forced socket closing
+    // Handle any errors during close
+    const uncaughtExceptionHandler = (err) => {
+      // Ignore ECONNRESET errors which are common during server shutdown
+      if (err.code !== 'ECONNRESET') {
+        console.error('Error during server shutdown:', err.message);
       }
-    });
+    };
+    
+    // Listen for uncaught exceptions during the close process
+    process.on('uncaughtException', uncaughtExceptionHandler);
+    
+    try {
+      // First close the server to stop accepting new connections
+      server.close(() => {
+        clearTimeout(forceTimeout);
+        process.removeListener('uncaughtException', uncaughtExceptionHandler);
+        resolve();
+      });
+      
+      // Immediately terminate all connections
+      // This is not ideal for production but works well for tests
+      if (typeof server.destroy === 'function') {
+        server.destroy();
+      }
+    } catch (err) {
+      // If any synchronous errors occur, still clean up and resolve
+      clearTimeout(forceTimeout);
+      process.removeListener('uncaughtException', uncaughtExceptionHandler);
+      resolve();
+    }
   });
 }
 

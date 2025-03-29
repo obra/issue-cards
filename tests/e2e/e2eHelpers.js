@@ -135,8 +135,19 @@ function setupTestEnvironment() {
 function cleanupTestEnvironment(testDir) {
   if (!testDir) return;
   
+  // Important: Change back to the original directory before deleting
+  // This prevents the "ENOENT: no such file or directory, uv_cwd" error
   try {
-    // Recursively delete the test directory
+    // Store the current directory
+    const currentDir = process.cwd();
+    
+    // If we're in the test directory, change to the parent directory
+    if (currentDir === testDir || currentDir.startsWith(testDir + path.sep)) {
+      const originalDir = path.resolve(__dirname, '..', '..');
+      process.chdir(originalDir);
+    }
+    
+    // Now it's safe to delete the directory
     fs.rmSync(testDir, { recursive: true, force: true });
   } catch (error) {
     console.error(`Error cleaning up test directory: ${error.message}`);

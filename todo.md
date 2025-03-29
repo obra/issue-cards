@@ -1,37 +1,48 @@
-# Implement Set Current Issue Command
+# Simplified Testing Infrastructure
 
-This plan outlines the tasks needed to implement a new command that allows users to explicitly set which issue is considered "current":
+## Solution Summary
 
-## Phase 1: Write Tests
+We've successfully fixed the ES module import issues by correctly accessing the exports from the unified and remark packages.
 
-- [ ] Add unit tests for the new command in `tests/commands/setCurrent.test.js`
-- [ ] Test handling of non-existent issues
-- [ ] Test handling of closed issues
-- [ ] Test successful setting of current issue
-- [ ] Add E2E tests in `tests/e2e/commands.test.js` for the new command
+## Key Findings
 
-## Phase 2: Implement Storage Mechanism
+1. When using CommonJS `require()` with these ES modules:
+   - `unified` exports a function as the `unified` property
+   - `remark-parse` and `remark-stringify` export their functions as `default` properties
 
-- [ ] Create a `.current` file in the `.issues` directory to store the current issue number
-- [ ] Modify `getCurrentIssue` in `issueManager.js` to check this file first
-- [ ] Add a `setCurrentIssue` function to `issueManager.js`
-- [ ] Update the fallback logic to use alphabetical ordering when no current issue is set
+2. The correct import pattern is:
+   ```javascript
+   const unifiedModule = require('unified');
+   const unified = unifiedModule.unified;
+   const remarkParseModule = require('remark-parse');
+   const remarkParse = remarkParseModule.default;
+   const remarkStringifyModule = require('remark-stringify');
+   const remarkStringify = remarkStringifyModule.default;
+   ```
 
-## Phase 3: Implement Command
+3. We still need Babel and the Jest `transformIgnorePatterns` configuration to transform the ES modules in node_modules.
 
-- [ ] Create `src/commands/setCurrent.js` file
-- [ ] Implement the command with validation
-- [ ] Add the command to the CLI in `src/cli.js`
-- [ ] Handle error cases (non-existent issue, closed issue)
+## Changes Made
 
-## Phase 4: Update Documentation
+1. Fixed imports in `taskParser.js` to properly access the right exports
+2. Simplified the code by removing complex dynamic imports with try/catch blocks
+3. Maintained the Babel configuration since it's still required for the tests
 
-- [ ] Add documentation for the new command in `docs/commands.md`
-- [ ] Update any workflow examples to show how to use the command
-- [ ] Add helpful messaging in command output
+## Next Steps
 
-## Phase 5: Integration
+1. We might want to review other parts of the codebase for similar import patterns that could be simplified
 
-- [ ] Update relevant commands to respect the explicitly set current issue
-- [ ] Ensure closing an issue that's set as current clears the `.current` file
-- [ ] Add unit tests for this integration
+## Dependency Analysis
+
+After conducting a binary search through the transformIgnorePatterns configuration, we confirmed that all of the following packages need to be transformed:
+
+- unified - The core processor
+- unist - Unified syntax tree utilities
+- remark - Markdown processor
+- mdast - Markdown abstract syntax tree
+- micromark - Markdown parser
+- bail - Error handling utility
+- trough - Middleware pipeline utility
+- vfile - Virtual file system for unified
+
+These packages form a deeply interconnected dependency tree, and all use ESM module syntax which needs to be transformed for Jest's CommonJS environment. We attempted to reduce the list, but found that our tests require the transformation of all these packages.

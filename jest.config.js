@@ -14,9 +14,17 @@ module.exports = {
   // Configure test output to be less verbose
   silent: false,
   verbose: false,
-  // Handle ES modules
+  // These ESM-only packages need to be transformed by Babel for Jest's CommonJS environment.
+  // The packages form a deeply interconnected dependency tree used for markdown parsing:
+  // - unified: Core processor
+  // - unist: Unified syntax tree utilities
+  // - remark: Markdown processor
+  // - mdast: Markdown abstract syntax tree
+  // - micromark: Markdown parser
+  // - bail: Error handling utility
+  // - trough: Middleware pipeline utility
+  // - vfile: Virtual file system for unified
   transformIgnorePatterns: [
-    // Important: This pattern allows Jest to transform ES modules in node_modules
     'node_modules/(?!(unified|unist|remark|mdast|micromark|bail|trough|vfile|))',
   ],
 };
