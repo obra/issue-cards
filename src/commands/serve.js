@@ -1,95 +1,66 @@
-// ABOUTME: Command to start the MCP server for AI integration
-// ABOUTME: Provides options for port, host, and token configuration
+// ABOUTME: Serve command for launching the MCP server for AI integration
+// ABOUTME: Provides a REST API for interacting with issue-cards via MCP tools
 
 const { Command } = require('commander');
-const { isInitialized } = require('../utils/directory');
-const { UninitializedError, SystemError } = require('../utils/errors');
-const output = require('../utils/outputManager');
-const { startServer } = require('../utils/mcpServer');
-
-/**
- * Action handler for the serve command
- * 
- * @param {Object} options - Command options
- * @param {number} options.port - Port to run the server on
- * @param {string} options.host - Host to bind the server to
- * @param {string} options.token - Authentication token for the server
- */
-async function serveAction(options) {
-  try {
-    // Check if issue tracking is initialized
-    const initialized = await isInitialized();
-    
-    if (!initialized) {
-      throw new UninitializedError()
-        .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
-    }
-    
-    // Ensure port is a number
-    const port = parseInt(options.port, 10);
-    if (isNaN(port)) {
-      throw new SystemError('Invalid port number')
-        .withDisplayMessage(`Invalid port number: ${options.port}`);
-    }
-    
-    // Check for token if not provided
-    if (!options.token) {
-      output.warning('No authentication token provided. Server will accept all requests.');
-      output.warning('For production use, provide a token with the --token option.');
-    }
-    
-    // Start the server
-    const server = await startServer({ 
-      port,
-      host: options.host,
-      token: options.token
-    });
-    
-    const address = server.address();
-    output.success(`MCP server running at http://${address.address}:${address.port}`);
-    output.info('Press Ctrl+C to stop the server');
-    
-    // Handle process termination
-    process.on('SIGINT', async () => {
-      output.info('Shutting down server...');
-      try {
-        const { stopServer } = require('../utils/mcpServer');
-        await stopServer(server);
-        output.success('Server stopped');
-        process.exit(0);
-      } catch (error) {
-        output.error(`Error shutting down server: ${error.message}`);
-        process.exit(1);
-      }
-    });
-    
-  } catch (error) {
-    if (error instanceof UninitializedError) {
-      // Just re-throw the error with display message already set
-      throw error;
-    } else {
-      // Wrap generic errors in a SystemError with display message
-      throw new SystemError(`Failed to start MCP server: ${error.message}`)
-        .withDisplayMessage(`Failed to start MCP server: ${error.message}`);
-    }
-  }
-}
+const { startServer } = require('../mcp/mcpServer');
+const outputManager = require('../utils/outputManager');
 
 /**
  * Create the serve command
  * 
- * @returns {Command} The configured command
+ * @returns {Command} The serve command
  */
 function createCommand() {
-  return new Command('serve')
-    .description('Start MCP server for AI integration')
-    .option('-p, --port <number>', 'Port to run the server on', 3000)
-    .option('-H, --host <string>', 'Host to bind the server to', 'localhost')
-    .option('-t, --token <string>', 'Authentication token for the server')
-    .action(serveAction);
+  const command = new Command('serve');
+  
+  command
+    .description('Start the MCP server for AI integration')
+    .option('-p, --port <number>', 'Port to use', 3000)
+    .option('-h, --host <string>', 'Host to bind to', 'localhost')
+    .option('-t, --token <string>', 'Authentication token for API access')
+    .action(async (options) => {
+      try {
+        // Start the server
+        const server = startServer({
+          port: options.port,
+          host: options.host,
+          token: options.token
+        });
+        
+        // Output server info
+        outputManager.success(`MCP server started successfully`);
+        outputManager.info(`Server URL: http://${options.host}:${options.port}`);
+        
+        // Output authentication info if a token was provided
+        if (options.token) {
+          outputManager.info('Authentication enabled - API requests require token');
+        } else {
+          outputManager.warn('Authentication disabled - API is open to all requests');
+        }
+        
+        // Output API endpoints
+        outputManager.info('API Endpoints:');
+        outputManager.list([
+          'GET  /api/health - Health check endpoint',
+          'GET  /api/status - Server status and available tools',
+          'GET  /api/tools - List available MCP tools',
+          'GET  /api/tools/:name - Get details for a specific tool',
+          'POST /api/tools/execute - Execute a tool'
+        ]);
+        
+        // Keep the process running
+        process.on('SIGINT', async () => {
+          outputManager.info('Shutting down MCP server...');
+          await require('../mcp/mcpServer').stopServer(server);
+          process.exit(0);
+        });
+      } catch (error) {
+        outputManager.error(`Failed to start MCP server: ${error.message}`);
+        process.exit(1);
+      }
+    });
+  
+  return command;
 }
 
-module.exports = {
-  createCommand,
-  serveAction, // Exported for testing
-};
+module.exports = { createCommand };

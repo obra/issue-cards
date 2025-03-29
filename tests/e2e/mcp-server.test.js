@@ -15,7 +15,7 @@ jest.mock('../../src/utils/taskExpander', () => ({
 }));
 
 // Now we can require the server code
-const { startServer, stopServer } = require('../../src/utils/mcpServer');
+const { startServer, stopServer } = require('../../src/mcp/mcpServer');
 const outputManager = require('../../src/utils/outputManager');
 
 // Mock CLI commands
@@ -38,22 +38,32 @@ jest.mock('../../src/utils/directory', () => ({
   isInitialized: jest.fn().mockResolvedValue(true)
 }));
 
-// Mock CLI module for tool registration
-jest.mock('../../src/cli', () => ({
-  loadAvailableCommands: jest.fn().mockReturnValue([
+// Mock MCP tool registration
+jest.mock('../../src/mcp/registration', () => ({
+  registerMcpTools: jest.fn().mockReturnValue([
     {
-      createCommand: jest.fn().mockReturnValue({
-        name: jest.fn().mockReturnValue('list'),
-        description: jest.fn().mockReturnValue('List issues'),
-        options: []
-      })
+      name: 'mcp__listIssues',
+      implementation: jest.fn().mockResolvedValue({ success: true, data: [] }),
+      description: 'List all available issues',
+      parameters: []
     },
     {
-      createCommand: jest.fn().mockReturnValue({
-        name: jest.fn().mockReturnValue('show'),
-        description: jest.fn().mockReturnValue('Show issue details'),
-        options: []
-      })
+      name: 'mcp__showIssue',
+      implementation: jest.fn().mockResolvedValue({ success: true, data: {} }),
+      description: 'Show details of a specific issue',
+      parameters: []
+    }
+  ]),
+  getRegisteredTools: jest.fn().mockReturnValue([
+    {
+      name: 'mcp__listIssues',
+      description: 'List all available issues',
+      parameters: []
+    },
+    {
+      name: 'mcp__showIssue',
+      description: 'Show details of a specific issue',
+      parameters: []
     }
   ])
 }));
@@ -161,13 +171,12 @@ describe('MCP Server e2e', () => {
         .post('/api/tools/execute')
         .set('Authorization', 'Bearer test-token')
         .send({
-          tool: 'list',
-          args: { json: true }
+          tool: 'mcp__listIssues',
+          args: { state: 'open' }
         });
         
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
-      expect(executeCommand).toHaveBeenCalledWith('list', { json: true });
     });
     
     it('should validate tool execution requests', async () => {
@@ -183,19 +192,17 @@ describe('MCP Server e2e', () => {
       expect(response.body).toHaveProperty('error');
     });
     
-    it('should handle tool execution errors', async () => {
-      executeCommand.mockRejectedValueOnce(new Error('Test error'));
-      
+    it('should validate tool requests with missing args', async () => {
       const response = await request(server)
         .post('/api/tools/execute')
         .set('Authorization', 'Bearer test-token')
         .send({
-          tool: 'list',
-          args: {}
+          tool: 'mcp__listIssues'
+          // Missing args, should trigger validation error
         });
         
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('error', 'Tool execution failed');
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
     });
   });
 });

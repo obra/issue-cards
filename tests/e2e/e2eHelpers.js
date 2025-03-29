@@ -106,9 +106,48 @@ function expectCommand(command, validator, options = {}) {
   return validator(result);
 }
 
+/**
+ * Set up a test environment with a temporary directory
+ * 
+ * @returns {string} The path to the temporary test directory
+ */
+function setupTestEnvironment() {
+  // Create a temporary directory for tests
+  const testDir = path.join(__dirname, '..', '..', 'temp-test-' + Date.now());
+  fs.mkdirSync(testDir, { recursive: true });
+  
+  // Change to the test directory
+  process.chdir(testDir);
+  
+  // Create basic directory structure for issue-cards
+  const issuesDir = path.join(testDir, '.issues');
+  fs.mkdirSync(path.join(issuesDir, 'open'), { recursive: true });
+  fs.mkdirSync(path.join(issuesDir, 'closed'), { recursive: true });
+  
+  return testDir;
+}
+
+/**
+ * Clean up the test environment
+ * 
+ * @param {string} testDir - The test directory to clean up
+ */
+function cleanupTestEnvironment(testDir) {
+  if (!testDir) return;
+  
+  try {
+    // Recursively delete the test directory
+    fs.rmSync(testDir, { recursive: true, force: true });
+  } catch (error) {
+    console.error(`Error cleaning up test directory: ${error.message}`);
+  }
+}
+
 module.exports = {
   runQuietly,
   runQuietlyBase,
   expectCommand,
-  runWithCoverage
+  runWithCoverage,
+  setupTestEnvironment,
+  cleanupTestEnvironment
 };

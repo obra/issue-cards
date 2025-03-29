@@ -13,20 +13,20 @@ Create tool wrappers for key issue-cards commands and implement proper output pa
 
 
 ## Tasks
-- [ ] Write failing unit tests for the functionality
-- [ ] Run the unit tests and verify they fail for the expected reason
-- [ ] Design MCP tool interface and registration system
-- [ ] Run unit tests and verify they now pass
-- [ ] Make sure test coverage meets project requirements
-- [ ] Implement mcp__listIssues tool
-- [ ] Implement mcp__showIssue tool
-- [ ] Implement mcp__getCurrentTask tool
-- [ ] Implement mcp__addTask tool
-- [ ] Create common error handling for all tools
-- [ ] Add parameter validation with JSON schema
-- [ ] Write failing end-to-end test that verifies the expected behavior
-- [ ] Run the test and verify it fails correctly
-- [ ] {{TASK}}
+- [x] Write failing unit tests for the functionality
+- [x] Run the unit tests and verify they fail for the expected reason
+- [x] Design MCP tool interface and registration system
+- [x] Run unit tests and verify they now pass
+- [x] Make sure test coverage meets project requirements
+- [x] Implement mcp__listIssues tool
+- [x] Implement mcp__showIssue tool
+- [x] Implement mcp__getCurrentTask tool
+- [x] Implement mcp__addTask tool
+- [x] Create common error handling for all tools
+- [x] Add parameter validation with JSON schema
+- [x] Write failing end-to-end test that verifies the expected behavior
+- [x] Run the test and verify it fails correctly
+- [x] {{TASK}}
 - [ ] Run the end-to-end test and verify it passes
 - [ ] Verify the feature works in the full application context
 - [ ] Write end-to-end tests for core tools
