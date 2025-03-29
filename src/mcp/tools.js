@@ -26,7 +26,7 @@ const {
  * @param {string} [args.state] - Filter by issue state (open, closed, all)
  * @returns {Promise<Object>} MCP result object
  */
-const mcp__listIssues = withValidation(
+const mcp__listIssues = withValidation('mcp__listIssues',
   withErrorHandling(async (args) => {
     const issues = await getIssues(args.state);
     
@@ -44,7 +44,7 @@ const mcp__listIssues = withValidation(
  * @param {string} args.issueNumber - The issue number to show
  * @returns {Promise<Object>} MCP result object
  */
-const mcp__showIssue = withValidation(async (args) => {
+const mcp__showIssue = withValidation('mcp__showIssue', async (args) => {
   try {
     // Get issue details
     const issue = await getIssueByNumber(args.issueNumber);
@@ -64,7 +64,7 @@ const mcp__showIssue = withValidation(async (args) => {
  * @param {Object} args - Command arguments
  * @returns {Promise<Object>} MCP result object with current task data
  */
-const mcp__getCurrentTask = withValidation(
+const mcp__getCurrentTask = withValidation('mcp__getCurrentTask',
   withErrorHandling(async (args) => {
     // Get current issue
     const currentIssue = await getCurrentIssue();
@@ -108,7 +108,7 @@ const mcp__getCurrentTask = withValidation(
  * @param {string} args.description - The task description
  * @returns {Promise<Object>} MCP result object
  */
-const mcp__addTask = withValidation(async (args) => {
+const mcp__addTask = withValidation('mcp__addTask', async (args) => {
   try {
     // Add task to the issue
     const newTask = await addTaskToIssue(args.issueNumber, args.description);

@@ -112,13 +112,41 @@ function validateArgs(toolName, args) {
 /**
  * Middleware that adds schema validation to MCP tools
  * 
- * @param {Function} toolFunc - The tool function to wrap
+ * @param {Function|string} toolFuncOrName - The tool function to wrap or explicit tool name
+ * @param {Function} [actualFunc] - The actual function (when first param is a name)
  * @returns {Function} Wrapped function with validation
  */
-function withValidation(toolFunc) {
+function withValidation(toolFuncOrName, actualFunc) {
+  let toolName;
+  let toolFunc;
+  
+  // Handle both forms of the function:
+  // 1. withValidation(func) - extract name from func
+  // 2. withValidation('name', func) - use explicit name
+  if (typeof toolFuncOrName === 'function') {
+    toolFunc = toolFuncOrName;
+    // Extract tool name from the function name - assumes it's mcp__something
+    const fnName = toolFunc.name || '';
+    toolName = fnName;
+  } else if (typeof toolFuncOrName === 'string' && typeof actualFunc === 'function') {
+    toolName = toolFuncOrName;
+    toolFunc = actualFunc;
+  } else {
+    throw new Error('Invalid arguments to withValidation');
+  }
+  
   return async function(args) {
-    // Get tool name from function name
-    const toolName = this.name || toolFunc.name;
+    // Determine tool name from module exports if not found
+    if (!toolName) {
+      // Try to find the tool name by checking what properties in the exports match this function
+      const toolsModule = require('./tools');
+      for (const [exportName, exportedFunc] of Object.entries(toolsModule)) {
+        if (exportedFunc === this || exportedFunc.toString() === toolFunc.toString()) {
+          toolName = exportName;
+          break;
+        }
+      }
+    }
     
     // Validate arguments
     const validationError = validateArgs(toolName, args);
