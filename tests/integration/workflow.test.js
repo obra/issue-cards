@@ -7,16 +7,12 @@ const { execSync } = require('child_process');
 const directory = require('../../src/utils/directory');
 const issueManager = require('../../src/utils/issueManager');
 
-// Mock fs.promises for certain operations
-const originalFsPromises = fs.promises;
-fs.promises = {
-  ...originalFsPromises,
-  mkdir: jest.fn().mockImplementation(originalFsPromises.mkdir),
-  readdir: jest.fn().mockImplementation(originalFsPromises.readdir),
-  readFile: jest.fn().mockImplementation(originalFsPromises.readFile),
-  writeFile: jest.fn().mockImplementation(originalFsPromises.writeFile),
-  access: jest.fn().mockImplementation(originalFsPromises.access),
-};
+// Mock fs.promises for certain operations - spy on the actual methods instead of replacing them
+jest.spyOn(fs.promises, 'mkdir');
+jest.spyOn(fs.promises, 'readdir');
+jest.spyOn(fs.promises, 'readFile');
+jest.spyOn(fs.promises, 'writeFile');
+jest.spyOn(fs.promises, 'access');
 
 // Mock child_process.execSync
 jest.mock('child_process', () => ({
@@ -41,7 +37,7 @@ describe('Issue Cards Workflow Integration', () => {
   beforeAll(async () => {
     // Create test directory
     try {
-      await originalFsPromises.mkdir(testDir, { recursive: true });
+      await fs.promises.mkdir(testDir, { recursive: true });
     } catch (err) {
       if (err.code !== 'EEXIST') throw err;
     }
@@ -58,13 +54,10 @@ describe('Issue Cards Workflow Integration', () => {
   afterAll(async () => {
     // Clean up test directory
     try {
-      await originalFsPromises.rm(testDir, { recursive: true, force: true });
+      await fs.promises.rm(testDir, { recursive: true, force: true });
     } catch (err) {
       console.error(`Error cleaning up test directory: ${err.message}`);
     }
-    
-    // Restore original fs.promises
-    fs.promises = originalFsPromises;
     
     // Restore all mocks
     jest.restoreAllMocks();
