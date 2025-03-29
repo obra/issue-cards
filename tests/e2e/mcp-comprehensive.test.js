@@ -4,6 +4,7 @@
 const path = require('path');
 const fs = require('fs');
 const request = require('supertest');
+const axios = require('axios'); // Using axios instead of fetch for testing
 const {
   setupTestEnvironment,
   cleanupTestEnvironment,
@@ -19,7 +20,11 @@ describe('MCP Comprehensive E2E', () => {
   let serverPort;
   let baseUrl;
   
-  beforeAll(() => {
+  // Import directly to create a server programmatically
+  const { createServer, startServer, stopServer } = require('../../src/mcp/mcpServer');
+  let mcpServer;
+  
+  beforeAll(async () => {
     // Set up test environment with sample issues
     testDir = setupTestEnvironment();
     
@@ -57,17 +62,22 @@ describe('MCP Comprehensive E2E', () => {
     serverPort = Math.floor(Math.random() * 900) + 3100;
     baseUrl = `http://localhost:${serverPort}`;
     
-    // Start the MCP server in the background
-    const command = `node ../../bin/issue-cards.js serve -p ${serverPort} > /dev/null 2>&1 &`;
-    runQuietly(command);
+    // Start the MCP server programmatically
+    mcpServer = startServer({
+      port: serverPort,
+      host: 'localhost',
+      token: null // No token for testing
+    });
     
     // Give the server time to start
-    return new Promise(resolve => setTimeout(resolve, 1000));
+    return new Promise(resolve => setTimeout(resolve, 500));
   });
   
   afterAll(async () => {
-    // Kill all node processes started in this test
-    runQuietly('pkill -f "node.*issue-cards.*serve" || true');
+    // Stop the server properly
+    if (mcpServer && mcpServer.listening) {
+      await stopServer(mcpServer);
+    }
     
     // Clean up test directory
     cleanupTestEnvironment(testDir);
@@ -75,20 +85,18 @@ describe('MCP Comprehensive E2E', () => {
   
   it('should verify server is running with health check', async () => {
     // Make HTTP request directly
-    const response = await fetch(`${baseUrl}/api/health`);
-    const data = await response.json();
+    const response = await axios.get(`${baseUrl}/api/health`);
     
     expect(response.status).toBe(200);
-    expect(data).toHaveProperty('status', 'ok');
+    expect(response.data).toHaveProperty('status', 'ok');
   });
   
   it('should list available tools via status endpoint', async () => {
-    const response = await fetch(`${baseUrl}/api/status`);
-    const data = await response.json();
+    const response = await axios.get(`${baseUrl}/api/status`);
     
     expect(response.status).toBe(200);
-    expect(data).toHaveProperty('tools');
-    expect(data.tools).toEqual(
+    expect(response.data).toHaveProperty('tools');
+    expect(response.data.tools).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'mcp__listIssues' }),
         expect.objectContaining({ name: 'mcp__showIssue' }),
@@ -99,21 +107,17 @@ describe('MCP Comprehensive E2E', () => {
   });
   
   it('should list issues via API', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__listIssues',
-        args: { state: 'open' }
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__listIssues',
+      args: { state: 'open' }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.data).toHaveLength(2);
-    expect(data.data).toEqual(
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toHaveLength(2);
+    expect(response.data.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           number: '0001',
@@ -128,20 +132,16 @@ describe('MCP Comprehensive E2E', () => {
   });
   
   it('should show issue details via API', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__showIssue',
-        args: { issueNumber: '0001' }
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__showIssue',
+      args: { issueNumber: '0001' }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.data).toEqual(
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
       expect.objectContaining({
         number: '0001',
         title: 'Test Issue 1',
@@ -151,20 +151,16 @@ describe('MCP Comprehensive E2E', () => {
   });
   
   it('should get current task via API', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__getCurrentTask',
-        args: {}
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__getCurrentTask',
+      args: {}
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.data).toEqual(
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
       expect.objectContaining({
         issueNumber: '0002',
         issueTitle: 'Test Issue 2',
@@ -179,23 +175,19 @@ describe('MCP Comprehensive E2E', () => {
   });
   
   it('should add a task to an issue via API', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__addTask',
-        args: {
-          issueNumber: '0001',
-          description: 'New task from E2E test'
-        }
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__addTask',
+      args: {
+        issueNumber: '0001',
+        description: 'New task from E2E test'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.data).toEqual(
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
       expect.objectContaining({
         description: 'New task from E2E test',
         completed: false,
@@ -213,41 +205,33 @@ describe('MCP Comprehensive E2E', () => {
   });
   
   it('should handle validation errors', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__addTask',
-        args: {
-          issueNumber: '0001',
-          description: '' // Empty description should fail validation
-        }
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__addTask',
+      args: {
+        issueNumber: '0001',
+        description: '' // Empty description should fail validation
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(false);
-    expect(data.error).toHaveProperty('type', 'ValidationError');
+    expect(response.data.success).toBe(false);
+    expect(response.data.error).toHaveProperty('type', 'ValidationError');
   });
   
   it('should handle not found errors', async () => {
-    const response = await fetch(`${baseUrl}/api/tools/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool: 'mcp__showIssue',
-        args: {
-          issueNumber: '9999' // Non-existent issue
-        }
-      })
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__showIssue',
+      args: {
+        issueNumber: '9999' // Non-existent issue
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     
-    const data = await response.json();
-    
     expect(response.status).toBe(200);
-    expect(data.success).toBe(false);
-    expect(data.error).toHaveProperty('type', 'NotFoundError');
+    expect(response.data.success).toBe(false);
+    expect(response.data.error).toHaveProperty('type', 'NotFoundError');
   });
 });
