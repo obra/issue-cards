@@ -4,6 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 const { getIssueDirectoryPath } = require('./directory');
+const { extractTasks, findCurrentTask } = require('./taskParser');
+const { extractContext } = require('./contextExtractor');
 
 /**
  * Get the file path for an issue
@@ -119,54 +121,86 @@ function extractIssueTitle(content, issueNumber) {
 }
 
 /**
- * List all open issues
+ * List all issues
+ * 
+ * @param {string} [state='open'] - Issue state ('open', 'closed', or 'all')
+ * @returns {Promise<Array<Object>>} List of issues with number, title, and content
+ */
+async function getIssues(state = 'open') {
+  try {
+    const states = state === 'all' ? ['open', 'closed'] : [state];
+    const allIssues = [];
+    
+    // Process each requested state
+    for (const currentState of states) {
+      if (currentState !== 'open' && currentState !== 'closed') {
+        throw new Error(`Invalid issue state: ${currentState}`);
+      }
+      
+      const issuesDir = getIssueDirectoryPath(currentState);
+      let files;
+      
+      try {
+        files = await fs.promises.readdir(issuesDir);
+      } catch (error) {
+        // If directory doesn't exist, continue with empty list
+        files = [];
+      }
+      
+      // Filter and sort issue files
+      const issueFiles = files
+        .filter(file => file.startsWith('issue-') && file.endsWith('.md'))
+        .sort();
+      
+      // Read each issue file and extract information
+      const issues = await Promise.all(
+        issueFiles.map(async (file) => {
+          const match = file.match(/issue-(\d+)\.md/);
+          const issueNumber = match ? match[1] : '';
+          
+          try {
+            const content = await fs.promises.readFile(
+              path.join(issuesDir, file),
+              'utf8'
+            );
+            
+            const title = extractIssueTitle(content, issueNumber);
+            
+            return {
+              number: issueNumber,
+              title,
+              content,
+              state: currentState
+            };
+          } catch (error) {
+            // If we can't read the file, still return basic info with error
+            return {
+              number: issueNumber,
+              title: `Error: ${error.message}`,
+              content: '',
+              state: currentState
+            };
+          }
+        })
+      );
+      
+      allIssues.push(...issues);
+    }
+    
+    // Sort all issues by number
+    return allIssues.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+  } catch (error) {
+    throw new Error(`Failed to list issues: ${error.message}`);
+  }
+}
+
+/**
+ * List all open issues (compatibility function)
  * 
  * @returns {Promise<Array<Object>>} List of issues with number, title, and content
  */
 async function listIssues() {
-  try {
-    const openDir = getIssueDirectoryPath('open');
-    const files = await fs.promises.readdir(openDir);
-    
-    // Filter and sort issue files
-    const issueFiles = files
-      .filter(file => file.startsWith('issue-') && file.endsWith('.md'))
-      .sort();
-    
-    // Read each issue file and extract information
-    const issues = await Promise.all(
-      issueFiles.map(async (file) => {
-        const match = file.match(/issue-(\d+)\.md/);
-        const issueNumber = match ? match[1] : '';
-        
-        try {
-          const content = await fs.promises.readFile(
-            path.join(openDir, file),
-            'utf8'
-          );
-          
-          const title = extractIssueTitle(content, issueNumber);
-          
-          return {
-            number: issueNumber,
-            title,
-            content
-          };
-        } catch (error) {
-          // If we can't read the file, still return basic info with error
-          return {
-            number: issueNumber,
-            title: `Error: ${error.message}`,
-            content: ''
-          };
-        }
-      })
-    );
-    
-    return issues;
-  } catch (error) {
-    throw new Error(`Failed to list issues: ${error.message}`);
-  }
+  return getIssues('open');
 }
 
 /**
@@ -325,14 +359,163 @@ async function setCurrentIssue(issueNumber) {
   }
 }
 
+/**
+ * Get the current task from the current issue
+ * 
+ * @returns {Promise<Object|null>} Current task or null if no current task
+ */
+async function getCurrentTask() {
+  try {
+    // Get the current issue
+    const currentIssue = await getCurrentIssue();
+    
+    if (!currentIssue) {
+      return null;
+    }
+    
+    // Extract tasks from the issue content
+    const tasks = await extractTasks(currentIssue.content);
+    
+    // Find the first uncompleted task
+    const currentTask = findCurrentTask(tasks);
+    
+    if (!currentTask) {
+      return null;
+    }
+    
+    // Extract context from the issue
+    const contextData = await extractContext(currentIssue.content);
+    
+    // Return formatted task with context
+    return {
+      id: `task-${currentTask.index}`,
+      description: currentTask.text,
+      completed: currentTask.completed,
+      contextData: {
+        problem: contextData['Problem to be solved'] || '',
+        approach: contextData['Planned approach'] || '',
+        instructions: contextData['Instructions'] || ''
+      }
+    };
+  } catch (error) {
+    throw new Error(`Failed to get current task: ${error.message}`);
+  }
+}
+
+/**
+ * Get issue details by number
+ * 
+ * @param {string} issueNumber - Issue number to get
+ * @returns {Promise<Object>} Issue details
+ */
+async function getIssueByNumber(issueNumber) {
+  try {
+    // Normalize issue number
+    const paddedIssueNumber = issueNumber.padStart(4, '0');
+    
+    // Get issue content
+    const content = await getIssue(paddedIssueNumber);
+    
+    // Determine issue state
+    let state = 'open';
+    try {
+      const openPath = getIssueFilePath(paddedIssueNumber, 'open');
+      await fs.promises.access(openPath, fs.constants.F_OK);
+    } catch (error) {
+      state = 'closed';
+    }
+    
+    // Extract title
+    const title = extractIssueTitle(content, paddedIssueNumber);
+    
+    return {
+      number: paddedIssueNumber,
+      title,
+      content,
+      state
+    };
+  } catch (error) {
+    throw new Error(`Issue #${issueNumber} not found`);
+  }
+}
+
+/**
+ * Check if an issue number is valid
+ * 
+ * @param {string} issueNumber - Issue number to check
+ * @returns {Promise<boolean>} True if issue number is valid
+ */
+async function isValidIssueNumber(issueNumber) {
+  return issueExists(issueNumber);
+}
+
+/**
+ * Add a task to an issue
+ * 
+ * @param {string} issueNumber - Issue number to add task to
+ * @param {string} description - Task description
+ * @returns {Promise<Object>} Task object
+ */
+async function addTaskToIssue(issueNumber, description) {
+  try {
+    // Normalize issue number
+    const paddedIssueNumber = issueNumber.padStart(4, '0');
+    
+    // Verify issue exists in open directory
+    const openPath = getIssueFilePath(paddedIssueNumber, 'open');
+    let content;
+    
+    try {
+      content = await fs.promises.readFile(openPath, 'utf8');
+    } catch (error) {
+      throw new Error(`Issue #${issueNumber} is not an open issue`);
+    }
+    
+    // Find the Tasks section
+    const tasksSectionMatch = content.match(/## Tasks\n([\s\S]*?)(?=\n##|$)/);
+    
+    if (!tasksSectionMatch) {
+      throw new Error('Tasks section not found in issue');
+    }
+    
+    // Add task to the end of the Tasks section
+    const tasksSection = tasksSectionMatch[0];
+    const newTasksSection = `${tasksSection.trimEnd()}\n- [ ] ${description}\n`;
+    
+    // Replace the Tasks section in the content
+    const newContent = content.replace(tasksSection, newTasksSection);
+    
+    // Write the updated content back to the file
+    await fs.promises.writeFile(openPath, newContent, 'utf8');
+    
+    // Extract tasks to get the index of the new task
+    const tasks = await extractTasks(newContent);
+    const newTask = tasks[tasks.length - 1];
+    
+    return {
+      id: `task-${newTask.index}`,
+      description: newTask.text,
+      completed: false,
+      issueNumber: paddedIssueNumber
+    };
+  } catch (error) {
+    throw new Error(`Failed to add task: ${error.message}`);
+  }
+}
+
 module.exports = {
   getIssueFilePath,
   getNextIssueNumber,
   saveIssue,
   getIssue,
   listIssues,
+  getIssues,
   extractIssueTitle,
   getCurrentIssue,
+  getCurrentTask,
+  getIssueByNumber,
+  isValidIssueNumber,
+  addTaskToIssue,
   readIssue,
   writeIssue,
   closeIssue,

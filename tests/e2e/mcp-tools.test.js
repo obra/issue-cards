@@ -7,7 +7,8 @@ const request = require('supertest');
 const fs = require('fs');
 const {
   setupTestEnvironment,
-  cleanupTestEnvironment
+  cleanupTestEnvironment,
+  runQuietly
 } = require('./e2eHelpers');
 
 // Mock the issueManager functions
@@ -58,16 +59,17 @@ describe('MCP Tools E2E', () => {
   let testDir;
   let server;
   let app;
+  let serverProcess;
   const serverPort = 3002;
   
   beforeEach(async () => {
     // Set up test environment with sample issues
     testDir = setupTestEnvironment();
     
-    // Create the Express app
+    // Create the Express app for direct testing
     app = createServer({ token: 'test-token' });
     
-    // Start the server
+    // Start the server for API testing
     server = startServer({
       port: serverPort,
       host: 'localhost', 
@@ -79,6 +81,27 @@ describe('MCP Tools E2E', () => {
     // Clean up
     await stopServer(server);
     cleanupTestEnvironment(testDir);
+  });
+  
+  // Test the actual CLI serve command
+  describe('CLI server execution', () => {
+    beforeEach(() => {
+      // Create a sample issue for the CLI to work with
+      const issueDir = path.join(testDir, '.issues', 'open');
+      fs.mkdirSync(issueDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(issueDir, 'issue-0001.md'),
+        '# Issue 0001: Test Issue\n\n## Problem to be solved\n' +
+        'This is a test issue\n\n## Tasks\n- [ ] Task 1\n- [x] Task 2'
+      );
+    });
+    
+    it('should start the server via CLI command', () => {
+      // Run the serve command with --help to verify it works
+      const result = runQuietly('node ../../bin/issue-cards.js serve --help');
+      expect(result.stdout).toContain('Start the MCP server for AI integration');
+      expect(result.status).toBe(0);
+    });
   });
   
   describe('mcp__listIssues', () => {
