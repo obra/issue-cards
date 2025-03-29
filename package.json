@@ -14,6 +14,8 @@
     "test:unit": "jest --testPathIgnorePatterns=tests/e2e",
     "test:e2e": "jest tests/e2e",
     "test:e2e-coverage": "cross-env E2E_COLLECT_COVERAGE=true jest tests/e2e --coverage",
+    "test:mcp": "jest --config=jest.mcp.config.js",
+    "test:mcp-coverage": "jest --config=jest.mcp.config.js --coverage",
     "coverage:e2e-with-nyc": "nyc --clean false npm run test:e2e",
     "coverage:report": "nyc report --reporter=html",
     "lint": "eslint .",
@@ -45,6 +47,7 @@
     "url": "https://github.com/issue-cards/issue-cards/issues"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "express": "^4.21.2",
