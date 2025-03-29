@@ -1,216 +1,200 @@
-# AI Integration with MCP Tools
+# AI Integration with Issue Cards
 
-This document describes how to integrate AI assistants with Issue Cards via MCP (Model Control Protocol) tools.
+This document provides guidance for integrating AI assistants with Issue Cards using the MCP (Model-Code-Prompt) API.
 
 ## Overview
 
-Issue Cards provides a set of MCP tools that allow AI assistants to interact with issues programmatically. These tools are exposed via a REST API that can be accessed by AI assistants.
+Issue Cards provides a comprehensive API for AI assistants to interact with the system. This allows AI tools to:
 
-## Starting the MCP Server
+1. Create and manage issues
+2. Complete tasks and track progress
+3. Add notes, questions, and failed approaches to issues
+4. Work with templates
+5. Retrieve context for decision-making
 
-To start the MCP server, run the following command:
+## Getting Started
+
+To use the MCP API, you must start the Issue Cards server:
 
 ```bash
-issue-cards serve [options]
+issue-cards serve
 ```
 
-Options:
-- `-p, --port <number>` - Port to use (default: 3000)
-- `-h, --host <string>` - Host to bind to (default: localhost)
-- `-t, --token <string>` - Authentication token for API access
+By default, this starts a server on port 3000. You can customize the port and host:
 
-Example:
 ```bash
-issue-cards serve --port 3000 --token my-secret-token
+issue-cards serve -p 4000 -h localhost
 ```
 
-## API Reference
+For security, you can add an API token:
 
-### Authentication
-
-All API requests (except health check) require authentication. You can provide the token in one of two ways:
-
-1. As a Bearer token in the Authorization header:
-   ```
-   Authorization: Bearer my-secret-token
-   ```
-
-2. As a query parameter:
-   ```
-   ?token=my-secret-token
-   ```
-
-### Endpoints
-
-- `GET /api/health` - Health check endpoint (no authentication required)
-- `GET /api/status` - Server status and available tools
-- `GET /api/tools` - List available MCP tools
-- `GET /api/tools/:name` - Get details for a specific tool
-- `POST /api/tools/execute` - Execute a tool
-
-### Executing Tools
-
-To execute a tool, send a POST request to `/api/tools/execute` with a JSON body containing:
-
-```json
-{
-  "tool": "mcp__toolName",
-  "args": {
-    "param1": "value1",
-    "param2": "value2"
-  }
-}
+```bash
+issue-cards serve -t your-api-token
 ```
 
-### Available Tools
+## API Endpoints
 
-#### mcp__listIssues
+The MCP API exposes the following key endpoints:
 
-Lists all available issues.
+- `GET /api/health` - Check server health
+- `GET /api/status` - Get server status and available tools
+- `GET /api/tools` - List all available MCP tools
+- `POST /api/tools/execute` - Execute an MCP tool
 
-Parameters:
-- `state` (optional): Filter by issue state (`open`, `closed`, `all`). Default: `all`
+## MCP Tools
 
-Example:
-```json
-{
-  "tool": "mcp__listIssues",
-  "args": {
-    "state": "open"
-  }
-}
-```
+Issue Cards provides several MCP tools for AI integration. All tools follow a consistent pattern:
 
-Response:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "number": "0001",
-      "title": "Example Issue",
-      "state": "open",
-      "path": "/path/to/issue-0001.md"
-    }
-  ]
-}
-```
+1. Each tool accepts a specific set of parameters
+2. Each tool returns a standardized response format
+3. All tools include validation and error handling
 
-#### mcp__showIssue
+### Response Format
 
-Shows details of a specific issue.
+All MCP tools return responses in the following format:
 
-Parameters:
-- `issueNumber` (required): The issue number to show
-
-Example:
-```json
-{
-  "tool": "mcp__showIssue",
-  "args": {
-    "issueNumber": "0001"
-  }
-}
-```
-
-Response:
 ```json
 {
   "success": true,
   "data": {
-    "number": "0001",
-    "title": "Example Issue",
-    "state": "open",
-    "path": "/path/to/issue-0001.md",
-    "content": "# Issue 0001: Example Issue\n\n...",
-    "tasks": [
-      {
-        "id": "task-1",
-        "description": "Example task",
-        "completed": false
-      }
-    ]
+    // Tool-specific response data
   }
 }
 ```
 
-#### mcp__getCurrentTask
-
-Gets the current task and context.
-
-Parameters: None
-
-Example:
-```json
-{
-  "tool": "mcp__getCurrentTask",
-  "args": {}
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "issueNumber": "0001",
-    "issueTitle": "Example Issue",
-    "taskId": "task-1",
-    "description": "Example task",
-    "context": {
-      "problem": "Problem description",
-      "approach": "Planned approach"
-    }
-  }
-}
-```
-
-#### mcp__addTask
-
-Adds a new task to an issue.
-
-Parameters:
-- `issueNumber` (required): The issue number to add the task to
-- `description` (required): The task description
-
-Example:
-```json
-{
-  "tool": "mcp__addTask",
-  "args": {
-    "issueNumber": "0001",
-    "description": "New task from API"
-  }
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "task-123",
-    "description": "New task from API",
-    "completed": false
-  }
-}
-```
-
-## Error Handling
-
-All tools return a standardized error response when an error occurs:
+Or for errors:
 
 ```json
 {
   "success": false,
   "error": {
     "type": "ErrorType",
-    "message": "Error message"
+    "message": "Human-readable error message"
   }
 }
 ```
 
-Common error types:
-- `ValidationError` - Invalid parameters
-- `NotFoundError` - Resource not found
-- `ExecutionError` - Error during tool execution
+### Available Tools
+
+#### Core Issue Management
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `mcp__listIssues` | List all issues | `state` (open/closed/all) |
+| `mcp__showIssue` | Show issue details | `issueNumber` |
+| `mcp__getCurrentTask` | Get current task with context | None |
+| `mcp__addTask` | Add a task to an issue | `issueNumber`, `description` |
+
+#### Task and Issue Creation
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `mcp__createIssue` | Create a new issue from template | `template`, `title`, `problem`, etc. |
+| `mcp__completeTask` | Complete current task | None |
+
+#### Context and Documentation
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `mcp__addNote` | Add a note to a section | `section`, `note`, `issueNumber` |
+| `mcp__addQuestion` | Add a question to an issue | `question`, `issueNumber` |
+| `mcp__logFailure` | Log a failed approach | `approach`, `reason`, `issueNumber` |
+
+#### Template Management
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `mcp__listTemplates` | List available templates | `type` (issue/tag) |
+| `mcp__showTemplate` | Show template content | `name`, `type` |
+
+## Using the API with AI Assistants
+
+To integrate with AI assistants, you can use the API to:
+
+1. Retrieve the current task context
+2. Document AI-generated solutions
+3. Track progress through a workflow
+4. Maintain a record of approaches tried
+
+### Example: Getting the Current Task
+
+```javascript
+const response = await fetch('http://localhost:3000/api/tools/execute', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer your-api-token'
+  },
+  body: JSON.stringify({
+    tool: 'mcp__getCurrentTask',
+    args: {}
+  })
+});
+
+const result = await response.json();
+// Access task details and context
+const task = result.data;
+```
+
+### Example: Recording AI's Solution Approach
+
+```javascript
+const response = await fetch('http://localhost:3000/api/tools/execute', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer your-api-token'
+  },
+  body: JSON.stringify({
+    tool: 'mcp__addNote',
+    args: {
+      section: 'Planned approach',
+      note: 'Implement solution using the Strategy pattern to improve flexibility'
+    }
+  })
+});
+
+const result = await response.json();
+// Check if note was added successfully
+console.log(result.success);
+```
+
+## Best Practices for AI Integration
+
+1. **Start with Context**: Always begin by getting the current task and its context.
+2. **Document Reasoning**: Use `mcp__addNote` to document the AI's reasoning and approach.
+3. **Record Failed Approaches**: Use `mcp__logFailure` to document strategies that didn't work.
+4. **Ask Questions**: Use `mcp__addQuestion` when clarification is needed.
+5. **Complete Tasks**: Use `mcp__completeTask` when work is finished to move to the next step.
+
+## Error Handling
+
+All MCP tools include robust error handling. Common error types:
+
+- `ValidationError`: Invalid arguments provided
+- `NotFoundError`: Requested resource (issue, template, etc.) not found
+- `SectionNotFoundError`: Referenced section doesn't exist in the issue
+- `UserError`: Generic user error condition
+
+Always check the `success` field in responses and handle errors gracefully.
+
+## Security Considerations
+
+1. Use API tokens for all production deployments
+2. Run the server on localhost or behind authentication
+3. Restrict network access to the server in production environments
+4. Consider using HTTPS in production
+
+## Example Workflow
+
+A typical AI integration workflow might look like:
+
+1. Get current task and context
+2. Analyze the problem
+3. Document the planned approach
+4. Record any failed attempts
+5. Implement the solution
+6. Document the implementation
+7. Complete the task
+
+This enables smooth collaboration between humans and AI assistants, with clear tracking of progress and reasoning.

@@ -39,7 +39,9 @@ describe('MCP Comprehensive E2E', () => {
       '## Problem to be solved\nTest problem 1\n\n' +
       '## Planned approach\nTest approach 1\n\n' +
       '## Tasks\n- [ ] Task 1.1\n- [x] Task 1.2\n- [ ] Task 1.3\n\n' +
-      '## Instructions\nTest instructions 1'
+      '## Instructions\nTest instructions 1\n\n' +
+      '## Questions to resolve\nExisting question?\n\n' +
+      '## Failed approaches\nExisting failed approach\n- Reason: It did not work'
     );
     
     // Create second issue
@@ -49,13 +51,39 @@ describe('MCP Comprehensive E2E', () => {
       '## Problem to be solved\nTest problem 2\n\n' +
       '## Planned approach\nTest approach 2\n\n' +
       '## Tasks\n- [ ] Task 2.1\n- [ ] Task 2.2\n\n' +
-      '## Instructions\nTest instructions 2'
+      '## Instructions\nTest instructions 2\n\n' +
+      '## Questions to resolve\n\n' +
+      '## Failed approaches\n'
     );
     
     // Set issue 2 as current
     fs.writeFileSync(
       path.join(testDir, '.issues', '.current'),
       '0002'
+    );
+    
+    // Copy template files to the correct directory structure recognized by issue-cards
+    const configDir = path.join(testDir, '.issues', 'config');
+    const issueTemplateDir = path.join(configDir, 'templates', 'issue');
+    const tagTemplateDir = path.join(configDir, 'templates', 'tag');
+    
+    // These directories should already exist from setupTestEnvironment
+    
+    // Create sample templates
+    fs.writeFileSync(
+      path.join(issueTemplateDir, 'test.md'),
+      '# Issue {{NUMBER}}: {{TITLE}}\n\n' +
+      '## Problem to be solved\n{{PROBLEM}}\n\n' +
+      '## Planned approach\n{{APPROACH}}\n\n' +
+      '## Tasks\n{{TASKS}}\n\n' +
+      '## Instructions\n{{INSTRUCTIONS}}\n\n' +
+      '## Questions to resolve\n{{QUESTIONS}}\n\n' +
+      '## Failed approaches\n{{FAILED_APPROACHES}}'
+    );
+    
+    fs.writeFileSync(
+      path.join(tagTemplateDir, 'test-tag.md'),
+      '## Test Tag\n\nThis is a test tag template.'
     );
     
     // Select a random port between 3100-3999 to avoid conflicts
@@ -101,7 +129,14 @@ describe('MCP Comprehensive E2E', () => {
         expect.objectContaining({ name: 'mcp__listIssues' }),
         expect.objectContaining({ name: 'mcp__showIssue' }),
         expect.objectContaining({ name: 'mcp__getCurrentTask' }),
-        expect.objectContaining({ name: 'mcp__addTask' })
+        expect.objectContaining({ name: 'mcp__addTask' }),
+        expect.objectContaining({ name: 'mcp__createIssue' }),
+        expect.objectContaining({ name: 'mcp__completeTask' }),
+        expect.objectContaining({ name: 'mcp__addNote' }),
+        expect.objectContaining({ name: 'mcp__addQuestion' }),
+        expect.objectContaining({ name: 'mcp__logFailure' }),
+        expect.objectContaining({ name: 'mcp__listTemplates' }),
+        expect.objectContaining({ name: 'mcp__showTemplate' })
       ])
     );
   });
@@ -204,6 +239,213 @@ describe('MCP Comprehensive E2E', () => {
     expect(issueContent).toContain('- [ ] New task from E2E test');
   });
   
+  it('should create a new issue via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__createIssue',
+      args: {
+        template: 'test',
+        title: 'New API Issue',
+        problem: 'API created issue',
+        approach: 'Use MCP API',
+        task: ['First API task', 'Second API task']
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        title: 'New API Issue',
+        template: 'test'
+      })
+    );
+    
+    // Verify the file was actually created
+    const newIssueNumber = response.data.data.number;
+    const issueContent = fs.readFileSync(
+      path.join(testDir, '.issues', 'open', `issue-${newIssueNumber}.md`),
+      'utf8'
+    );
+    
+    expect(issueContent).toContain('# Issue');
+    expect(issueContent).toContain('New API Issue');
+    expect(issueContent).toContain('API created issue');
+    expect(issueContent).toContain('Use MCP API');
+    expect(issueContent).toContain('- [ ] First API task');
+    expect(issueContent).toContain('- [ ] Second API task');
+  });
+  
+  it('should complete a task via API', async () => {
+    // First get the current task
+    let response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__getCurrentTask',
+      args: {}
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const currentTask = response.data.data.description;
+    
+    // Now complete the task
+    response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__completeTask',
+      args: {}
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        taskCompleted: currentTask,
+        nextTask: expect.objectContaining({
+          description: 'Task 2.2'
+        })
+      })
+    );
+    
+    // Verify the file was actually updated
+    const issueContent = fs.readFileSync(
+      path.join(testDir, '.issues', 'open', 'issue-0002.md'),
+      'utf8'
+    );
+    
+    expect(issueContent).toContain('- [x] Task 2.1');
+    expect(issueContent).toContain('- [ ] Task 2.2');
+  });
+  
+  it('should add a note to an issue section via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__addNote',
+      args: {
+        issueNumber: '0001',
+        section: 'Problem to be solved',
+        note: 'Additional problem information from API'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        issueNumber: '0001',
+        section: 'Problem to be solved',
+        noteAdded: true
+      })
+    );
+    
+    // Verify the file was actually updated
+    const issueContent = fs.readFileSync(
+      path.join(testDir, '.issues', 'open', 'issue-0001.md'),
+      'utf8'
+    );
+    
+    expect(issueContent).toContain('Additional problem information from API');
+  });
+  
+  it('should add a question to an issue via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__addQuestion',
+      args: {
+        issueNumber: '0001',
+        question: 'Is this a new question from API'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        issueNumber: '0001',
+        questionAdded: true
+      })
+    );
+    
+    // Verify the file was actually updated
+    const issueContent = fs.readFileSync(
+      path.join(testDir, '.issues', 'open', 'issue-0001.md'),
+      'utf8'
+    );
+    
+    expect(issueContent).toContain('Is this a new question from API?');
+  });
+  
+  it('should log a failed approach to an issue via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__logFailure',
+      args: {
+        issueNumber: '0001',
+        approach: 'API failure approach',
+        reason: 'API testing'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        issueNumber: '0001',
+        approachLogged: true
+      })
+    );
+    
+    // Verify the file was actually updated
+    const issueContent = fs.readFileSync(
+      path.join(testDir, '.issues', 'open', 'issue-0001.md'),
+      'utf8'
+    );
+    
+    expect(issueContent).toContain('API failure approach');
+    expect(issueContent).toContain('API testing');
+  });
+  
+  it('should list templates via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__listTemplates',
+      args: {}
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toHaveProperty('issue');
+    expect(response.data.data).toHaveProperty('tag');
+    expect(response.data.data.issue).toContain('test');
+    expect(response.data.data.tag).toContain('test-tag');
+  });
+  
+  it('should show a template via API', async () => {
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__showTemplate',
+      args: {
+        type: 'issue',
+        name: 'test'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+    expect(response.data.data).toEqual(
+      expect.objectContaining({
+        name: 'test',
+        type: 'issue',
+        content: expect.stringContaining('# Issue {{NUMBER}}: {{TITLE}}')
+      })
+    );
+  });
+  
   it('should handle validation errors', async () => {
     const response = await axios.post(`${baseUrl}/api/tools/execute`, {
       tool: 'mcp__addTask',
@@ -233,5 +475,29 @@ describe('MCP Comprehensive E2E', () => {
     expect(response.status).toBe(200);
     expect(response.data.success).toBe(false);
     expect(response.data.error).toHaveProperty('type', 'NotFoundError');
+  });
+  
+  it('should handle section not found errors', async () => {
+    // Create an issue without Questions section
+    fs.writeFileSync(
+      path.join(testDir, '.issues', 'open', 'issue-0003.md'),
+      '# Issue 0003: Missing Section\n\n' +
+      '## Problem to be solved\nTest problem\n\n' +
+      '## Tasks\n- [ ] Test task\n\n'
+    );
+    
+    const response = await axios.post(`${baseUrl}/api/tools/execute`, {
+      tool: 'mcp__addQuestion',
+      args: {
+        issueNumber: '0003',
+        question: 'Question to missing section'
+      }
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(false);
+    expect(response.data.error).toHaveProperty('type', 'SectionNotFoundError');
   });
 });

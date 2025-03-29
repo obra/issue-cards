@@ -124,6 +124,14 @@ function setupTestEnvironment() {
   fs.mkdirSync(path.join(issuesDir, 'open'), { recursive: true });
   fs.mkdirSync(path.join(issuesDir, 'closed'), { recursive: true });
   
+  // Set up templates directory structure
+  const configDir = path.join(issuesDir, 'config');
+  fs.mkdirSync(path.join(configDir, 'templates', 'issue'), { recursive: true });
+  fs.mkdirSync(path.join(configDir, 'templates', 'tag'), { recursive: true });
+  
+  // Set environment variable to use our test directory for issue-cards
+  process.env.ISSUE_CARDS_DIR = issuesDir;
+  
   return testDir;
 }
 
@@ -134,6 +142,9 @@ function setupTestEnvironment() {
  */
 function cleanupTestEnvironment(testDir) {
   if (!testDir) return;
+  
+  // Reset environment variables
+  delete process.env.ISSUE_CARDS_DIR;
   
   // Important: Change back to the original directory before deleting
   // This prevents the "ENOENT: no such file or directory, uv_cwd" error

@@ -61,6 +61,152 @@ const schemas = {
     },
     required: ['issueNumber', 'description'],
     additionalProperties: false
+  },
+  
+  // Schema for mcp__createIssue
+  mcp__createIssue: {
+    type: 'object',
+    properties: {
+      template: {
+        type: 'string',
+        minLength: 1
+      },
+      title: {
+        type: 'string',
+        minLength: 1
+      },
+      problem: {
+        type: 'string'
+      },
+      approach: {
+        type: 'string'
+      },
+      failedApproaches: {
+        type: 'string'
+      },
+      questions: {
+        type: 'string'
+      },
+      task: {
+        oneOf: [
+          { type: 'string', minLength: 1 },
+          { 
+            type: 'array', 
+            items: { type: 'string', minLength: 1 }
+          }
+        ]
+      },
+      instructions: {
+        type: 'string'
+      },
+      nextSteps: {
+        type: 'string'
+      }
+    },
+    required: ['template', 'title'],
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__completeTask
+  mcp__completeTask: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__addNote
+  mcp__addNote: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      note: {
+        type: 'string',
+        minLength: 1
+      },
+      section: {
+        type: 'string',
+        minLength: 1
+      },
+      format: {
+        type: 'string',
+        enum: ['', 'question', 'failure', 'task']
+      },
+      reason: {
+        type: 'string'
+      }
+    },
+    required: ['note', 'section'],
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__addQuestion
+  mcp__addQuestion: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      question: {
+        type: 'string',
+        minLength: 1
+      }
+    },
+    required: ['question'],
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__logFailure
+  mcp__logFailure: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      approach: {
+        type: 'string',
+        minLength: 1
+      },
+      reason: {
+        type: 'string',
+        default: 'Not specified'
+      }
+    },
+    required: ['approach'],
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__listTemplates
+  mcp__listTemplates: {
+    type: 'object',
+    properties: {
+      type: {
+        type: 'string',
+        enum: ['issue', 'tag']
+      }
+    },
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__showTemplate
+  mcp__showTemplate: {
+    type: 'object',
+    properties: {
+      name: {
+        type: 'string',
+        minLength: 1
+      },
+      type: {
+        type: 'string',
+        enum: ['issue', 'tag']
+      }
+    },
+    required: ['name', 'type'],
+    additionalProperties: false
   }
 };
 

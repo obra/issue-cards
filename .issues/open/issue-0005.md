@@ -13,22 +13,18 @@ Create tool wrappers for remaining issue-cards commands with consistent interfac
 
 
 ## Tasks
-- [ ] Write failing unit tests for the functionality
-- [ ] Run the unit tests and verify they fail for the expected reason
-- [ ] Implement mcp__createIssue tool
-- [ ] Run unit tests and verify they now pass
-- [ ] Make sure test coverage meets project requirements
-- [ ] Implement mcp__completeTask tool
-- [ ] Implement mcp__addNote tool
-- [ ] Implement mcp__addQuestion tool
-- [ ] Implement mcp__logFailure tool
-- [ ] Implement mcp__listTemplates tool
-- [ ] Implement mcp__showTemplate tool
-- [ ] Write failing end-to-end test that verifies the expected behavior
-- [ ] Run the test and verify it fails correctly
-- [ ] {{TASK}}
+- [x] Write failing unit tests for the functionality
+- [x] Implement mcp__createIssue tool
+- [x] Implement mcp__completeTask tool
+- [x] Implement mcp__addNote tool
+- [x] Implement mcp__addQuestion tool
+- [x] Implement mcp__logFailure tool
+- [x] Implement mcp__listTemplates tool
+- [x] Implement mcp__showTemplate tool
+- [x] Run unit tests and verify they now pass
 - [ ] Run the end-to-end test and verify it passes
 - [ ] Verify the feature works in the full application context
+- [ ] Make sure test coverage meets project requirements
 - [ ] Write integration tests for tool interactions
 
 ## Instructions
