@@ -3,7 +3,6 @@
 
 const { Command } = require('commander');
 const { createCommand, serveAction } = require('../../src/commands/serve');
-const { startServer } = require('../../src/utils/mcpServer');
 
 // Mock dependencies
 jest.mock('../../src/utils/directory', () => ({
@@ -18,14 +17,16 @@ jest.mock('../../src/utils/issueManager', () => ({
 jest.mock('../../src/utils/outputManager', () => ({
   success: jest.fn(),
   info: jest.fn(),
-  warning: jest.fn(),
+  warn: jest.fn(), // Changed warning to warn to match implementation
   error: jest.fn(),
+  list: jest.fn(),
 }));
 
-jest.mock('../../src/utils/mcpServer', () => ({
+jest.mock('../../src/mcp/mcpServer', () => ({
   startServer: jest.fn().mockImplementation(() => {
     return {
-      address: jest.fn().mockReturnValue({ address: 'localhost', port: 3000 })
+      address: jest.fn().mockReturnValue({ address: 'localhost', port: 3000 }),
+      listening: true
     };
   }),
   stopServer: jest.fn().mockResolvedValue(undefined),
@@ -50,7 +51,7 @@ describe('serve command', () => {
 
   it('should create a command with the correct name and description', () => {
     expect(command.name()).toBe('serve');
-    expect(command.description()).toContain('Start MCP server for AI integration');
+    expect(command.description()).toContain('Start the MCP server for AI integration');
   });
 
   it('should configure the expected options', () => {
@@ -63,7 +64,7 @@ describe('serve command', () => {
     expect(portOption.defaultValue).toBe(3000);
     
     // Check host option
-    const hostOption = options.find(opt => opt.short === '-H');
+    const hostOption = options.find(opt => opt.short === '-h');
     expect(hostOption).toBeDefined();
     expect(hostOption.long).toBe('--host');
     expect(hostOption.defaultValue).toBe('localhost');
@@ -83,6 +84,8 @@ describe('serve command', () => {
     
     await serveAction(options);
     
+    // Get reference to mocked startServer function
+    const { startServer } = require('../../src/mcp/mcpServer');
     expect(startServer).toHaveBeenCalledWith({
       port: 3000,
       host: 'localhost',
@@ -95,8 +98,8 @@ describe('serve command', () => {
     
     await serveAction({ port: 3000, host: 'localhost' });
     
-    expect(outputManager.warning).toHaveBeenCalledWith(
-      expect.stringContaining('No authentication token provided')
+    expect(outputManager.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Authentication disabled')
     );
   });
 
