@@ -40,7 +40,7 @@ function createValidationError(message, details = {}) {
  */
 function createNotFoundError(entity, identifier) {
   const message = identifier
-    ? `${entity} not found: ${identifier}`
+    ? `${entity} #${identifier} not found`
     : `${entity} not found`;
   
   return createErrorResponse('NotFoundError', message);
