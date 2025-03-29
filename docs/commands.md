@@ -20,6 +20,8 @@ This document provides detailed information on all available commands in the Iss
   - [add-question](#add-question)
 - [Template Commands](#template-commands)
   - [templates](#templates)
+- [AI Integration Commands](#ai-integration-commands)
+  - [serve](#serve)
 - [Global Options](#global-options)
 
 ## Installation
@@ -378,6 +380,46 @@ issue-cards templates --validate
 # Show specific template type
 issue-cards templates --type tag
 ```
+
+## AI Integration Commands
+
+### serve
+
+Starts the MCP (Model-Code-Prompt) server for AI integration.
+
+```bash
+issue-cards serve [options]
+```
+
+Options:
+- `--port`, `-p` - Port to listen on (default: 3000)
+- `--host`, `-h` - Host to bind to (default: localhost)
+- `--token`, `-t` - Authentication token for API access
+- `--no-auth` - Disable authentication (not recommended for production)
+
+Examples:
+```bash
+# Start server with default settings
+issue-cards serve
+
+# Start server on custom port
+issue-cards serve -p 8080
+
+# Start server with authentication token
+issue-cards serve -t your-api-token
+
+# Start server binding to all interfaces
+issue-cards serve -h 0.0.0.0
+```
+
+The MCP server exposes the following API endpoints:
+- `GET /api/health` - Check server health
+- `GET /api/status` - Get server status and available tools
+- `GET /api/tools` - List all available MCP tools
+- `GET /api/tools/:name` - Get details for a specific tool
+- `POST /api/tools/execute` - Execute an MCP tool
+
+For detailed documentation on using the MCP server with AI models, see [AI Integration](ai-integration.md).
 
 ## Global Options
 

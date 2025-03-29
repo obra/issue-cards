@@ -1,0 +1,49 @@
+[
+  {
+    "template": "feature",
+    "title": "Add user authentication",
+    "problem": "Users need to securely log in to access their content",
+    "approach": "Implement JWT authentication with secure cookies",
+    "tasks": [
+      "Create User model",
+      "Implement password hashing",
+      "Create login endpoint"
+    ],
+    "questions": [
+      "What should be the token expiration time?",
+      "Should we support refresh tokens?"
+    ],
+    "instructions": "Follow OWASP security guidelines",
+    "failedApproaches": [
+      "Tried using localStorage but it was vulnerable to XSS"
+    ],
+    "nextSteps": [
+      "Implement authorization middleware",
+      "Add user profile management"
+    ]
+  },
+  {
+    "template": "bugfix",
+    "title": "Fix login redirect on mobile devices",
+    "problem": "After login, users on mobile devices are not redirected to the page they were viewing",
+    "approach": "Fix the URL handling in the redirection code to handle mobile user agents correctly",
+    "tasks": [
+      "Reproduce the issue on different mobile devices",
+      "Add user agent detection to the redirect logic",
+      "Test fix on multiple browsers and devices"
+    ]
+  },
+  {
+    "template": "refactor",
+    "title": "Improve API error handling",
+    "problem": "Current error handling is inconsistent across API endpoints",
+    "approach": "Create a standardized error response format and central error handling middleware",
+    "tasks": [
+      "Audit current error handling patterns",
+      "Design consistent error response structure",
+      "Implement central error handling middleware",
+      "Update all endpoints to use the new pattern"
+    ],
+    "instructions": "Ensure backward compatibility with existing clients"
+  }
+]

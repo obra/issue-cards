@@ -13,6 +13,7 @@ Issue Cards is an AI-optimized command-line issue tracking tool designed for bot
 - **Tag-Based Task Expansion**: Apply common patterns like testing requirements with simple tags
 - **Context-Rich Display**: Each task shows all the context needed to implement it
 - **Git Integration**: Automatically stages issue updates when using git
+- **AI Integration**: Built-in MCP (Model-Code-Prompt) server for direct AI assistant integration
 - **AI-Friendly Output**: Standardized command output format for easy parsing by AI agents
 - **Configurable**: Customize directories and behavior through environment variables
 
@@ -68,6 +69,12 @@ issue-cards list
 - `issue-cards templates` - List available templates
 - `issue-cards templates <name>` - Show specific template details
 
+### AI Integration
+
+- `issue-cards serve [--port 3000] [--token secret]` - Start MCP server for AI integration
+- `issue-cards serve --host 0.0.0.0` - Start server and bind to all interfaces
+- `issue-cards serve --no-auth` - Start server without authentication (for local development)
+
 ## Issue Structure
 
 Each issue contains:
@@ -122,6 +129,45 @@ issue-cards complete-task --quiet
 ```
 
 For more details on output formats, see [Output Format Documentation](docs/output-format.md).
+
+## AI Integration
+
+Issue Cards provides a powerful Model-Code-Prompt (MCP) API that allows AI assistants to interact with your issues and tasks. This enables seamless collaboration between humans and AI tools like Claude or GPT.
+
+### Starting the MCP Server
+
+```bash
+# Start the server with default settings
+issue-cards serve
+
+# Start with authentication token (recommended for production)
+issue-cards serve --token your-secret-token
+
+# Specify a custom port
+issue-cards serve --port 8080
+```
+
+### Key Integration Features
+
+- **REST API**: Simple JSON-based API for all issue operations
+- **Standardized Tools**: 11 MCP tools covering all issue-cards functionality
+- **Authentication**: Optional token-based authentication
+- **Detailed Responses**: Consistent response format with rich error handling
+- **AI-Optimized**: Designed specifically for integration with AI assistants
+
+This enables AI assistants to:
+- Create and manage issues
+- Complete tasks and track progress
+- Document approaches and attempted solutions
+- Record questions and failure causes
+- Provide detailed context for implementation
+
+For detailed documentation, see:
+- [AI Integration Guide](docs/ai-integration.md)
+- [MCP Tool Reference](docs/mcp-tool-reference.md)
+- [MCP Server Configuration](docs/mcp-server-config.md)
+- [Example Curl Commands](docs/mcp-curl-examples.md)
+- [Example Claude Prompts](docs/claude-prompt-examples.md)
 
 ## Issue Example
 
