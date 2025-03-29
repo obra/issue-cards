@@ -1,16 +1,6 @@
 // ABOUTME: Tests for the add-task command
 // ABOUTME: Verifies adding tasks to issues with tags and positioning
 
-// Mock unified and remark before importing modules
-jest.mock('unified', () => ({
-  unified: jest.fn().mockReturnValue({
-    use: jest.fn().mockReturnThis(),
-    parse: jest.fn()
-  })
-}));
-jest.mock('remark-parse', () => ({}));
-jest.mock('remark-stringify', () => ({}));
-
 const {
   addTaskAction,
   insertTaskIntoContent,
