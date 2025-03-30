@@ -97,6 +97,10 @@ Issue Cards can be configured using environment variables:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ISSUE_CARDS_DIR` | Directory to store issues and templates | `.issues` in current working directory |
+| `ISSUE_CARDS_MCP_PORT` | Port for the MCP server | `3000` |
+| `ISSUE_CARDS_MCP_HOST` | Host to bind the MCP server to | `localhost` |
+| `ISSUE_CARDS_MCP_TOKEN` | Authentication token for MCP server | None (auth disabled) |
+| `ISSUE_CARDS_MCP_CORS` | Enable CORS for MCP server | `false` |
 
 Example:
 
@@ -104,7 +108,12 @@ Example:
 # Use a custom directory for issues
 export ISSUE_CARDS_DIR=/path/to/custom/issues
 issue-cards init
+
+# Start MCP server with custom port and authentication
+ISSUE_CARDS_MCP_PORT=8080 ISSUE_CARDS_MCP_TOKEN=secure-token issue-cards serve
 ```
+
+For a complete reference of all environment variables and advanced configuration options, see the [Environment Variables Documentation](docs/environment-variables.md).
 
 ### Output Options
 

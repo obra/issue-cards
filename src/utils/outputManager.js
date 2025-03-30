@@ -460,6 +460,83 @@ function blank() {
 }
 
 /**
+ * Print an empty line (alias for blank)
+ */
+function empty() {
+  blank();
+}
+
+/**
+ * Output a header
+ * 
+ * @param {string} text - The header text
+ */
+function header(text) {
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
+    if (config.jsonOutput) {
+      console.log(JSON.stringify({ type: 'header', text }));
+    } else {
+      const formattedText = config.useColors
+        ? chalk.bold.underline(text)
+        : text.toUpperCase();
+      console.log(formattedText);
+    }
+  }
+}
+
+/**
+ * Output a subheader
+ * 
+ * @param {string} text - The subheader text
+ */
+function subheader(text) {
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
+    if (config.jsonOutput) {
+      console.log(JSON.stringify({ type: 'subheader', text }));
+    } else {
+      const formattedText = config.useColors
+        ? chalk.bold(text)
+        : text;
+      console.log(formattedText);
+    }
+  }
+}
+
+/**
+ * Output a key-value pair
+ * 
+ * @param {string} key - The key
+ * @param {string} value - The value
+ */
+function keyValue(key, value) {
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
+    if (config.jsonOutput) {
+      console.log(JSON.stringify({ type: 'keyValue', key, value }));
+    } else {
+      const formattedKey = config.useColors
+        ? chalk.bold(key)
+        : key;
+      console.log(`${formattedKey} - ${value}`);
+    }
+  }
+}
+
+/**
+ * Output a detail line (indented)
+ * 
+ * @param {string} text - The detail text
+ */
+function detail(text) {
+  if (!config.suppressConsole && config.verbosity >= VERBOSITY.NORMAL) {
+    if (config.jsonOutput) {
+      console.log(JSON.stringify({ type: 'detail', text }));
+    } else {
+      console.log(`  ${text}`);
+    }
+  }
+}
+
+/**
  * Get the captured output
  * 
  * @returns {Object} The captured output data
@@ -812,6 +889,11 @@ module.exports = {
   table,
   raw,
   blank,
+  empty,
+  header,
+  subheader,
+  keyValue,
+  detail,
   
   // Output capture
   getCapturedOutput,
