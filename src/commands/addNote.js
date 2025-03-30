@@ -19,7 +19,7 @@ const { UserError, SystemError, SectionNotFoundError } = require('../utils/error
  * 
  * @param {string} noteText - The note text to add
  * @param {Object} options - Command options
- * @param {number|null} options.issueNumber - Issue number (optional, uses current if not provided)
+ * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
  * @param {string} options.section - Section to add note to
  * @param {string} options.format - Format type (optional)
  * @returns {Promise<void>}
@@ -27,7 +27,7 @@ const { UserError, SystemError, SectionNotFoundError } = require('../utils/error
 async function addNoteAction(noteText, options = {}) {
   try {
     // Use current issue if no issue number provided
-    let issueNumber = options.issueNumber;
+    let issueNumber = options.issue;
     
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
@@ -96,7 +96,7 @@ function createCommand() {
   return new Command('add-note')
     .description('Add a note to a specific section of an issue')
     .argument('<note>', 'The note text to add')
-    .option('-i, --issue-number <number>', 'Issue number (uses current issue if not specified)')
+    .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
     .option('-s, --section <name>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
     .option('-f, --format <type>', 'Note format (question, failure, task, or blank for normal note)')
     .option('-r, --reason <text>', 'Reason for a failed approach (used with --format=failure)')

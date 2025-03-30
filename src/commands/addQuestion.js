@@ -19,13 +19,13 @@ const { UserError, SystemError, SectionNotFoundError } = require('../utils/error
  * 
  * @param {string} questionText - The question to add
  * @param {Object} options - Command options
- * @param {number|null} options.issueNumber - Issue number (optional, uses current if not provided)
+ * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
  * @returns {Promise<void>}
  */
 async function addQuestionAction(questionText, options = {}) {
   try {
     // Use current issue if no issue number provided
-    let issueNumber = options.issueNumber;
+    let issueNumber = options.issue;
     
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
@@ -94,7 +94,7 @@ function createCommand() {
   return new Command('add-question')
     .description('Add a question to the Questions to resolve section')
     .argument('<question>', 'The question to add')
-    .option('-i, --issue-number <number>', 'Issue number (uses current issue if not specified)')
+    .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
     .action(addQuestionAction);
 }
 

@@ -68,7 +68,7 @@ None yet
 
     // Call the action
     await logFailureAction('This approach didnt work', { 
-      issueNumber: 1, 
+      issue: 1, 
       reason: 'Performance issues'
     });
 
@@ -144,7 +144,7 @@ Next steps for current issue
 
     // Call without a reason
     await logFailureAction('Failed attempt with no reason', { 
-      issueNumber: 1 
+      issue: 1 
     });
 
     // Check that writeFile was called
@@ -170,7 +170,7 @@ Next steps for current issue
 
     // Add another failure
     await logFailureAction('New failed approach', { 
-      issueNumber: 1, 
+      issue: 1, 
       reason: 'New reason'
     });
 
@@ -198,7 +198,7 @@ Next steps for current issue
 
     // Should throw a SectionNotFoundError with displayMessage
     try {
-      await logFailureAction('This will fail', { issueNumber: 1 });
+      await logFailureAction('This will fail', { issue: 1 });
       fail('Expected an error to be thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(SectionNotFoundError);
@@ -226,7 +226,7 @@ Next steps for current issue
     fs.readFile.mockRejectedValue(fsError);
     
     try {
-      await logFailureAction('This will fail', { issueNumber: 1 });
+      await logFailureAction('This will fail', { issue: 1 });
       fail('Expected an error to be thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(SystemError);

@@ -73,7 +73,7 @@ None yet
 
     // Call the action
     await addNoteAction('This is a new note', { 
-      issueNumber: 1, 
+      issue: 1, 
       section: 'problem' 
     });
 
@@ -106,7 +106,7 @@ None yet
 
     // Call the action
     await addNoteAction('This is my first failed approach', { 
-      issueNumber: 1, 
+      issue: 1, 
       section: 'failed-approaches' 
     });
 
@@ -183,7 +183,7 @@ Next steps for current issue
     // Call with invalid section
     try {
       await addNoteAction('Note for invalid section', { 
-        issueNumber: 1, 
+        issue: 1, 
         section: 'non-existent-section' 
       });
       fail('Should have thrown an error');
@@ -227,7 +227,7 @@ Next steps for current issue
 
     // Add a question
     await addNoteAction('New question to resolve?', { 
-      issueNumber: 1, 
+      issue: 1, 
       section: 'questions',
       format: 'question'
     });

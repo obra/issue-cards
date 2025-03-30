@@ -20,14 +20,14 @@ const { UserError, SectionNotFoundError, SystemError } = require('../utils/error
  * 
  * @param {string} approachText - Description of the failed approach
  * @param {Object} options - Command options
- * @param {number|null} options.issueNumber - Issue number (optional, uses current if not provided)
+ * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
  * @param {string} options.reason - Reason for failure
  * @returns {Promise<void>}
  */
 async function logFailureAction(approachText, options = {}) {
   try {
     // Use current issue if no issue number provided
-    let issueNumber = options.issueNumber;
+    let issueNumber = options.issue;
     
     if (!issueNumber) {
       const currentIssue = await getCurrentIssue();
@@ -88,7 +88,7 @@ function createCommand() {
   return new Command('log-failure')
     .description('Log a failed approach to an issue')
     .argument('<approach>', 'Description of the failed approach')
-    .option('-i, --issue-number <number>', 'Issue number (uses current issue if not specified)')
+    .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
     .option('-r, --reason <text>', 'Reason for the failure', 'Not specified')
     .action(logFailureAction);
 }

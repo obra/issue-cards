@@ -67,7 +67,7 @@ None yet
 
     // Call the action
     await addQuestionAction('New question that needs an answer?', { 
-      issueNumber: 1 
+      issue: 1 
     });
 
     // Verify the file was read correctly
@@ -143,7 +143,7 @@ Next steps for current issue
 
     // Add question to empty section
     await addQuestionAction('First question?', { 
-      issueNumber: 1 
+      issue: 1 
     });
 
     // Check that writeFile was called
@@ -161,7 +161,7 @@ Next steps for current issue
 
     // Call with a question that already has a question mark
     await addQuestionAction('Does this work?', { 
-      issueNumber: 1 
+      issue: 1 
     });
 
     // Check that writeFile was called
@@ -181,7 +181,7 @@ Next steps for current issue
 
     // Call with text that doesn't end with a question mark
     await addQuestionAction('Is this a question', { 
-      issueNumber: 1 
+      issue: 1 
     });
 
     // Check that writeFile was called
@@ -205,7 +205,7 @@ Next steps for current issue
 
     // Should throw an error
     await expect(addQuestionAction('This will fail?', { 
-      issueNumber: 1 
+      issue: 1 
     })).rejects.toThrow('Section "Questions to resolve" not found in issue');
   });
 });
