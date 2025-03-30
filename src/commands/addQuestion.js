@@ -92,6 +92,7 @@ async function addQuestionAction(questionText, options = {}) {
  */
 function createCommand() {
   return new Command('add-question')
+    .alias('question')
     .description('Add a question to the Questions to resolve section')
     .argument('<question>', 'The question to add')
     .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')

@@ -86,6 +86,7 @@ async function logFailureAction(approachText, options = {}) {
  */
 function createCommand() {
   return new Command('log-failure')
+    .alias('failure')
     .description('Log a failed approach to an issue')
     .argument('<approach>', 'Description of the failed approach')
     .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')

@@ -54,15 +54,15 @@ issue-cards list
 - `issue-cards create <template> --title <title>` - Create a new issue
 - `issue-cards list` - Show all open issues
 - `issue-cards current` - Show current task with context
-- `issue-cards complete-task` - Mark current task as complete and show next
+- `issue-cards complete-task` (or `complete`) - Mark current task as complete and show next
 - `issue-cards show [issue-number]` - Show issue details
 
 ### Task Management
 
-- `issue-cards add-task <description> [--before|--after] [--tags "tag1,tag2"]` - Add a new task
-- `issue-cards add-note <note>` - Add a note to the current issue
-- `issue-cards log-failure <description>` - Log a failed approach
-- `issue-cards add-question <question>` - Add a question to resolve
+- `issue-cards add-task` (or `add`) `<description> [--before|--after] [--tags "tag1,tag2"]` - Add a new task
+- `issue-cards add-note <note>` - Add a plain text note to the current issue
+- `issue-cards log-failure` (or `failure`) `<description>` - Log a failed approach
+- `issue-cards add-question` (or `question`) `<question>` - Add a question to resolve
 
 ### Templates
 
@@ -241,7 +241,7 @@ When working in a git repository, Issue Cards automatically stages changes to is
 
 ```bash
 # When you mark a task as complete
-issue-cards complete-task
+issue-cards complete-task  # or issue-cards complete
 # Issue file is updated and automatically staged with git
 
 # When you add a note or log a failure
@@ -278,7 +278,7 @@ issue-cards create feature \
 issue-cards current
 
 # Mark current task complete and see next task
-issue-cards complete-task
+issue-cards complete-task  # or the shorter alias: issue-cards complete
 ```
 
 ### Adding Notes and Tracking Progress
@@ -289,9 +289,13 @@ issue-cards add-note "We should consider adding rate limiting to the login endpo
 
 # Log a failed approach
 issue-cards log-failure "Tried using localStorage but it was vulnerable to XSS"
+# Or use the shorter alias
+issue-cards failure "Tried using localStorage but it was vulnerable to XSS"
 
 # Add a question
 issue-cards add-question "What should be the token expiration time?"
+# Or use the shorter alias
+issue-cards question "What should be the token expiration time?"
 ```
 
 ## Documentation

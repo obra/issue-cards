@@ -248,6 +248,8 @@ Marks the current task as complete and shows the next task.
 
 ```bash
 issue-cards complete-task
+# Or use the shorter alias
+issue-cards complete
 ```
 
 Example output:
@@ -294,6 +296,8 @@ Adds a new task to an issue.
 
 ```bash
 issue-cards add-task [options] <task-text>
+# Or use the shorter alias
+issue-cards add [options] <task-text>
 ```
 
 Arguments:
@@ -357,6 +361,8 @@ Logs a failed approach to the Failed approaches section of an issue.
 
 ```bash
 issue-cards log-failure [options] <approach>
+# Or use the shorter alias
+issue-cards failure [options] <approach>
 ```
 
 Arguments:
@@ -381,6 +387,8 @@ Adds a question to the Questions to resolve section of an issue.
 
 ```bash
 issue-cards add-question [options] <question>
+# Or use the shorter alias
+issue-cards question [options] <question>
 ```
 
 Arguments:

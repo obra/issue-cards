@@ -341,6 +341,7 @@ async function addTaskAction(taskText, options) {
  */
 function createCommand() {
   return new Command('add-task')
+    .alias('add')
     .description('Add a new task to an issue')
     .argument('<task-text>', 'Text of the task to add (use quotes, include expansion tags with + at the end)')
     .option('-i, --issue <id>', 'Issue ID to add task to (defaults to first open issue)')

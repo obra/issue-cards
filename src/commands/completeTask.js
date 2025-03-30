@@ -181,6 +181,7 @@ async function completeTaskAction(options = {}) {
  */
 function createCommand() {
   return new Command('complete-task')
+    .alias('complete')
     .description('Mark current task as complete and show next task')
     .action(completeTaskAction);
 }
