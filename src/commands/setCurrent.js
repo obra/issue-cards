@@ -25,9 +25,10 @@ function isValidIssueNumber(issueNumber) {
 /**
  * Action handler for the set-current command
  * 
- * @param {string} issueNumber - Issue number to set as current
+ * @param {Object} options - Command options
+ * @param {string} options.issue - Issue number to set as current
  */
-async function setCurrentAction(issueNumber) {
+async function setCurrentAction(options) {
   try {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
@@ -36,6 +37,9 @@ async function setCurrentAction(issueNumber) {
       throw new UninitializedError()
         .withDisplayMessage('Issue tracking is not initialized (Run `issue-cards init` first)');
     }
+    
+    // Get the issue number from options
+    const issueNumber = options.issue;
     
     // Validate issue number format
     if (!isValidIssueNumber(issueNumber)) {
@@ -80,7 +84,7 @@ async function setCurrentAction(issueNumber) {
 function createCommand() {
   return new Command('set-current')
     .description('Set current issue for operations')
-    .argument('<issueNumber>', 'Issue number to set as current')
+    .requiredOption('-i, --issue <number>', 'Issue number to set as current (required)')
     .action(setCurrentAction);
 }
 

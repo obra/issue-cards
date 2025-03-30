@@ -217,11 +217,20 @@ Note: The above upcoming tasks are for context only. Do not work on them until t
 Sets a specific issue as the current issue.
 
 ```bash
-issue-cards set-current <issue>
+issue-cards set-current --issue <number>
 ```
 
-Arguments:
-- `issue` - The issue number to set as current
+Options:
+- `-i, --issue <number>` - Issue number to set as current (required)
+
+Examples:
+```bash
+# Set issue #0002 as current
+issue-cards set-current --issue 0002
+
+# Using the short form
+issue-cards set-current -i 2
+```
 
 Example output:
 ```

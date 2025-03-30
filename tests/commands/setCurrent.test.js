@@ -58,11 +58,12 @@ describe('Set Current command', () => {
       const actionHandler = command._actionHandler;
       expect(typeof actionHandler).toBe('function');
       
-      // Verify required issueNumber argument
-      const args = command._args;
-      expect(args.length).toBe(1);
-      expect(args[0].name()).toBe('issueNumber');
-      expect(args[0].required).toBe(true);
+      // Verify required issue option
+      const options = command.options;
+      const issueOption = options.find(opt => opt.long === '--issue');
+      expect(issueOption).toBeDefined();
+      expect(issueOption.required).toBe(true);
+      expect(issueOption.short).toBe('-i');
     });
   });
   
@@ -74,7 +75,7 @@ describe('Set Current command', () => {
       // Mock setCurrentIssue success
       issueManager.setCurrentIssue.mockResolvedValue();
       
-      await setCurrentAction('0001');
+      await setCurrentAction({ issue: '0001' });
       
       // Verify the issue exists check
       expect(issueManager.issueExists).toHaveBeenCalledWith('0001');
@@ -90,7 +91,7 @@ describe('Set Current command', () => {
       // Mock directory.isInitialized to return false
       directory.isInitialized.mockResolvedValue(false);
       
-      await expect(setCurrentAction('0001')).rejects.toThrow('Issue tracking is not initialized');
+      await expect(setCurrentAction({ issue: '0001' })).rejects.toThrow('Issue tracking is not initialized');
       
       // Verify setCurrentIssue was not called
       expect(issueManager.setCurrentIssue).not.toHaveBeenCalled();
@@ -100,28 +101,28 @@ describe('Set Current command', () => {
       // Mock issue doesn't exist
       issueManager.issueExists.mockResolvedValue(false);
       
-      await expect(setCurrentAction('9999')).rejects.toThrow('Issue #9999 not found');
+      await expect(setCurrentAction({ issue: '9999' })).rejects.toThrow('Issue #9999 not found');
       
       // Verify setCurrentIssue was not called
       expect(issueManager.setCurrentIssue).not.toHaveBeenCalled();
     });
     
     test('shows error for issue number zero', async () => {
-      await expect(setCurrentAction('0')).rejects.toThrow('Invalid issue number');
+      await expect(setCurrentAction({ issue: '0' })).rejects.toThrow('Invalid issue number');
       
       // Verify setCurrentIssue was not called
       expect(issueManager.setCurrentIssue).not.toHaveBeenCalled();
     });
     
     test('shows error for negative issue number', async () => {
-      await expect(setCurrentAction('-1')).rejects.toThrow('Invalid issue number');
+      await expect(setCurrentAction({ issue: '-1' })).rejects.toThrow('Invalid issue number');
       
       // Verify setCurrentIssue was not called
       expect(issueManager.setCurrentIssue).not.toHaveBeenCalled();
     });
     
     test('shows error for non-numeric issue number', async () => {
-      await expect(setCurrentAction('abc')).rejects.toThrow('Invalid issue number');
+      await expect(setCurrentAction({ issue: 'abc' })).rejects.toThrow('Invalid issue number');
       
       // Verify setCurrentIssue was not called
       expect(issueManager.setCurrentIssue).not.toHaveBeenCalled();
@@ -135,7 +136,7 @@ describe('Set Current command', () => {
       const error = new Error('Disk full');
       issueManager.setCurrentIssue.mockRejectedValue(error);
       
-      await expect(setCurrentAction('0001')).rejects.toThrow('Failed to set current issue');
+      await expect(setCurrentAction({ issue: '0001' })).rejects.toThrow('Failed to set current issue');
       
       // Verify issue existence was checked
       expect(issueManager.issueExists).toHaveBeenCalledWith('0001');
