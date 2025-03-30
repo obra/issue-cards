@@ -10,9 +10,10 @@ const { UninitializedError, IssueNotFoundError, UserError, SystemError } = requi
 /**
  * Action handler for the show command
  * 
- * @param {string} [issueNumber] - Optional issue number to show
+ * @param {Object} options - Command options
+ * @param {string} [options.issue] - Optional issue number to show
  */
-async function showAction(issueNumber) {
+async function showAction(options = {}) {
   try {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
@@ -23,15 +24,15 @@ async function showAction(issueNumber) {
     }
     
     // If issue number provided, show that specific issue
-    if (issueNumber) {
+    if (options.issue) {
       try {
         // Pad to 4 digits for issue numbers like "0001"
-        const paddedNumber = issueNumber.toString().padStart(4, '0');
+        const paddedNumber = options.issue.toString().padStart(4, '0');
         const issueContent = await getIssue(paddedNumber);
         output.raw(issueContent);
       } catch (error) {
-        throw new IssueNotFoundError(issueNumber)
-          .withDisplayMessage(`Issue #${issueNumber} not found`);
+        throw new IssueNotFoundError(options.issue)
+          .withDisplayMessage(`Issue #${options.issue} not found`);
       }
       return;
     }
@@ -68,7 +69,7 @@ async function showAction(issueNumber) {
 function createCommand() {
   return new Command('show')
     .description('Show issue details')
-    .argument('[issue-number]', 'Issue number to show. If omitted, shows the current issue.')
+    .option('-i, --issue <number>', 'Issue number to show (if omitted, shows the current issue)')
     .action(showAction);
 }
 

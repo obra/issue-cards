@@ -64,7 +64,7 @@ describe('Show command', () => {
       const mockContent = '# Issue 0001: Test Issue\n\nContent here';
       issueManager.getIssue.mockResolvedValue(mockContent);
       
-      await showAction('0001');
+      await showAction({ issue: '0001' });
       
       // Verify issue content was displayed
       expect(issueManager.getIssue).toHaveBeenCalledWith('0001');
@@ -80,7 +80,7 @@ describe('Show command', () => {
       issueManager.getIssue.mockRejectedValue(new Error('Issue #0001 not found'));
       
       try {
-        await showAction('0001');
+        await showAction({ issue: '0001' });
         fail('Expected an error to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(IssueNotFoundError);
@@ -94,7 +94,7 @@ describe('Show command', () => {
       directory.isInitialized.mockResolvedValue(false);
       
       try {
-        await showAction('0001');
+        await showAction({ issue: '0001' });
         fail('Expected an error to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(UninitializedError);
@@ -113,7 +113,7 @@ describe('Show command', () => {
       issueManager.getIssue.mockRejectedValue(new Error('Failed to read issue'));
       
       try {
-        await showAction('0001');
+        await showAction({ issue: '0001' });
         fail('Expected an error to be thrown');
       } catch (error) {
         // The error is caught and wrapped in IssueNotFoundError in the code
@@ -136,7 +136,7 @@ describe('Show command', () => {
       ];
       issueManager.listIssues.mockResolvedValue(mockIssues);
       
-      await showAction();
+      await showAction({});
       
       // Verify first issue content was displayed (current issue)
       expect(issueManager.listIssues).toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('Show command', () => {
       issueManager.listIssues.mockResolvedValue([]);
       
       try {
-        await showAction();
+        await showAction({});
         fail('Expected an error to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(UserError);

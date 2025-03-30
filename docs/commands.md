@@ -127,11 +127,23 @@ Total: 3 open issues
 Shows details of an issue.
 
 ```bash
-issue-cards show [issue]
+issue-cards show [options]
 ```
 
-Arguments:
-- `issue` - Issue number to show (if omitted, shows the current issue)
+Options:
+- `-i, --issue <number>` - Issue number to show (if omitted, shows the current issue)
+
+Examples:
+```bash
+# Show a specific issue
+issue-cards show --issue 0001
+
+# Show a specific issue with the short option
+issue-cards show -i 0001
+
+# Show the current issue
+issue-cards show
+```
 
 Example output:
 ```
