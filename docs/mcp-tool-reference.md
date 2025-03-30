@@ -38,6 +38,19 @@ Common error types include:
 - `SectionNotFoundError`: Referenced section doesn't exist
 - `UserError`: General user error condition
 
+### Command Aliases
+
+For convenience, several commonly used commands have aliases that provide identical functionality with shorter names. These aliases match the CLI command aliases:
+
+| Original Tool      | Alias Tool       |
+|--------------------|------------------|
+| `mcp__completeTask` | `mcp__complete`  |
+| `mcp__addTask`     | `mcp__add`       |
+| `mcp__addQuestion` | `mcp__question`  |
+| `mcp__logFailure`  | `mcp__failure`   |
+
+The alias tools have identical parameters and behaviors to their original counterparts. You can use either the original or the alias based on your preference.
+
 ## Core Issue Management Tools
 
 ### mcp__listIssues

@@ -350,14 +350,12 @@ const mcp__completeTask = withValidation('mcp__completeTask',
 );
 
 /**
- * Add a note to a specific section of an issue
+ * Add a plain text note to a specific section of an issue
  * 
  * @param {Object} args - Command arguments
  * @param {string} args.note - The note text to add
  * @param {string} args.section - Section to add the note to
  * @param {string} [args.issueNumber] - Issue number (uses current if not specified)
- * @param {string} [args.format] - Note format (blank, question, failure, task)
- * @param {string} [args.reason] - Reason for a failed approach
  * @returns {Promise<Object>} MCP result object
  */
 const mcp__addNote = withValidation('mcp__addNote',
@@ -387,15 +385,13 @@ const mcp__addNote = withValidation('mcp__addNote',
       const normalizedSection = normalizeSectionName(args.section);
       
       try {
-        // Add note to the section
+        // Add note to the section as plain text (no format)
         const updatedContent = addContentToSection(
           issueContent, 
           normalizedSection, 
           args.note, 
-          args.format,
-          {
-            reason: args.reason
-          }
+          null, // No format - plain text only
+          {}    // No additional options
         );
         
         // Save the updated content
@@ -666,6 +662,23 @@ const mcp__showTemplate = withValidation('mcp__showTemplate',
   }
 );
 
+// Create aliases for commonly used commands with proper validation
+const mcp__complete = withValidation('mcp__complete', async (args) => {
+  return await mcp__completeTask(args);
+});
+
+const mcp__add = withValidation('mcp__add', async (args) => {
+  return await mcp__addTask(args);
+});
+
+const mcp__question = withValidation('mcp__question', async (args) => {
+  return await mcp__addQuestion(args);
+});
+
+const mcp__failure = withValidation('mcp__failure', async (args) => {
+  return await mcp__logFailure(args);
+});
+
 module.exports = {
   mcp__listIssues,
   mcp__showIssue,
@@ -677,5 +690,10 @@ module.exports = {
   mcp__addQuestion,
   mcp__logFailure,
   mcp__listTemplates,
-  mcp__showTemplate
+  mcp__showTemplate,
+  // Aliases
+  mcp__complete,
+  mcp__add,
+  mcp__question,
+  mcp__failure
 };

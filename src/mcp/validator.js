@@ -129,13 +129,6 @@ const schemas = {
       section: {
         type: 'string',
         minLength: 1
-      },
-      format: {
-        type: 'string',
-        enum: ['', 'question', 'failure', 'task']
-      },
-      reason: {
-        type: 'string'
       }
     },
     required: ['note', 'section'],
@@ -206,6 +199,65 @@ const schemas = {
       }
     },
     required: ['name', 'type'],
+    additionalProperties: false
+  },
+  
+  // Alias schemas - duplicate the original schemas
+  mcp__complete: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
+  },
+  
+  mcp__add: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      description: {
+        type: 'string',
+        minLength: 1
+      }
+    },
+    required: ['issueNumber', 'description'],
+    additionalProperties: false
+  },
+  
+  mcp__question: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      question: {
+        type: 'string',
+        minLength: 1
+      }
+    },
+    required: ['question'],
+    additionalProperties: false
+  },
+  
+  mcp__failure: {
+    type: 'object',
+    properties: {
+      issueNumber: {
+        type: 'string',
+        pattern: '^\\d{4}$'
+      },
+      approach: {
+        type: 'string',
+        minLength: 1
+      },
+      reason: {
+        type: 'string',
+        default: 'Not specified'
+      }
+    },
+    required: ['approach'],
     additionalProperties: false
   }
 };

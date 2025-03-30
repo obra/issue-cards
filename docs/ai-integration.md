@@ -80,34 +80,47 @@ Or for errors:
 
 #### Core Issue Management
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `mcp__listIssues` | List all issues | `state` (open/closed/all) |
-| `mcp__showIssue` | Show issue details | `issueNumber` |
-| `mcp__getCurrentTask` | Get current task with context | None |
-| `mcp__addTask` | Add a task to an issue | `issueNumber`, `description` |
+| Tool | Description | Key Parameters | Alias |
+|------|-------------|----------------|-------|
+| `mcp__listIssues` | List all issues | `state` (open/closed/all) | - |
+| `mcp__showIssue` | Show issue details | `issueNumber` | - |
+| `mcp__getCurrentTask` | Get current task with context | None | - |
+| `mcp__addTask` | Add a task to an issue | `issueNumber`, `description` | `mcp__add` |
 
 #### Task and Issue Creation
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `mcp__createIssue` | Create a new issue from template | `template`, `title`, `problem`, etc. |
-| `mcp__completeTask` | Complete current task | None |
+| Tool | Description | Key Parameters | Alias |
+|------|-------------|----------------|-------|
+| `mcp__createIssue` | Create a new issue from template | `template`, `title`, `problem`, etc. | - |
+| `mcp__completeTask` | Complete current task | None | `mcp__complete` |
 
 #### Context and Documentation
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `mcp__addNote` | Add a note to a section | `section`, `note`, `issueNumber` |
-| `mcp__addQuestion` | Add a question to an issue | `question`, `issueNumber` |
-| `mcp__logFailure` | Log a failed approach | `approach`, `reason`, `issueNumber` |
+| Tool | Description | Key Parameters | Alias |
+|------|-------------|----------------|-------|
+| `mcp__addNote` | Add a note to a section | `section`, `note`, `issueNumber` | - |
+| `mcp__addQuestion` | Add a question to an issue | `question`, `issueNumber` | `mcp__question` |
+| `mcp__logFailure` | Log a failed approach | `approach`, `reason`, `issueNumber` | `mcp__failure` |
+
+### Command Aliases
+
+For convenience, several commonly used commands have aliases that provide identical functionality with shorter names:
+
+| Original Tool | Alias Tool | Description |
+|---------------|------------|-------------|
+| `mcp__completeTask` | `mcp__complete` | Complete the current task |
+| `mcp__addTask` | `mcp__add` | Add a task to an issue |
+| `mcp__addQuestion` | `mcp__question` | Add a question to an issue |
+| `mcp__logFailure` | `mcp__failure` | Log a failed approach |
+
+Aliases have identical parameters and functionality to their original counterparts. You can use either the original or the alias based on your preference.
 
 #### Template Management
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `mcp__listTemplates` | List available templates | `type` (issue/tag) |
-| `mcp__showTemplate` | Show template content | `name`, `type` |
+| Tool | Description | Key Parameters | Alias |
+|------|-------------|----------------|-------|
+| `mcp__listTemplates` | List available templates | `type` (issue/tag) | - |
+| `mcp__showTemplate` | Show template content | `name`, `type` | - |
 
 ## Using the API with AI Assistants
 

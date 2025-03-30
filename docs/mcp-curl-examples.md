@@ -361,6 +361,55 @@ Response:
 }
 ```
 
+## Using Command Aliases
+
+The API supports aliases for commonly used commands, allowing for shorter tool names with the same functionality.
+
+### Using the mcp__add alias (for mcp__addTask)
+
+```bash
+curl -s -X POST http://localhost:3000/api/tools/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "mcp__add", "args": {"issueNumber": "0001", "description": "Test on iPhone and Android"}}' | jq
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "task-6",
+    "description": "Test on iPhone and Android",
+    "completed": false,
+    "issueNumber": "0001"
+  }
+}
+```
+
+### Using the mcp__complete alias (for mcp__completeTask)
+
+```bash
+curl -s -X POST http://localhost:3000/api/tools/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "mcp__complete", "args": {}}' | jq
+```
+
+### Using the mcp__question alias (for mcp__addQuestion)
+
+```bash
+curl -s -X POST http://localhost:3000/api/tools/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "mcp__question", "args": {"question": "Should we support desktop notifications"}}' | jq
+```
+
+### Using the mcp__failure alias (for mcp__logFailure)
+
+```bash
+curl -s -X POST http://localhost:3000/api/tools/execute \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "mcp__failure", "args": {"approach": "Using cookies for token storage", "reason": "Security issues"}}' | jq
+```
+
 ## Using Authentication
 
 When authentication is enabled, you need to include the token in your requests:
