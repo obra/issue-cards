@@ -222,14 +222,13 @@ Next steps for current issue
     expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Planned approach section'));
   });
 
-  test('should format the note based on section type', async () => {
+  test('should add plain text to list sections appropriately', async () => {
     fs.readFile.mockResolvedValue(mockIssueContent);
 
-    // Add a question
-    await addNoteAction('New question to resolve?', { 
+    // Add a plain text note to a list section
+    await addNoteAction('New insight about questions', { 
       issue: 1, 
-      section: 'questions',
-      format: 'question'
+      section: 'questions'
     });
 
     // Check that writeFile was called
@@ -237,10 +236,10 @@ Next steps for current issue
     expect(fs.writeFile.mock.calls[0][0]).toBe('/test/issues/open/issue-1.md');
     expect(fs.writeFile.mock.calls[0][2]).toBe('utf8');
     
-    // Verify question was added as a task item
+    // Verify plain text was added to the list section (should be added as a list item)
     const writtenContent = fs.writeFile.mock.calls[0][1];
     expect(writtenContent).toContain('- [ ] Question 1?');
-    expect(writtenContent).toContain('- [ ] New question to resolve?');
+    expect(writtenContent).toContain('New insight about questions');
     
     // Verify success message was output
     expect(mockOutput.success).toHaveBeenCalledWith(expect.stringContaining('Added note to Questions to resolve section'));

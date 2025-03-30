@@ -321,7 +321,7 @@ issue-cards add-task "Create login form component +unit-test +update-docs"
 
 ### add-note
 
-Adds a note to a specific section of an issue.
+Adds a plain text note to a specific section of an issue.
 
 ```bash
 issue-cards add-note [options] <note>
@@ -333,8 +333,6 @@ Arguments:
 Options:
 - `-i, --issue <number>` - Issue number (uses current issue if not specified)
 - `-s, --section <name>` - Section to add note to (problem, approach, failed-approaches, etc.), defaults to 'problem'
-- `-f, --format <type>` - Note format (question, failure, task, or blank for normal note)
-- `-r, --reason <text>` - Reason for a failed approach (used with --format=failure)
 
 Examples:
 ```bash
@@ -344,9 +342,14 @@ issue-cards add-note "We should use bcrypt with 10 rounds for password hashing"
 # Add a note to a specific issue's approach section
 issue-cards add-note -i 2 -s approach "We should use bcrypt with 10 rounds for password hashing"
 
-# Add a formatted note with a specific section
-issue-cards add-note -i 3 -s failed-approaches -f failure -r "Security vulnerability" "Tried using localStorage"
+# Add a note to a different section
+issue-cards add-note -s instructions "Be sure to follow the security guidelines"
 ```
+
+For specialized formats, use dedicated commands:
+- `add-question` - For adding questions to the Questions section
+- `log-failure` - For logging failures with reasons to the Failed approaches section
+- `add-task` - For adding tasks to the Tasks section
 
 ### log-failure
 

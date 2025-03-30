@@ -15,13 +15,12 @@ const output = require('../utils/outputManager');
 const { UserError, SystemError, SectionNotFoundError } = require('../utils/errors');
 
 /**
- * Add a note to a specific section of an issue
+ * Add a plain text note to a specific section of an issue
  * 
  * @param {string} noteText - The note text to add
  * @param {Object} options - Command options
  * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
  * @param {string} options.section - Section to add note to
- * @param {string} options.format - Format type (optional)
  * @returns {Promise<void>}
  */
 async function addNoteAction(noteText, options = {}) {
@@ -49,12 +48,12 @@ async function addNoteAction(noteText, options = {}) {
     const normalizedSection = normalizeSectionName(options.section);
     
     try {
-      // Add note to the section
+      // Add plain text note to the section (no format specified)
       const updatedContent = addContentToSection(
         content, 
         normalizedSection, 
         noteText, 
-        options.format,
+        null, // No format - plain text only
         options
       );
       
@@ -94,12 +93,10 @@ async function addNoteAction(noteText, options = {}) {
  */
 function createCommand() {
   return new Command('add-note')
-    .description('Add a note to a specific section of an issue')
+    .description('Add a plain text note to a specific section of an issue')
     .argument('<note>', 'The note text to add')
     .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
     .option('-s, --section <name>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
-    .option('-f, --format <type>', 'Note format (question, failure, task, or blank for normal note)')
-    .option('-r, --reason <text>', 'Reason for a failed approach (used with --format=failure)')
     .action(addNoteAction);
 }
 
