@@ -105,7 +105,7 @@ describe('Output Manager E2E', () => {
   // Test error formatting
   test('error formatting', () => {
     // Test with a command that will cause an error
-    const errorOutput = runQuietly(`node ${binPath} show 999`, {
+    const errorOutput = runQuietly(`node ${binPath} show --issue 999`, {
       cwd: testDir,
       env: { ...process.env }
     });

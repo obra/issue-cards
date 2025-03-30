@@ -127,7 +127,7 @@ describe('CLI Command Errors E2E', () => {
     expect(initResult.status).toBe(0);
     
     // Try to show a non-existent issue
-    const result = runQuietly(`node ${binPath} show 9999`, {
+    const result = runQuietly(`node ${binPath} show --issue 9999`, {
       cwd: testDir,
       env: { ...process.env }
     });

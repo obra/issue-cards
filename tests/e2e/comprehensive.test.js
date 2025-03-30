@@ -128,7 +128,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     expect(output).toContain('Created Issue #0002');
     
     // 7. Show issue with number (showing issue #2)
-    output = runCommand('show 2');
+    output = runCommand('show --issue 2');
     expect(output).toContain('Bug Test');
     
     // 8. Check current task (should work on the oldest issue - issue #1)
@@ -283,7 +283,7 @@ describe('Issue Cards Comprehensive E2E', () => {
     runCommand('init');
     
     // 2. Try show with non-existent issue
-    const showResult = runQuietly(`node ${binPath} show 999`, {
+    const showResult = runQuietly(`node ${binPath} show --issue 999`, {
       cwd: testDir,
       env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
     });

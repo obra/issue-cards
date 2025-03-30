@@ -46,8 +46,10 @@ async function stageChangesInGit(issueNumber) {
 
 /**
  * Action handler for the complete-task command
+ * 
+ * @param {Object} options - Command options
  */
-async function completeTaskAction() {
+async function completeTaskAction(options = {}) {
   try {
     // Check if issue tracking is initialized
     const initialized = await isInitialized();
@@ -66,10 +68,16 @@ async function completeTaskAction() {
     }
     
     // Get the current issue
-    const currentIssue = await getCurrentIssue();
+    const targetIssue = await getCurrentIssue();
+    
+    if (!targetIssue) {
+      throw new UserError('No current issue set')
+        .withRecoveryHint('Set a current issue with `issue-cards set-current -i <number>`')
+        .withDisplayMessage('No current issue set (Use `issue-cards set-current -i <number>` to set one)');
+    }
     
     // Extract tasks from the issue
-    const tasks = await extractTasks(currentIssue.content);
+    const tasks = await extractTasks(targetIssue.content);
     
     // Find the current (first uncompleted) task
     const currentTask = findCurrentTask(tasks);
@@ -81,16 +89,16 @@ async function completeTaskAction() {
     
     // Update the task status
     const updatedContent = await updateTaskStatus(
-      currentIssue.content, 
+      targetIssue.content, 
       currentTask.index, 
       true
     );
     
     // Save the updated issue
-    await saveIssue(currentIssue.number, updatedContent);
+    await saveIssue(targetIssue.number, updatedContent);
     
     // Try to stage changes in git
-    await stageChangesInGit(currentIssue.number);
+    await stageChangesInGit(targetIssue.number);
     
     // Show completion message
     output.success(`Task completed: ${currentTask.text}`);
@@ -101,12 +109,12 @@ async function completeTaskAction() {
     
     if (!nextTask) {
       // Close the issue by moving it to the closed directory
-      await closeIssue(currentIssue.number);
+      await closeIssue(targetIssue.number);
       
       // Try to stage the closed issue file in git too
       try {
         if (isGitAvailable() && await isGitRepository()) {
-          const closedIssuePath = path.join(getIssueDirectoryPath('closed'), `issue-${currentIssue.number}.md`);
+          const closedIssuePath = path.join(getIssueDirectoryPath('closed'), `issue-${targetIssue.number}.md`);
           await gitStage(closedIssuePath);
         }
       } catch (error) {
@@ -124,7 +132,7 @@ async function completeTaskAction() {
         if (fileExists) {
           const currentIssueNumber = await fs.promises.readFile(currentFilePath, 'utf8');
           // If this was the current issue, clear the .current file
-          if (currentIssueNumber.trim() === currentIssue.number) {
+          if (currentIssueNumber.trim() === targetIssue.number) {
             await fs.promises.unlink(currentFilePath);
           }
         }
@@ -133,13 +141,13 @@ async function completeTaskAction() {
         output.debug(`Failed to clear .current file: ${error.message}`);
       }
       
-      output.success(`🎉 All tasks complete! Issue #${currentIssue.number} has been closed.`);
+      output.success(`🎉 All tasks complete! Issue #${targetIssue.number} has been closed.`);
       output.blank();
       output.info('Would you like to work on another issue? Run:');
       output.info('  issue-cards list');
     } else {
       // Extract context from the issue
-      const issueContent = await getIssue(currentIssue.number);
+      const issueContent = await getIssue(targetIssue.number);
       const context = extractContext(issueContent);
       
       // Build output for next task

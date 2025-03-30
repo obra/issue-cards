@@ -217,7 +217,7 @@ describe('Issue Cards E2E Commands', () => {
     expect(output).toContain('Refactor Third Issue');
     
     // Test show command with issue number 2 - the bugfix template adds "Fix" prefix to the title
-    output = runCommand('show 2');
+    output = runCommand('show --issue 2');
     expect(output).toContain('Second Issue');
     expect(output).toContain('Second problem');
     
@@ -345,7 +345,7 @@ describe('Issue Cards E2E Commands', () => {
     expect(output).toContain('Task 1');
     
     // Set issue #0002 as current
-    output = runCommand('set-current 2');
+    output = runCommand('set-current --issue 2');
     expect(output).toContain('Issue #2 is now current');
     
     // Check that issue #0002 is now current
@@ -353,7 +353,7 @@ describe('Issue Cards E2E Commands', () => {
     expect(output).toContain('Task A');
     
     // Set issue #0003 as current
-    output = runCommand('set-current 3');
+    output = runCommand('set-current --issue 3');
     expect(output).toContain('Issue #3 is now current');
     
     // Check that issue #0003 is now current
@@ -362,7 +362,7 @@ describe('Issue Cards E2E Commands', () => {
     
     // Test with invalid issue number
     try {
-      runCommand('set-current 9999');
+      runCommand('set-current --issue 9999');
       fail('Expected command to fail with non-existent issue');
     } catch (error) {
       expect(error.stderr || error.stdout).toContain('not found');
@@ -370,7 +370,7 @@ describe('Issue Cards E2E Commands', () => {
     
     // Test with invalid format
     try {
-      runCommand('set-current abc');
+      runCommand('set-current --issue abc');
       fail('Expected command to fail with invalid issue number format');
     } catch (error) {
       expect(error.stderr || error.stdout).toContain('Invalid issue number');
