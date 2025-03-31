@@ -41,7 +41,7 @@ async function listAction(options) {
       console.log(JSON.stringify(issues));
     } else {
       // Display issues in standard format
-      output.section('Open Issues', issues.map(issue => `#${issue.number}: ${issue.title}`));
+      output.section('Open Issues', issues.map(issue => `#${issue.issueNumber}: ${issue.title}`));
       output.info(`Total: ${issues.length} open issue${issues.length !== 1 ? 's' : ''}`);
     }
   } catch (error) {

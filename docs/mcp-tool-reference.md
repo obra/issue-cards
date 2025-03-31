@@ -77,7 +77,7 @@ Lists all issues in the system, with optional filtering by state.
   "success": true,
   "data": [
     {
-      "number": "0001",
+      "issueNumber": "0001",
       "title": "First Issue",
       "state": "open",
       "tasks": [
@@ -86,7 +86,7 @@ Lists all issues in the system, with optional filtering by state.
       ]
     },
     {
-      "number": "0002",
+      "issueNumber": "0002",
       "title": "Second Issue",
       "state": "open",
       "tasks": []
@@ -118,7 +118,7 @@ Shows detailed information about a specific issue.
 {
   "success": true,
   "data": {
-    "number": "0001",
+    "issueNumber": "0001",
     "title": "First Issue",
     "state": "open",
     "content": "# Issue 0001: First Issue\n\n## Problem to be solved\n...",
@@ -241,7 +241,7 @@ Creates a new issue from a template.
 {
   "success": true,
   "data": {
-    "number": "0003",
+    "issueNumber": "0003",
     "title": "Add new authentication method",
     "template": "feature"
   }

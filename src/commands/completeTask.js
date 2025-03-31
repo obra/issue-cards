@@ -95,10 +95,10 @@ async function completeTaskAction(options = {}) {
     );
     
     // Save the updated issue
-    await saveIssue(targetIssue.number, updatedContent);
+    await saveIssue(targetIssue.issueNumber, updatedContent);
     
     // Try to stage changes in git
-    await stageChangesInGit(targetIssue.number);
+    await stageChangesInGit(targetIssue.issueNumber);
     
     // Show completion message
     output.success(`Task completed: ${currentTask.text}`);
@@ -109,12 +109,12 @@ async function completeTaskAction(options = {}) {
     
     if (!nextTask) {
       // Close the issue by moving it to the closed directory
-      await closeIssue(targetIssue.number);
+      await closeIssue(targetIssue.issueNumber);
       
       // Try to stage the closed issue file in git too
       try {
         if (isGitAvailable() && await isGitRepository()) {
-          const closedIssuePath = path.join(getIssueDirectoryPath('closed'), `issue-${targetIssue.number}.md`);
+          const closedIssuePath = path.join(getIssueDirectoryPath('closed'), `issue-${targetIssue.issueNumber}.md`);
           await gitStage(closedIssuePath);
         }
       } catch (error) {
@@ -132,7 +132,7 @@ async function completeTaskAction(options = {}) {
         if (fileExists) {
           const currentIssueNumber = await fs.promises.readFile(currentFilePath, 'utf8');
           // If this was the current issue, clear the .current file
-          if (currentIssueNumber.trim() === targetIssue.number) {
+          if (currentIssueNumber.trim() === targetIssue.issueNumber) {
             await fs.promises.unlink(currentFilePath);
           }
         }
@@ -141,13 +141,13 @@ async function completeTaskAction(options = {}) {
         output.debug(`Failed to clear .current file: ${error.message}`);
       }
       
-      output.success(`🎉 All tasks complete! Issue #${targetIssue.number} has been closed.`);
+      output.success(`🎉 All tasks complete! Issue #${targetIssue.issueNumber} has been closed.`);
       output.blank();
       output.info('Would you like to work on another issue? Run:');
       output.info('  issue-cards list');
     } else {
       // Extract context from the issue
-      const issueContent = await getIssue(targetIssue.number);
+      const issueContent = await getIssue(targetIssue.issueNumber);
       const context = extractContext(issueContent);
       
       // Build output for next task

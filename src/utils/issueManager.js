@@ -171,7 +171,7 @@ async function getIssues(state = 'open') {
             const title = extractIssueTitle(content, issueNumber);
             
             return {
-              number: issueNumber,
+              issueNumber: issueNumber,
               title,
               content,
               state: currentState
@@ -179,7 +179,7 @@ async function getIssues(state = 'open') {
           } catch (error) {
             // If we can't read the file, still return basic info with error
             return {
-              number: issueNumber,
+              issueNumber: issueNumber,
               title: `Error: ${error.message}`,
               content: '',
               state: currentState
@@ -192,7 +192,7 @@ async function getIssues(state = 'open') {
     }
     
     // Sort all issues by number
-    return allIssues.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+    return allIssues.sort((a, b) => parseInt(a.issueNumber) - parseInt(b.issueNumber));
   } catch (error) {
     throw new Error(`Failed to list issues: ${error.message}`);
   }
@@ -230,7 +230,7 @@ async function getCurrentIssue() {
       const trimmedNumber = currentIssueNumber.trim();
       const currentIssue = issues.find(issue => {
         // Try different formats for comparison (padded or unpadded)
-        const issueNum = issue.number;
+        const issueNum = issue.issueNumber;
         const unpadded = String(parseInt(trimmedNumber, 10));
         
         return issueNum === trimmedNumber || 
@@ -242,10 +242,10 @@ async function getCurrentIssue() {
       // If found, return it
       if (currentIssue) {
         return {
-          number: currentIssue.number,
+          issueNumber: currentIssue.issueNumber,
           title: currentIssue.title,
           content: currentIssue.content,
-          path: getIssueFilePath(currentIssue.number, 'open')
+          path: getIssueFilePath(currentIssue.issueNumber, 'open')
         };
       }
       // If not found or file is empty, fall back to default behavior
@@ -257,10 +257,10 @@ async function getCurrentIssue() {
     const firstIssue = issues[0];
     
     return {
-      number: firstIssue.number,
+      issueNumber: firstIssue.issueNumber,
       title: firstIssue.title,
       content: firstIssue.content,
-      path: getIssueFilePath(firstIssue.number, 'open')
+      path: getIssueFilePath(firstIssue.issueNumber, 'open')
     };
   } catch (error) {
     throw new Error(`Failed to get current issue: ${error.message}`);
@@ -433,7 +433,7 @@ async function getIssueByNumber(issueNumber) {
     const title = extractIssueTitle(content, paddedIssueNumber);
     
     return {
-      number: paddedIssueNumber,
+      issueNumber: paddedIssueNumber,
       title,
       content,
       state

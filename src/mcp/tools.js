@@ -102,7 +102,7 @@ const mcp__getCurrentTask = withValidation('mcp__getCurrentTask',
     
     // Format the response
     const response = {
-      issueNumber: currentIssue.number,
+      issueNumber: currentIssue.issueNumber,
       issueTitle: currentIssue.title,
       taskId: currentTask ? currentTask.id : null,
       description: currentTask ? currentTask.description : null
@@ -235,7 +235,7 @@ const mcp__createIssue = withValidation('mcp__createIssue',
     return {
       success: true,
       data: {
-        number: issueNumber,
+        issueNumber: issueNumber,
         title: args.title,
         template: args.template
       }
@@ -285,7 +285,7 @@ const mcp__completeTask = withValidation('mcp__completeTask',
     );
     
     // Save the updated issue
-    await saveIssue(currentIssue.number, updatedContent);
+    await saveIssue(currentIssue.issueNumber, updatedContent);
     
     // Check if all tasks are now completed
     const updatedTasks = await extractTasks(updatedContent);
@@ -294,12 +294,12 @@ const mcp__completeTask = withValidation('mcp__completeTask',
     // Prepare response data
     const responseData = {
       taskCompleted: currentTask.text,
-      issueNumber: currentIssue.number
+      issueNumber: currentIssue.issueNumber
     };
     
     if (!nextTask) {
       // All tasks are completed, close the issue
-      await closeIssue(currentIssue.number);
+      await closeIssue(currentIssue.issueNumber);
       responseData.nextTask = null;
       responseData.issueCompleted = true;
     } else {
@@ -310,7 +310,7 @@ const mcp__completeTask = withValidation('mcp__completeTask',
       };
       
       // Get the issue content to extract context
-      const issueContent = await getIssue(currentIssue.number);
+      const issueContent = await getIssue(currentIssue.issueNumber);
       
       // Extract context sections if they exist
       const extractContext = (content) => {
@@ -374,7 +374,7 @@ const mcp__addNote = withValidation('mcp__addNote',
           }
         };
       }
-      issueNumber = currentIssue.number;
+      issueNumber = currentIssue.issueNumber;
     }
     
     try {
@@ -449,7 +449,7 @@ const mcp__addQuestion = withValidation('mcp__addQuestion',
           }
         };
       }
-      issueNumber = currentIssue.number;
+      issueNumber = currentIssue.issueNumber;
     }
     
     try {
@@ -525,7 +525,7 @@ const mcp__logFailure = withValidation('mcp__logFailure',
           }
         };
       }
-      issueNumber = currentIssue.number;
+      issueNumber = currentIssue.issueNumber;
     }
     
     try {

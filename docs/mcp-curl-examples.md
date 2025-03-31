@@ -99,13 +99,13 @@ Response:
   "success": true,
   "data": [
     {
-      "number": "0001",
+      "issueNumber": "0001",
       "title": "Fix login redirect",
       "state": "open",
       "content": "# Issue 0001: Fix login redirect\n..."
     },
     {
-      "number": "0002",
+      "issueNumber": "0002",
       "title": "Add search functionality",
       "state": "open",
       "content": "# Issue 0002: Add search functionality\n..."
@@ -127,7 +127,7 @@ Response:
 {
   "success": true,
   "data": {
-    "number": "0001",
+    "issueNumber": "0001",
     "title": "Fix login redirect",
     "state": "open",
     "content": "# Issue 0001: Fix login redirect\n\n## Problem to be solved\nRedirect fails on mobile\n\n..."
@@ -204,7 +204,7 @@ Response:
 {
   "success": true,
   "data": {
-    "number": "0003",
+    "issueNumber": "0003",
     "title": "Add new authentication method",
     "template": "feature"
   }
