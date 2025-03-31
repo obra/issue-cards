@@ -97,14 +97,20 @@ describe('Context Extractor Advanced E2E', () => {
 
   // Test extraction of complex context for current task
   test('extracting context for current task', () => {
+    console.log("Starting extracting context for current task test");
+    
     // Create a complex issue
-    createComplexIssue();
+    const issueFile = createComplexIssue();
     
     // Check current task to see what context is extracted
     const currentOutput = runQuietly(`node ${binPath} current`, {
       cwd: testDir,
       env: { ...process.env }
     });
+    
+    // Log the actual output for debugging
+    console.log("TEST DEBUG - Current output:");
+    console.log(currentOutput.stdout);
     
     // Context should include problem description
     expect(currentOutput.stdout).toContain('Our application needs to extract and analyze');

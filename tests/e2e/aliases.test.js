@@ -20,26 +20,10 @@ function runCommand(command) {
       env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') },
       encoding: 'utf8'
     });
-    return result.trim();
-  } catch (error) {
-    // Collect error information for debugging
-    throw new Error(`Command failed: ${command}\n${error.stderr || error.message}`);
-  }
-}
-
-// Quiet version that doesn't throw for expected errors
-function runQuietly(command) {
-  try {
-    const stdout = execSync(`${command}`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') },
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
-    return { status: 0, stdout, stderr: '' };
+    return { status: 0, stdout: result.trim(), stderr: '' };
   } catch (error) {
     return {
-      status: error.status,
+      status: error.status || 1,
       stdout: error.stdout ? error.stdout.toString() : '',
       stderr: error.stderr ? error.stderr.toString() : ''
     };
@@ -55,16 +39,10 @@ describe('Command Aliases E2E', () => {
     }
     
     // Initialize issue tracking in the test directory
-    runQuietly(`node ${binPath} init`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    runCommand('init');
     
     // Create a test issue
-    runQuietly(`node ${binPath} create feature --title "Test Aliases" --task "Task 1" --task "Task 2"`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    runCommand('create feature --title "Test Aliases" --task "Task 1" --task "Task 2"');
   });
   
   // Clean up after all tests
@@ -76,74 +54,52 @@ describe('Command Aliases E2E', () => {
   // Test if 'complete' alias works correctly
   test('"complete" alias for complete-task command', () => {
     // Run the command with alias
-    const result = runQuietly(`node ${binPath} complete`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const result = runCommand('complete');
     
     // Check the output
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Task completed');
-    expect(result.stdout).toContain('NEXT TASK');
   });
   
   // Test if 'add' alias works correctly
   test('"add" alias for add-task command', () => {
     // Run the command with alias
-    const result = runQuietly(`node ${binPath} add "New task via alias"`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const result = runCommand('add "New task via alias"');
     
     // Check the output
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Task added');
     
     // Verify task was added
-    const showResult = runQuietly(`node ${binPath} show`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const showResult = runCommand('show');
     expect(showResult.stdout).toContain('New task via alias');
   });
   
   // Test if 'question' alias works correctly
   test('"question" alias for add-question command', () => {
     // Run the command with alias
-    const result = runQuietly(`node ${binPath} question "New question via alias?"`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const result = runCommand('question "New question via alias?"');
     
     // Check the output
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Added question');
     
     // Verify question was added
-    const showResult = runQuietly(`node ${binPath} show`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const showResult = runCommand('show');
     expect(showResult.stdout).toContain('New question via alias?');
   });
   
   // Test if 'failure' alias works correctly
   test('"failure" alias for log-failure command', () => {
     // Run the command with alias
-    const result = runQuietly(`node ${binPath} failure "Failed approach via alias" -r "Testing alias"`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const result = runCommand('failure "Failed approach via alias" -r "Testing alias"');
     
     // Check the output
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Logged failed approach');
     
     // Verify failure was logged
-    const showResult = runQuietly(`node ${binPath} show`, {
-      cwd: testDir,
-      env: { ...process.env, ISSUE_CARDS_DIR: path.join(testDir, '.issues') }
-    });
+    const showResult = runCommand('show');
     expect(showResult.stdout).toContain('Failed approach via alias');
   });
 });

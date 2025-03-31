@@ -21,7 +21,7 @@ function extractContext(content) {
   const context = {
     problem: '',
     approach: '',
-    failed: [],
+    failed: [], // This will be accessed as 'failed' in the task display
     questions: [],
     instructions: ''
   };
@@ -130,6 +130,8 @@ async function currentAction() {
     
     // Extract context from the issue
     const context = extractContext(currentIssue.content);
+    
+    // Debug logging removed
     
     // Use the shared task display utility
     displayTaskWithContext(currentTask, context, expandedSteps, { headerPrefix: 'CURRENT' });
