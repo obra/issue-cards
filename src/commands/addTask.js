@@ -255,11 +255,11 @@ async function addTaskAction(taskText, options) {
     }
     
     // Default to the first issue
-    let issueNumber = options.issue || issues[0].number;
+    let issueNumber = options.issue || issues[0].issueNumber;
     
     // Find the issue - pad to 4 digits for issue numbers like "0001"
     const paddedNumber = issueNumber.toString().padStart(4, '0');
-    const issue = issues.find(i => i.number === paddedNumber);
+    const issue = issues.find(i => i.issueNumber === paddedNumber);
     
     if (!issue) {
       throw new IssueNotFoundError(issueNumber)
@@ -267,7 +267,7 @@ async function addTaskAction(taskText, options) {
     }
     
     // Make sure issue.path exists or construct it
-    const issuePath = issue.path || getIssueFilePath(issue.number);
+    const issuePath = issue.path || getIssueFilePath(issue.issueNumber);
     
     // Read the issue content
     const issueContent = await readIssue(issuePath);
@@ -313,9 +313,9 @@ async function addTaskAction(taskText, options) {
     });
     
     if (tagsAtEnd && tagsAtEnd.length > 0) {
-      output.success(`Task added to issue ${issue.number} with expanded subtasks from tags: ${tagsAtEnd.map(t => t.name).join(', ')}`);
+      output.success(`Task added to issue ${issue.issueNumber} with expanded subtasks from tags: ${tagsAtEnd.map(t => t.name).join(', ')}`);
     } else {
-      output.success(`Task added to issue ${issue.number} at position: ${position}`);
+      output.success(`Task added to issue ${issue.issueNumber} at position: ${position}`);
     }
   } catch (error) {
     if (error instanceof UninitializedError || 
@@ -344,7 +344,7 @@ function createCommand() {
     .alias('add')
     .description('Add a new task to an issue')
     .argument('<task-text>', 'Text of the task to add (use quotes, include expansion tags with + at the end)')
-    .option('-i, --issue <id>', 'Issue ID to add task to (defaults to first open issue)')
+    .option('-i, --issue <issueNumber>', 'Issue number to add task to (defaults to first open issue)')
     .option('-b, --before', 'Add task before the current task')
     .option('-a, --after', 'Add task after the current task')
     .action(addTaskAction);

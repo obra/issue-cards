@@ -69,7 +69,7 @@ async function showAction(options = {}) {
 function createCommand() {
   return new Command('show')
     .description('Show issue details')
-    .option('-i, --issue <number>', 'Issue number to show (if omitted, shows the current issue)')
+    .option('-i, --issue <issueNumber>', 'Issue number to show (if omitted, shows the current issue)')
     .action(showAction);
 }
 

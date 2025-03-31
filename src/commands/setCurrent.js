@@ -84,7 +84,7 @@ async function setCurrentAction(options) {
 function createCommand() {
   return new Command('set-current')
     .description('Set current issue for operations')
-    .requiredOption('-i, --issue <number>', 'Issue number to set as current (required)')
+    .requiredOption('-i, --issue <issueNumber>', 'Issue number to set as current (required)')
     .action(setCurrentAction);
 }
 

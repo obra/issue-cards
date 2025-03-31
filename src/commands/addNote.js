@@ -19,7 +19,7 @@ const { UserError, SystemError, SectionNotFoundError } = require('../utils/error
  * 
  * @param {string} noteText - The note text to add
  * @param {Object} options - Command options
- * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
+ * @param {string|null} options.issue - Issue number (optional, uses current if not provided)
  * @param {string} options.section - Section to add note to
  * @returns {Promise<void>}
  */
@@ -35,7 +35,7 @@ async function addNoteAction(noteText, options = {}) {
           .withRecoveryHint('Specify an issue number or set a current issue')
           .withDisplayMessage('No current issue found (Specify an issue number or set a current issue)');
       }
-      issueNumber = currentIssue.number;
+      issueNumber = currentIssue.issueNumber;
     }
     
     // Get the issue file path
@@ -95,7 +95,7 @@ function createCommand() {
   return new Command('add-note')
     .description('Add a plain text note to a specific section of an issue')
     .argument('<note>', 'The note text to add')
-    .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
+    .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
     .option('-s, --section <name>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
     .action(addNoteAction);
 }

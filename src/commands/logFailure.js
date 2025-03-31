@@ -20,7 +20,7 @@ const { UserError, SectionNotFoundError, SystemError } = require('../utils/error
  * 
  * @param {string} approachText - Description of the failed approach
  * @param {Object} options - Command options
- * @param {number|null} options.issue - Issue number (optional, uses current if not provided)
+ * @param {string|null} options.issue - Issue number (optional, uses current if not provided)
  * @param {string} options.reason - Reason for failure
  * @returns {Promise<void>}
  */
@@ -36,7 +36,7 @@ async function logFailureAction(approachText, options = {}) {
           .withRecoveryHint('Specify an issue number or set a current issue')
           .withDisplayMessage('No current issue found (Specify an issue number or set a current issue)');
       }
-      issueNumber = currentIssue.number;
+      issueNumber = currentIssue.issueNumber;
     }
     
     // Get the issue file path
@@ -89,7 +89,7 @@ function createCommand() {
     .alias('failure')
     .description('Log a failed approach to an issue')
     .argument('<approach>', 'Description of the failed approach')
-    .option('-i, --issue <number>', 'Issue number (uses current issue if not specified)')
+    .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
     .option('-r, --reason <text>', 'Reason for the failure', 'Not specified')
     .action(logFailureAction);
 }
