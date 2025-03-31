@@ -130,7 +130,7 @@ describe('MCP Additional Tools', () => {
       expect(result).toEqual({
         success: true,
         data: expect.objectContaining({
-          number: mockIssueNumber,
+          issueNumber: mockIssueNumber,
           title: 'Test Issue'
         })
       });
@@ -182,7 +182,7 @@ describe('MCP Additional Tools', () => {
     it('should complete the current task when called', async () => {
       // Mock getCurrentIssue and getCurrentTask
       const mockIssue = {
-        number: '0001',
+        issueNumber: '0001',
         title: 'Test Issue',
         content: '# Issue 0001: Test Issue\n\n## Tasks\n- [ ] Task 1\n- [ ] Task 2'
       };
@@ -217,7 +217,7 @@ describe('MCP Additional Tools', () => {
       });
       
       expect(require('../../src/utils/issueManager').saveIssue).toHaveBeenCalledWith(
-        mockIssue.number,
+        mockIssue.issueNumber,
         expect.any(String)
       );
     });
@@ -225,7 +225,7 @@ describe('MCP Additional Tools', () => {
     it('should handle case when all tasks are completed', async () => {
       // Mock getCurrentIssue and getCurrentTask
       const mockIssue = {
-        number: '0001',
+        issueNumber: '0001',
         title: 'Test Issue',
         content: '# Issue 0001: Test Issue\n\n## Tasks\n- [ ] Task 1'
       };
@@ -261,13 +261,13 @@ describe('MCP Additional Tools', () => {
         })
       });
       
-      expect(require('../../src/utils/issueManager').closeIssue).toHaveBeenCalledWith(mockIssue.number);
+      expect(require('../../src/utils/issueManager').closeIssue).toHaveBeenCalledWith(mockIssue.issueNumber);
     });
     
     it('should handle errors when no current task exists', async () => {
       // Mock getCurrentIssue and getCurrentTask to show no current task
       const mockIssue = {
-        number: '0001',
+        issueNumber: '0001',
         title: 'Test Issue',
         content: '# Issue 0001: Test Issue\n\n## Tasks\n- [x] Task 1'
       };
@@ -316,7 +316,7 @@ describe('MCP Additional Tools', () => {
       expect(result).toEqual({
         success: true,
         data: {
-          issueNumber: '0001',
+          issueNumber: mockIssue.issueNumber,
           section: 'problem',
           noteAdded: true
         }
@@ -411,7 +411,7 @@ describe('MCP Additional Tools', () => {
       expect(result).toEqual({
         success: true,
         data: {
-          issueNumber: '0001',
+          issueNumber: mockIssue.issueNumber,
           questionAdded: true
         }
       });
@@ -483,7 +483,7 @@ describe('MCP Additional Tools', () => {
       expect(result).toEqual({
         success: true,
         data: {
-          issueNumber: '0001',
+          issueNumber: mockIssue.issueNumber,
           approachLogged: true
         }
       });

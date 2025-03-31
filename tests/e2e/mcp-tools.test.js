@@ -14,12 +14,12 @@ const {
 // Mock the issueManager functions
 jest.mock('../../src/utils/issueManager', () => ({
   getIssues: jest.fn().mockResolvedValue([
-    { number: '0001', title: 'Test Issue', state: 'open', tasks: [] }
+    { issueNumber: '0001', title: 'Test Issue', state: 'open', tasks: [] }
   ]),
   getIssueByNumber: jest.fn().mockImplementation(async (number) => {
     if (number === '0001') {
       return { 
-        number: '0001', 
+        issueNumber: '0001', 
         title: 'Test Issue', 
         state: 'open', 
         tasks: [
@@ -31,7 +31,7 @@ jest.mock('../../src/utils/issueManager', () => ({
     throw new Error(`Issue not found: ${number}`);
   }),
   isValidIssueNumber: jest.fn().mockReturnValue(true),
-  getCurrentIssue: jest.fn().mockResolvedValue({ number: '0001', title: 'Current Issue' }),
+  getCurrentIssue: jest.fn().mockResolvedValue({ issueNumber: '0001', title: 'Current Issue' }),
   getCurrentTask: jest.fn().mockResolvedValue({ 
     id: 'task-1', 
     description: '{{TASK}}', 
@@ -149,7 +149,7 @@ describe('MCP Tools E2E', () => {
         success: true,
         data: expect.arrayContaining([
           expect.objectContaining({
-            number: '0001',
+            issueNumber: '0001',
             title: expect.stringContaining('Test Issue')
           })
         ])
@@ -190,7 +190,7 @@ describe('MCP Tools E2E', () => {
       expect(result).toEqual({
         success: true,
         data: expect.objectContaining({
-          number: '0001',
+          issueNumber: '0001',
           title: expect.stringContaining('Test Issue'),
           tasks: expect.arrayContaining([
             expect.objectContaining({

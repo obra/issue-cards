@@ -155,11 +155,11 @@ describe('MCP Comprehensive E2E', () => {
     expect(response.data.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          number: '0001',
+          issueNumber: '0001',
           title: 'Test Issue 1'
         }),
         expect.objectContaining({
-          number: '0002',
+          issueNumber: '0002',
           title: 'Test Issue 2'
         })
       ])
@@ -178,7 +178,7 @@ describe('MCP Comprehensive E2E', () => {
     expect(response.data.success).toBe(true);
     expect(response.data.data).toEqual(
       expect.objectContaining({
-        number: '0001',
+        issueNumber: '0001',
         title: 'Test Issue 1',
         content: expect.stringContaining('Test problem 1')
       })
@@ -200,6 +200,7 @@ describe('MCP Comprehensive E2E', () => {
         issueNumber: '0002',
         issueTitle: 'Test Issue 2',
         description: 'Task 2.1',
+        taskId: expect.any(String),
         context: expect.objectContaining({
           problem: 'Test problem 2',
           approach: 'Test approach 2',
@@ -263,7 +264,7 @@ describe('MCP Comprehensive E2E', () => {
     );
     
     // Verify the file was actually created
-    const newIssueNumber = response.data.data.number;
+    const newIssueNumber = response.data.data.issueNumber;
     const issueContent = fs.readFileSync(
       path.join(testDir, '.issues', 'open', `issue-${newIssueNumber}.md`),
       'utf8'

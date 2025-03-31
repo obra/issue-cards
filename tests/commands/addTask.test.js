@@ -403,7 +403,7 @@ describe('add-task command', () => {
     test('adds task to issue successfully', async () => {
       // Mock list issues and getIssueFilePath
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
+        { issueNumber: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
       issueManager.getIssueFilePath.mockReturnValue('/path/to/issue1.md');
       
@@ -422,8 +422,8 @@ describe('add-task command', () => {
     
     test('adds task to specific issue when provided', async () => {
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' },
-        { number: '0002', title: 'Issue 2', path: '/path/to/issue2.md' }
+        { issueNumber: '0001', title: 'Issue 1', path: '/path/to/issue1.md' },
+        { issueNumber: '0002', title: 'Issue 2', path: '/path/to/issue2.md' }
       ]);
       issueManager.getIssueFilePath.mockReturnValue('/path/to/issue2.md');
       
@@ -440,7 +440,7 @@ describe('add-task command', () => {
     test('handles invalid +tags', async () => {
       // Mock list issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
+        { issueNumber: '0001', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
       issueManager.getIssueFilePath.mockReturnValue('/path/to/issue1.md');
       
@@ -476,7 +476,7 @@ describe('add-task command', () => {
     
     test('handles invalid issue ID', async () => {
       issueManager.listIssues.mockResolvedValue([
-        { number: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
+        { issueNumber: '1', title: 'Issue 1', path: '/path/to/issue1.md' }
       ]);
 
       await expect(addTaskAction('New task', { issue: '999' }))

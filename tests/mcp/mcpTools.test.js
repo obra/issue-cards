@@ -66,8 +66,8 @@ describe('MCP Tools', () => {
     it('should return a list of issue objects when called', async () => {
       // Mock the issueManager.getIssues to return sample issues
       const mockIssues = [
-        { number: '0001', title: 'First issue', state: 'open' },
-        { number: '0002', title: 'Second issue', state: 'closed' }
+        { issueNumber: '0001', title: 'First issue', state: 'open' },
+        { issueNumber: '0002', title: 'Second issue', state: 'closed' }
       ];
       require('../../src/utils/issueManager').getIssues.mockResolvedValue(mockIssues);
       
@@ -76,15 +76,15 @@ describe('MCP Tools', () => {
       expect(result).toEqual({
         success: true,
         data: expect.arrayContaining([
-          expect.objectContaining({ number: '0001' }),
-          expect.objectContaining({ number: '0002' })
+          expect.objectContaining({ issueNumber: '0001' }),
+          expect.objectContaining({ issueNumber: '0002' })
         ])
       });
     });
     
     it('should filter issues by state when specified', async () => {
       // Mock the issueManager.getIssues to return filtered issues
-      const mockOpenIssues = [{ number: '0001', title: 'First issue', state: 'open' }];
+      const mockOpenIssues = [{ issueNumber: '0001', title: 'First issue', state: 'open' }];
       require('../../src/utils/issueManager').getIssues.mockResolvedValue(mockOpenIssues);
       
       // Call the function with state=open and verify the result
@@ -92,7 +92,7 @@ describe('MCP Tools', () => {
       expect(result).toEqual({
         success: true,
         data: expect.arrayContaining([
-          expect.objectContaining({ number: '0001', state: 'open' })
+          expect.objectContaining({ issueNumber: '0001', state: 'open' })
         ])
       });
       
@@ -123,7 +123,7 @@ describe('MCP Tools', () => {
     it('should return issue details when called with a valid issue number', async () => {
       // Mock the issueManager.getIssueByNumber to return a sample issue
       const mockIssue = {
-        number: '0001',
+        issueNumber: '0001',
         title: 'Test Issue',
         description: 'This is a test issue',
         state: 'open',
@@ -139,7 +139,7 @@ describe('MCP Tools', () => {
       expect(result).toEqual({
         success: true,
         data: expect.objectContaining({
-          number: '0001',
+          issueNumber: '0001',
           title: 'Test Issue',
           tasks: expect.arrayContaining([
             expect.objectContaining({ id: 1 }),
@@ -176,7 +176,7 @@ describe('MCP Tools', () => {
     it('should return the current task when there is an active issue with current task', async () => {
       // Mock the getCurrentIssue and getCurrentTask to return sample data
       const mockCurrentIssue = {
-        number: '0001',
+        issueNumber: '0001',
         title: 'Current Issue'
       };
       const mockCurrentTask = {
@@ -223,7 +223,7 @@ describe('MCP Tools', () => {
     it('should handle the case when there is a current issue but no current task', async () => {
       // Mock getCurrentIssue to return an issue but getCurrentTask to return null
       require('../../src/utils/issueManager').getCurrentIssue.mockResolvedValue({
-        number: '0001',
+        issueNumber: '0001',
         title: 'Current Issue'
       });
       require('../../src/utils/issueManager').getCurrentTask.mockResolvedValue(null);

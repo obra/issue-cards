@@ -101,8 +101,8 @@ describe('MCP Tools All E2E Tests', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ number: '0001', title: 'Test Issue' }),
-          expect.objectContaining({ number: '0002', title: 'Second Issue' })
+          expect.objectContaining({ issueNumber: '0001', title: 'Test Issue' }),
+          expect.objectContaining({ issueNumber: '0002', title: 'Second Issue' })
         ])
       );
     });
@@ -122,7 +122,7 @@ describe('MCP Tools All E2E Tests', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(
         expect.objectContaining({
-          number: '0001',
+          issueNumber: '0001',
           title: 'Test Issue',
           content: expect.stringContaining('This is a test problem')
         })
@@ -231,7 +231,7 @@ describe('MCP Tools All E2E Tests', () => {
       );
       
       // Verify the file was created
-      const issueNumber = result.data.number;
+      const issueNumber = result.data.issueNumber;
       const filePath = path.join(testDir, '.issues', 'open', `issue-${issueNumber}.md`);
       
       expect(fs.existsSync(filePath)).toBe(true);

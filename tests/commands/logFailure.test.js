@@ -23,7 +23,7 @@ jest.mock('../../src/utils/directory', () => ({
 
 jest.mock('../../src/utils/issueManager', () => ({
   getIssueFilePath: jest.fn().mockReturnValue('/test/issues/open/issue-1.md'),
-  getCurrentIssue: jest.fn().mockResolvedValue({ number: 2 }),
+  getCurrentIssue: jest.fn().mockResolvedValue({ issueNumber: 2 }),
 }));
 
 // Import getCurrentIssue after mocking

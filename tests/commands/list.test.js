@@ -60,10 +60,10 @@ describe('List command', () => {
       // Mock directory.isInitialized to return true
       directory.isInitialized.mockResolvedValue(true);
       
-      // Mock issueManager.listIssues to return issue list
+      // Mock issueManager.listIssues to return issue list with standardized issueNumber field
       const mockIssues = [
-        { number: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
-        { number: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
+        { issueNumber: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
+        { issueNumber: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
       ];
       issueManager.listIssues.mockResolvedValue(mockIssues);
       
@@ -143,10 +143,10 @@ describe('List command', () => {
         // Mock directory.isInitialized to return true
         directory.isInitialized.mockResolvedValue(true);
         
-        // Mock issueManager.listIssues to return issue list
+        // Mock issueManager.listIssues to return issue list with standardized issueNumber field
         const mockIssues = [
-          { number: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
-          { number: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
+          { issueNumber: '0001', title: 'First Issue', content: '# Issue 0001: First Issue' },
+          { issueNumber: '0002', title: 'Second Issue', content: '# Issue 0002: Second Issue' }
         ];
         issueManager.listIssues.mockResolvedValue(mockIssues);
         

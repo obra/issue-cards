@@ -97,12 +97,12 @@ describe('Complete Task command', () => {
       
       // Mock issueManager.listIssues to return issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
       // Mock getCurrentIssue to return the current issue
       issueManager.getCurrentIssue.mockResolvedValue(
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       );
       
       // Mock taskParser.extractTasks to return tasks
@@ -158,12 +158,12 @@ describe('Complete Task command', () => {
       
       // Mock issueManager.listIssues to return issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
       // Mock getCurrentIssue to return the current issue
       issueManager.getCurrentIssue.mockResolvedValue(
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       );
       
       // Mock taskParser.extractTasks to return tasks with last task not completed
@@ -235,12 +235,12 @@ describe('Complete Task command', () => {
       
       // Mock issueManager.listIssues to return issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
       // Mock getCurrentIssue to return the current issue
       issueManager.getCurrentIssue.mockResolvedValue(
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       );
       
       // Mock taskParser.extractTasks to return tasks
@@ -271,12 +271,12 @@ describe('Complete Task command', () => {
       
       // Mock issueManager.listIssues to return issues
       issueManager.listIssues.mockResolvedValue([
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       ]);
       
       // Mock getCurrentIssue to return the current issue
       issueManager.getCurrentIssue.mockResolvedValue(
-        { number: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
+        { issueNumber: '0001', title: 'Test Issue', content: '# Issue 0001: Test Issue' }
       );
       
       // Mock taskParser.extractTasks to return tasks
