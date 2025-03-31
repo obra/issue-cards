@@ -227,18 +227,18 @@ function createCommand() {
   const command = new Command('create')
     .description('Create a new issue from template')
     .argument('<template>', `Template to use (${templateList})`)
-    .option('--title <title>', 'Issue title (required)')
-    .option('--problem <description>', 'Description of the problem to solve')
-    .option('--approach <strategy>', 'Planned approach for solving the issue')
-    .option('--failed-approaches <list>', 'List of approaches already tried (one per line)')
-    .option('--questions <list>', 'List of questions that need answers (one per line)')
-    .option('--task <task>', 'A task to add to the issue (can be used multiple times)', (value, previous) => {
+    .option('--title <issueTitle>', 'Issue title (required)')
+    .option('--problem <problemDesc>', 'Description of the problem to solve')
+    .option('--approach <approachDesc>', 'Planned approach for solving the issue')
+    .option('--failed-approaches <approachesList>', 'List of approaches already tried (one per line)')
+    .option('--questions <questionsList>', 'List of questions that need answers (one per line)')
+    .option('--task <taskDesc>', 'A task to add to the issue (can be used multiple times)', (value, previous) => {
       const result = previous || [];
       result.push(value);
       return result;
     })
-    .option('--instructions <guidelines>', 'Guidelines to follow during implementation')
-    .option('--next-steps <list>', 'Future work (for context only)')
+    .option('--instructions <instructionsText>', 'Guidelines to follow during implementation')
+    .option('--next-steps <nextStepsList>', 'Future work (for context only)')
     .action(createAction);
 
   // Override the missingArgument behavior to show help instead of error

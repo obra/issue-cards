@@ -16,8 +16,8 @@ const { UninitializedError, TemplateNotFoundError, UserError, IssueCardsError, S
 function createCommand() {
   const command = new Command('templates')
     .description('List or view available templates')
-    .option('-t, --type <type>', 'Template type (issue or tag)')
-    .option('-n, --name <name>', 'Template name to display')
+    .option('-t, --type <templateType>', 'Template type (issue or tag)')
+    .option('-n, --name <templateName>', 'Template name to display')
     .option('-v, --validate', 'Validate template structure')
     .action(templatesAction);
   
@@ -28,8 +28,8 @@ function createCommand() {
  * Templates command action
  * 
  * @param {Object} options - Command options
- * @param {string} [options.type] - Template type
- * @param {string} [options.name] - Template name
+ * @param {string} [options.type] - Template type (issue or tag)
+ * @param {string} [options.name] - Template name to display
  * @param {boolean} [options.validate] - Validate template structure
  * @returns {Promise<void>}
  */

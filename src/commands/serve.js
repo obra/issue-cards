@@ -11,8 +11,8 @@ const { UserError, UninitializedError } = require('../utils/errors');
  * Execute the serve command action
  * 
  * @param {Object} options - Command options
- * @param {number} options.port - Port to use
- * @param {string} options.host - Host to bind to
+ * @param {number} options.port - Port number to use
+ * @param {string} options.host - Hostname to bind to
  * @param {string} options.token - Authentication token for API access
  * @returns {Promise<Object>} The server instance
  */
@@ -78,9 +78,9 @@ function createCommand() {
   
   command
     .description('Start the MCP server for AI integration')
-    .option('-p, --port <number>', 'Port to use', 3000)
-    .option('-h, --host <string>', 'Host to bind to', 'localhost')
-    .option('-t, --token <string>', 'Authentication token for API access')
+    .option('-p, --port <port>', 'Port to use', 3000)
+    .option('-h, --host <hostname>', 'Host to bind to', 'localhost')
+    .option('-t, --token <authToken>', 'Authentication token for API access')
     .action(async (options) => {
       try {
         await serveAction(options);

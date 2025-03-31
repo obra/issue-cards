@@ -96,7 +96,7 @@ function createCommand() {
     .description('Add a plain text note to a specific section of an issue')
     .argument('<note>', 'The note text to add')
     .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
-    .option('-s, --section <name>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
+    .option('-s, --section <sectionName>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
     .action(addNoteAction);
 }
 
