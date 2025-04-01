@@ -21,5 +21,3 @@
 ## Instructions
 {{INSTRUCTIONS}}
 
-## Next steps
-{{NEXT_STEPS}}

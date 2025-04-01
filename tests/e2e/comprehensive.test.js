@@ -103,8 +103,7 @@ describe('Issue Cards Comprehensive E2E', () => {
       '--task "Task 1" ' +
       '--task "Task 2" ' +
       '--task "Task 3" ' +
-      '--instructions "Test instructions" ' +
-      '--next-steps "Future step 1\nFuture step 2"');
+      '--instructions "Test instructions"');
     
     expect(output).toContain('Created Issue #0001');
     
@@ -121,7 +120,6 @@ describe('Issue Cards Comprehensive E2E', () => {
     expect(output).toContain('- Question 1?');
     expect(output).toContain('- [ ] Task 1');
     expect(output).toContain('Test instructions');
-    expect(output).toContain('- Future step 1');
     
     // 6. Create a bugfix issue
     output = runCommand('create bugfix --title "Bug Test" --problem "This is a bug"');

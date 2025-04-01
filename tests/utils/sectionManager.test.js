@@ -98,7 +98,6 @@ Plan for the future.
       expect(normalizeSectionName('questions_to_resolve')).toBe('Questions to resolve');
       expect(normalizeSectionName('tasks')).toBe('Tasks');
       expect(normalizeSectionName('instructions')).toBe('Instructions');
-      expect(normalizeSectionName('next-steps')).toBe('Next steps');
     });
     
     test('should return original string if no match found', () => {

@@ -99,12 +99,7 @@ function normalizeSectionName(sectionName) {
     
     'tasks': 'Tasks',
     
-    'instructions': 'Instructions',
-    
-    'next': 'Next steps',
-    'nextsteps': 'Next steps',
-    'next-steps': 'Next steps',
-    'next_steps': 'Next steps'
+    'instructions': 'Instructions'
   };
   
   // Convert to lowercase and remove spaces for matching

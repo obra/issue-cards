@@ -258,8 +258,7 @@ describe('Create command', () => {
         task: ['Task 1', 'Task 2', 'Task 3'],
         failedApproaches: 'Failed approach 1\nFailed approach 2',
         questions: 'Question 1?\nQuestion 2?',
-        instructions: 'Step 1\nStep 2',
-        nextSteps: 'Next step 1\nNext step 2',
+        instructions: 'Step 1\nStep 2'
       };
       
       await createAction(templateName, options);
@@ -285,7 +284,6 @@ describe('Create command', () => {
       expect(templateData.TASKS).toContain('- [ ] Task 2');
       expect(templateData.FAILED_APPROACHES).toContain('- Failed approach 1');
       expect(templateData.QUESTIONS).toContain('- Question 1?');
-      expect(templateData.NEXT_STEPS).toContain('- Next step 1');
       
       // Verify issue was saved
       expect(issueManager.saveIssue).toHaveBeenCalledWith(

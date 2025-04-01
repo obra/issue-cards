@@ -109,8 +109,7 @@ describe('Issue Cards E2E Commands', () => {
       '--task "Task 1" ' +
       '--task "Task 2" ' +
       '--task "Task 3" ' +
-      '--instructions "Follow these instructions" ' +
-      '--next-steps "Future enhancements"');
+      '--instructions "Follow these instructions"');
     
     expect(output).toContain('Created Issue #0001: Complete Create Test');
     
@@ -133,8 +132,6 @@ describe('Issue Cards E2E Commands', () => {
     expect(content).toContain('- [ ] Task 3');
     expect(content).toContain('## Instructions');
     expect(content).toContain('Follow these instructions');
-    expect(content).toContain('## Next steps');
-    expect(content).toContain('- Future enhancements');
   });
 
   // Test add-task command with various options

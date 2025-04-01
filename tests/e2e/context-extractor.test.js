@@ -42,8 +42,7 @@ describe('Context Extractor E2E', () => {
       '--task "Task related to extraction #unit-test" ' +
       '--task "Task about parsing" ' +
       '--task "Task for relevance testing" ' +
-      '--instructions "Follow these instructions for testing" ' +
-      '--next-steps "Improve context extraction\\nAdd more tests"');
+      '--instructions "Follow these instructions for testing"');
     
     // Add a note with structured content to test complex parsing
     runCommand('add-note "### Failed attempt\nTried using regex for context extraction\n\n**Reason:** Too complex and error-prone" --section "Failed approaches"');
@@ -248,8 +247,7 @@ describe('Context Extractor E2E', () => {
       '--task "First important task" ' +
       '--task "Second related task" ' +
       '--task "Third follow-up task" ' +
-      '--instructions "Follow these detailed instructions" ' +
-      '--next-steps "Future work item 1\\nFuture work item 2"');
+      '--instructions "Follow these detailed instructions"');
     
     // Add a note to problem section
     runCommand('add-note "Additional problem details and context" --section "Problem to be solved"');

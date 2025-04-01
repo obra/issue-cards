@@ -166,8 +166,7 @@ async function createAction(templateName, options) {
       FAILED_APPROACHES: formatAsList(options.failedApproaches),
       QUESTIONS: formatAsList(options.questions),
       TASKS: await formatAsTasks(options.task),
-      INSTRUCTIONS: options.instructions || '',
-      NEXT_STEPS: formatAsList(options.nextSteps)
+      INSTRUCTIONS: options.instructions || ''
     };
     
     // Render template
@@ -238,7 +237,6 @@ function createCommand() {
       return result;
     })
     .option('--instructions <instructionsText>', 'Guidelines to follow during implementation')
-    .option('--next-steps <nextStepsList>', 'Future work (for context only)')
     .action(createAction);
 
   // Override the missingArgument behavior to show help instead of error
