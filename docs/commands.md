@@ -476,7 +476,7 @@ The MCP server exposes the following API endpoints:
 - `GET /api/tools/:name` - Get details for a specific tool
 - `POST /api/tools/execute` - Execute an MCP tool
 
-For detailed documentation on using the MCP server with AI models, see [AI Integration](ai-integration.md).
+For detailed documentation on using the MCP server with AI models, see [AI Integration Guide](guides/ai-integration.md) and [AI Integration Reference](reference/ai-integration.md).
 
 ## Global Options
 

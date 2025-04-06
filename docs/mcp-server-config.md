@@ -114,7 +114,7 @@ The MCP server exposes the following endpoints:
 | `/api/tools/:name` | GET | Get details for a specific tool |
 | `/api/tools/execute` | POST | Execute an MCP tool |
 
-For details on using these endpoints, see the [MCP Curl Examples](mcp-curl-examples.md) documentation.
+For details on using these endpoints, see the [MCP Curl Examples](reference/mcp-curl-examples.md) documentation.
 
 ## Security Considerations
 
@@ -210,7 +210,8 @@ issue-cards serve --cors
 
 ## Resources
 
-- [MCP Curl Examples](mcp-curl-examples.md) - Examples of using the API with curl
-- [AI Integration](ai-integration.md) - General guide for AI integration
+- [MCP Curl Examples](reference/mcp-curl-examples.md) - Examples of using the API with curl
+- [AI Integration Guide](guides/ai-integration.md) - General guide for AI integration
+- [AI Integration Reference](reference/ai-integration.md) - Complete reference documentation
 - [Claude Prompt Examples](claude-prompt-examples.md) - Example prompts for Claude
-- [MCP Tool Reference](mcp-tool-reference.md) - Detailed reference for all MCP tools
+- [MCP Tool Reference](reference/mcp-tool-reference.md) - Detailed reference for all MCP tools

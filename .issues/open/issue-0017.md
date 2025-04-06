@@ -13,9 +13,9 @@ Update the README to focus on high-level overview and link to the new documentat
 
 
 ## Tasks
-- [ ] Revise README to remove duplicated command details
-- [ ] Add information about the new help system in README
-- [ ] Update links in README to point to new documentation structure
+- [x] Revise README to remove duplicated command details
+- [x] Add information about the new help system in README
+- [x] Update links in README to point to new documentation structure
 - [ ] Ensure consistent cross-references between documentation files
 - [ ] Add &#x27;related topics&#x27; sections to documentation files
 

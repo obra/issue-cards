@@ -32,7 +32,7 @@ For security, you can add an API token:
 issue-cards serve -t your-api-token
 ```
 
-For detailed server configuration options, see the [MCP Server Configuration](mcp-server-config.md) documentation.
+For detailed server configuration options, see the [MCP Server Configuration](reference/mcp-server-config.md) documentation.
 
 ## API Endpoints
 
@@ -131,7 +131,7 @@ To integrate with AI assistants, you can use the API to:
 3. Track progress through a workflow
 4. Maintain a record of approaches tried
 
-For detailed command-line examples using curl, see the [MCP Curl Examples](mcp-curl-examples.md) documentation.
+For detailed command-line examples using curl, see the [MCP Curl Examples](reference/mcp-curl-examples.md) documentation.
 
 For example prompts to use with Claude, see the [Claude Prompt Examples](claude-prompt-examples.md) documentation.
 
