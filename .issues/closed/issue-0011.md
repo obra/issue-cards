@@ -27,12 +27,12 @@ The goal is to make each command have a single, clear responsibility:
 ## Tasks
 
 
-- [ ] Update add-note command to remove format options and focus on sections
-- [ ] Update tests for add-note to reflect simplified behavior
-- [ ] Update documentation to reflect the simplified note-adding functionality
-- [ ] Ensure specialized commands like log-failure remain functional
-- [ ] Update MCP tools to align with the simplified approach
-- [ ] Run full test suite to ensure changes don't break existing functionality
+- [x] Update add-note command to remove format options and focus on sections
+- [x] Update tests for add-note to reflect simplified behavior
+- [x] Update documentation to reflect the simplified note-adding functionality
+- [x] Ensure specialized commands like log-failure remain functional
+- [x] Update MCP tools to align with the simplified approach
+- [x] Run full test suite to ensure changes don't break existing functionality
 ## Instructions
 Follow the project's naming and terminology guide for consistency. Ensure all commands maintain their short option forms for key parameters. Keep error messages helpful and consistent with existing patterns. Add clear examples in both code comments and documentation. This is pre-release software, so backward compatibility is not required.
 
