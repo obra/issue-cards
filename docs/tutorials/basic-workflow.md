@@ -91,6 +91,6 @@ issue-cards add-note "We should consider using Redis for session storage"
 
 ## Related Topics
 
-- [Task Tags](../reference/task-tags.md)
-- [Command Reference](../commands.md)
+- [Task Tags](../reference/tag-expansion.md)
+- [Task Management](task-management.md)
 - [Git Integration](../guides/git-integration.md)

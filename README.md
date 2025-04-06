@@ -113,7 +113,7 @@ issue-cards init
 ISSUE_CARDS_MCP_PORT=8080 ISSUE_CARDS_MCP_TOKEN=secure-token issue-cards serve
 ```
 
-For a complete reference of all environment variables and advanced configuration options, see the [Environment Variables Documentation](docs/environment-variables.md).
+For a complete reference of all environment variables and advanced configuration options, see the [Environment Variables Documentation](docs/reference/environment-vars.md).
 
 ### Output Options
 
@@ -137,7 +137,7 @@ issue-cards list --json
 issue-cards complete-task --quiet
 ```
 
-For more details on output formats, see [Output Format Documentation](docs/output-format.md).
+For more details on output formats, see [Output Format Documentation](docs/reference/output-formats.md).
 
 ## AI Integration
 
@@ -172,11 +172,11 @@ This enables AI assistants to:
 - Provide detailed context for implementation
 
 For detailed documentation, see:
-- [AI Integration Guide](docs/ai-integration.md)
-- [MCP Tool Reference](docs/mcp-tool-reference.md)
-- [MCP Server Configuration](docs/mcp-server-config.md)
-- [Example Curl Commands](docs/mcp-curl-examples.md)
-- [Example Claude Prompts](docs/claude-prompt-examples.md)
+- [AI Integration Guide](docs/guides/ai-integration.md)
+- [MCP Tool Reference](docs/reference/mcp-tool-reference.md)
+- [MCP Server Configuration](docs/reference/mcp-server-config.md)
+- [Example Curl Commands](docs/reference/mcp-curl-examples.md)
+- [Claude Prompt Examples](docs/claude-prompt-examples.md)
 
 ## Issue Example
 
@@ -302,12 +302,11 @@ issue-cards question "What should be the token expiration time?"
 
 For detailed documentation and more examples, see:
 
-- [Detailed Command Reference](docs/commands.md)
-- [Issue and Tag Templates](docs/templates.md)
-- [Example Workflows](docs/workflows.md)
-- [Integration with AI Tools](docs/ai-integration.md)
-- [Output Format](docs/output-format.md)
-- [Design Decisions](docs/design-decisions/)
+- [Getting Started](docs/getting-started.md)
+- [Tutorials](docs/tutorials/index.md)
+- [Guides](docs/guides/index.md)
+- [Reference Documentation](docs/reference/index.md)
+- [Design Decisions](docs/design/index.md)
 
 ## Contributing
 
