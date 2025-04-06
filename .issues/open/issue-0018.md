@@ -13,9 +13,9 @@ Create a set of focused guides that walk users through specific workflows and us
 
 
 ## Tasks
-- [ ] Create guides/git-integration.md explaining git integration features
-- [ ] Create guides/templates-customization.md for custom templates
-- [ ] Create guides/ai-integration.md for setting up AI integration
+- [x] Create guides/git-integration.md explaining git integration features
+- [x] Create guides/templates-customization.md for custom templates
+- [x] Create guides/ai-integration.md for setting up AI integration
 - [ ] Create guides/task-management.md for effective task workflow
 - [ ] Create guides/custom-installation.md for advanced installation options
 
