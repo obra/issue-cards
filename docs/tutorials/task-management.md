@@ -130,6 +130,8 @@ These task management skills will help you track and complete work more efficien
 
 ## Related Topics
 
-- [Tag Expansion Reference](../reference/tag-expansion.md)
-- [Templates Customization](../guides/templates-customization.md)
-- [Basic Workflow](basic-workflow.md)
+- [Tag Expansion Reference](../reference/tag-expansion.md) - How tag expansion works
+- [Templates Customization Guide](../guides/templates-customization.md) - Create custom templates
+- [Basic Workflow Tutorial](basic-workflow.md) - Essential workflows
+- [Advanced Features Tutorial](advanced-features.md) - Learn advanced capabilities
+- [Common Workflows Guide](../guides/common-workflows.md) - Example-driven guide

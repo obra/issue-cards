@@ -21,5 +21,7 @@ issue-cards help tutorials/basic-workflow
 
 ## Related Topics
 
-- [Getting Started Guide](../getting-started.md)
+- [Getting Started Guide](../getting-started.md) - Quick introduction to issue-cards
 - [Guides](../guides/index.md) - How-to guides for specific tasks
+- [Reference Documentation](../reference/index.md) - Technical reference
+- [Common Workflows Guide](../guides/common-workflows.md) - Example-driven workflows

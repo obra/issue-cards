@@ -121,6 +121,8 @@ These advanced features allow you to tailor issue-cards to your specific workflo
 
 ## Related Topics
 
-- [Templates Customization Guide](../guides/templates-customization.md)
-- [AI Integration Guide](../guides/ai-integration.md)
-- [Task Management Tutorial](task-management.md)
+- [Templates Customization Guide](../guides/templates-customization.md) - Create custom templates
+- [AI Integration Guide](../guides/ai-integration.md) - Working with AI tools
+- [Task Management Tutorial](task-management.md) - Deep dive into tasks
+- [Basic Workflow Tutorial](basic-workflow.md) - Essential workflows
+- [Common Workflows Guide](../guides/common-workflows.md) - Example-driven guide

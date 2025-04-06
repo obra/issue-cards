@@ -102,6 +102,8 @@ These basic workflows form the foundation of working with issue-cards and will h
 
 ## Related Topics
 
-- [Task Tags](../reference/tag-expansion.md)
-- [Task Management](task-management.md)
-- [Git Integration](../guides/git-integration.md)
+- [Task Management Tutorial](task-management.md) - Deep dive into task management
+- [Advanced Features Tutorial](advanced-features.md) - Learn advanced capabilities
+- [Project Planning Tutorial](project-planning.md) - Convert plans to tracked issues
+- [Tag Expansion Reference](../reference/tag-expansion.md) - How tags work
+- [Git Integration Guide](../guides/git-integration.md) - Using issue-cards with Git
