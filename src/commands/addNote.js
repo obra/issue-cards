@@ -92,12 +92,54 @@ async function addNoteAction(noteText, options = {}) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('add-note')
+  const command = new Command('add-note')
     .description('Add a plain text note to a specific section of an issue')
     .argument('<note>', 'The note text to add')
     .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
     .option('-s, --section <sectionName>', 'Section to add note to (problem, approach, failed-approaches, etc.)', 'problem')
     .action(addNoteAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Adds a plain text note to a specific section of an issue. Unlike other commands
+  that add content to specialized sections, this command can add text to any section
+  of an issue. By default, notes are added to the "Problem to be solved" section.
+
+Examples:
+  # Add a note to the default section (Problem to be solved)
+  $ issue-cards add-note "The bug only occurs in Chrome browsers"
+  
+  # Add a note to a specific section
+  $ issue-cards add-note "We should use bcrypt for password hashing" -s approach
+  
+  # Add a note to the instructions section
+  $ issue-cards add-note "Ensure backward compatibility with API v1" --section instructions
+  
+  # Add a note to a specific issue's approach section
+  $ issue-cards add-note "Use Redis for caching" -i 3 -s approach
+
+Available Sections:
+  - problem (default)      - "Problem to be solved" section
+  - approach               - "Planned approach" section
+  - instructions           - "Instructions" section
+  - failed-approaches      - "Failed approaches" section (consider using log-failure instead)
+  - questions              - "Questions to resolve" section (consider using add-question instead)
+  - next-steps             - "Next steps" section
+
+Special Purpose Commands:
+  For adding to specialized sections, these dedicated commands are recommended:
+  - For failed approaches: use 'issue-cards log-failure'
+  - For questions: use 'issue-cards add-question'
+  - For tasks: use 'issue-cards add-task'
+
+Related Commands:
+  $ issue-cards log-failure  # Document approaches that didn't work
+  $ issue-cards add-question # Add questions to resolve
+  $ issue-cards current      # View current task with context
+  `);
+    
+  return command;
 }
 
 module.exports = {

@@ -180,10 +180,46 @@ async function completeTaskAction(options = {}) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('complete-task')
+  const command = new Command('complete-task')
     .alias('complete')
     .description('Mark current task as complete and show next task')
     .action(completeTaskAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Marks the current task (first uncompleted task) in the current issue as complete
+  and then displays the next task with context. If all tasks are completed, the
+  issue is automatically moved to the closed/ directory.
+
+Examples:
+  # Mark the current task as complete
+  $ issue-cards complete-task
+  
+  # Using the shorter alias
+  $ issue-cards complete
+
+Workflow:
+  1. The command identifies the current task in the current issue
+  2. It updates the task's status from [ ] to [x] in the issue file
+  3. If git is available, changes are automatically staged
+  4. The next task is shown with context (similar to 'issue-cards current')
+  5. If all tasks are completed, the issue is automatically closed
+
+Automatic issue closure:
+  When all tasks in an issue are completed, the command:
+  - Moves the issue file from open/ to closed/
+  - Stages the changes in git (if available)
+  - Clears the .current file if this was the current issue
+  - Displays a success message with instructions for next steps
+
+Related commands:
+  $ issue-cards current      # Show the current task without completing it
+  $ issue-cards add-task     # Add a new task to the issue
+  $ issue-cards list         # List all open issues
+  `);
+    
+  return command;
 }
 
 module.exports = {

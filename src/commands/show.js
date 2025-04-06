@@ -67,10 +67,47 @@ async function showAction(options = {}) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('show')
+  const command = new Command('show')
     .description('Show issue details')
     .option('-i, --issue <issueNumber>', 'Issue number to show (if omitted, shows the current issue)')
     .action(showAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Displays the full content of an issue including all sections (problem, approach, 
+  tasks, failed approaches, questions, etc). By default, it shows the current issue
+  if no issue number is specified.
+
+Examples:
+  # Show the current issue
+  $ issue-cards show
+  
+  # Show a specific issue by number
+  $ issue-cards show -i 1
+  $ issue-cards show --issue 0001
+  
+Issue format:
+  Issues are formatted as Markdown files with sections including:
+  - Title and issue number
+  - Problem description
+  - Planned approach
+  - Tasks (with checkbox status)
+  - Failed approaches
+  - Questions to resolve
+  - Implementation instructions
+
+Usage notes:
+  - Issue numbers can be specified with or without leading zeros
+  - When no issue is specified, the first open issue is shown
+  - Use 'issue-cards current' to focus on just the current task with context
+
+Related commands:
+  $ issue-cards list         # List all open issues
+  $ issue-cards current      # Show only the current task with context
+  `);
+    
+  return command;
 }
 
 module.exports = {

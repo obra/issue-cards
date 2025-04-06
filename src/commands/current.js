@@ -163,9 +163,45 @@ async function currentAction() {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('current')
+  const command = new Command('current')
     .description('Show current task with context')
     .action(currentAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Displays the current task (first uncompleted task) from the current issue with
+  relevant context. This command focuses on the specific task at hand rather than
+  showing the entire issue content.
+
+Examples:
+  $ issue-cards current
+
+Output sections:
+  The command output includes:
+  - CURRENT TASK: The first uncompleted task in the current issue
+  - CONTEXT: Relevant sections from the issue (problem, approach, etc.)
+  - EXPANDED STEPS: If the task has tags like +unit-test, shows expanded steps
+  - UPCOMING TASKS: Preview of tasks that will come after the current task
+
+Task expansion:
+  Tasks with tags (e.g., "Implement login form +unit-test") are automatically
+  expanded into multiple steps. For example, a +unit-test tag might expand to:
+  1. Write failing unit tests for the feature
+  2. Run tests to verify they fail as expected
+  3. Implement the feature
+  4. Run tests to verify they now pass
+
+Related commands:
+  $ issue-cards complete     # Mark the current task as complete
+  $ issue-cards show         # Show the full issue details
+  $ issue-cards add-task     # Add a new task to the issue
+  
+For more information about task tags:
+  $ issue-cards help task-tags
+  `);
+    
+  return command;
 }
 
 module.exports = {

@@ -81,6 +81,7 @@ function createCommand() {
     .option('-p, --port <port>', 'Port to use', 3000)
     .option('-h, --host <hostname>', 'Host to bind to', 'localhost')
     .option('-t, --token <authToken>', 'Authentication token for API access')
+    .option('--no-auth', 'Disable authentication (not recommended for production)')
     .action(async (options) => {
       try {
         await serveAction(options);
@@ -89,6 +90,66 @@ function createCommand() {
         process.exit(1);
       }
     });
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Starts the Model-Code-Prompt (MCP) server for AI integration with Issue Cards.
+  The MCP server provides a REST API that allows AI assistants like Claude or
+  GPT to interact with issues and tasks. The server runs until interrupted.
+
+Examples:
+  # Start the server with default settings (localhost:3000)
+  $ issue-cards serve
+  
+  # Start the server on a custom port
+  $ issue-cards serve --port 8080
+  
+  # Start the server and bind to all interfaces
+  $ issue-cards serve --host 0.0.0.0
+  
+  # Start the server with authentication
+  $ issue-cards serve --token your-secret-token
+  
+  # Run with environment variables
+  $ ISSUE_CARDS_MCP_PORT=8080 ISSUE_CARDS_MCP_TOKEN=secret issue-cards serve
+
+API Endpoints:
+  GET  /api/health       - Health check endpoint
+  GET  /api/status       - Server status and available tools
+  GET  /api/tools        - List available MCP tools
+  GET  /api/tools/:name  - Get details for a specific tool
+  POST /api/tools/execute - Execute an MCP tool
+
+Authentication:
+  Authentication is recommended for production use. When authentication is enabled,
+  all API requests must include an 'Authorization' header with the token:
+  
+  Authorization: Bearer your-secret-token
+  
+  For development and testing, you can disable authentication with --no-auth.
+
+MCP Tools:
+  The MCP server exposes various tools that AI assistants can use:
+  - list        - List open issues
+  - show        - Show issue details
+  - current     - Show current task
+  - create      - Create a new issue
+  - addTask     - Add a task to an issue
+  - completeTask - Mark current task as complete
+  - addQuestion - Add a question to an issue
+  - logFailure  - Log a failed approach
+  - addNote     - Add a note to an issue section
+
+Environment Variables:
+  ISSUE_CARDS_MCP_PORT  - Port for the MCP server
+  ISSUE_CARDS_MCP_HOST  - Host to bind the server to
+  ISSUE_CARDS_MCP_TOKEN - Authentication token
+  ISSUE_CARDS_MCP_CORS  - Enable CORS for cross-origin requests
+
+For more information:
+  $ issue-cards help ai-integration  # Learn more about AI integration
+  `);
   
   return command;
 }

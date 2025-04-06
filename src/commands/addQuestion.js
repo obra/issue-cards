@@ -91,12 +91,52 @@ async function addQuestionAction(questionText, options = {}) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('add-question')
+  const command = new Command('add-question')
     .alias('question')
     .description('Add a question to the Questions to resolve section')
     .argument('<question>', 'The question to add')
     .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
     .action(addQuestionAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Adds a question to the "Questions to resolve" section of an issue. Questions represent
+  uncertainties or decisions that need to be made during the implementation of the issue.
+  The command will automatically add a question mark if one is not provided.
+
+Examples:
+  # Add a question to the current issue
+  $ issue-cards add-question "What authentication method should we use"
+  
+  # Add a question to a specific issue
+  $ issue-cards add-question "Should we use a database or file storage" -i 2
+  
+  # Using the shorter alias
+  $ issue-cards question "What is the expected timeout period"
+  
+  # Question marks are automatically added if missing
+  $ issue-cards question "What API version should we target"  # Becomes "What API version should we target?"
+
+Output Format:
+  Questions are added to the "Questions to resolve" section as a list item:
+  - What authentication method should we use?
+
+Purpose:
+  Questions highlight areas of uncertainty that need clarification before or during
+  implementation. They serve as discussion points for team members and can help
+  identify potential blockers or decision points that need attention.
+  
+  When viewed with 'issue-cards current', questions provide important context to
+  help guide implementation decisions or indicate what information may be missing.
+
+Related Commands:
+  $ issue-cards log-failure  # Document approaches that didn't work
+  $ issue-cards add-note     # Add a general note to any section
+  $ issue-cards current      # View current task with context including questions
+  `);
+    
+  return command;
 }
 
 module.exports = {

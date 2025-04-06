@@ -62,10 +62,38 @@ async function listAction(options) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('list')
+  const command = new Command('list')
     .description('List all open issues')
     .option('--json', 'Output in JSON format')
     .action(listAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Lists all open issues with their numbers and titles. When using this command 
+  without options, it displays a formatted list of all issues in the open/ directory.
+
+Examples:
+  # List all open issues in default format
+  $ issue-cards list
+  
+  # List issues in JSON format for scripting
+  $ issue-cards list --json
+
+Output format:
+  Standard output includes issue number, title, and task status:
+    #0001: Add user authentication (current)
+      Current task: Create User model
+    
+    #0002: Fix login redirect bug
+      Current task: Add error handling
+
+Related commands:
+  $ issue-cards show         # Show details of the current issue
+  $ issue-cards set-current  # Set an issue as the current issue
+  `);
+    
+  return command;
 }
 
 module.exports = {

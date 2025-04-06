@@ -340,7 +340,7 @@ async function addTaskAction(taskText, options) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('add-task')
+  const command = new Command('add-task')
     .alias('add')
     .description('Add a new task to an issue')
     .argument('<task-text>', 'Text of the task to add (use quotes, include expansion tags with + at the end)')
@@ -348,6 +348,58 @@ function createCommand() {
     .option('-b, --before', 'Add task before the current task')
     .option('-a, --after', 'Add task after the current task')
     .action(addTaskAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Adds a new task to an issue's Tasks section. By default, the task is added at
+  the end of the task list, but can be positioned before or after the current task.
+  
+  Tasks can include expansion tags (prefixed with +) that will automatically expand
+  the task into multiple subtasks based on predefined templates.
+
+Examples:
+  # Add a simple task to the current issue
+  $ issue-cards add-task "Implement user authentication"
+  
+  # Add a task to a specific issue
+  $ issue-cards add-task "Fix login redirect bug" -i 2
+  
+  # Add a task before the current task
+  $ issue-cards add-task "Set up database connection" --before
+  
+  # Add a task after the current task
+  $ issue-cards add-task "Add error handling" --after
+  
+  # Add a task with expansion tags
+  $ issue-cards add-task "Create User model +unit-test"
+  $ issue-cards add-task "Implement login page +unit-test +update-docs"
+  
+  # Using the shorter alias
+  $ issue-cards add "Deploy to production +lint-and-commit"
+
+Task Expansion:
+  When a task includes a +tag at the end, the task will be expanded into multiple
+  subtasks based on the tag's template. For example, "+unit-test" might expand to:
+  - Write failing unit tests
+  - Run tests to verify they fail
+  - Implement the feature
+  - Run tests to verify they pass
+  - Ensure test coverage is adequate
+  
+  Task tags must be at the end of the task text to be properly expanded.
+
+Available Tags:
+  The built-in tags include unit-test, e2e-test, update-docs, and lint-and-commit.
+  Run 'issue-cards help task-tags' for more information about available tags.
+
+Related Commands:
+  $ issue-cards current      # Show the current task
+  $ issue-cards complete     # Mark the current task as complete
+  $ issue-cards templates    # List available templates including tags
+  `);
+    
+  return command;
 }
 
 module.exports = {

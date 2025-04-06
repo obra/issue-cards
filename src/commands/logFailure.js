@@ -85,13 +85,53 @@ async function logFailureAction(approachText, options = {}) {
  * @returns {Command} The configured command
  */
 function createCommand() {
-  return new Command('log-failure')
+  const command = new Command('log-failure')
     .alias('failure')
     .description('Log a failed approach to an issue')
     .argument('<approach>', 'Description of the failed approach')
     .option('-i, --issue <issueNumber>', 'Issue number (uses current issue if not specified)')
     .option('-r, --reason <text>', 'Reason for the failure', 'Not specified')
     .action(logFailureAction);
+    
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Documents approaches that were tried but didn't work by adding them to the 
+  "Failed approaches" section of an issue. This helps prevent repeating the 
+  same mistakes and provides valuable context for both humans and AI assistants.
+
+Examples:
+  # Log a failed approach to the current issue
+  $ issue-cards log-failure "Tried using localStorage for token storage"
+  
+  # Log a failed approach with a specific reason
+  $ issue-cards log-failure "Used JWT without expiration" --reason "Security vulnerability"
+  
+  # Log a failed approach to a specific issue
+  $ issue-cards log-failure "Tried Redux for state management" -i 3 -r "Too complex for our needs"
+  
+  # Using the shorter alias
+  $ issue-cards failure "Attempted CSS Grid layout" -r "Compatibility issues with older browsers"
+
+Output Format:
+  The failed approach is added to the "Failed approaches" section of the issue as a list item:
+  - Tried using localStorage for token storage (Reason: Security vulnerability)
+
+  When viewed with 'issue-cards current', failed approaches provide important context
+  to help guide implementation decisions.
+
+Purpose:
+  Documenting failed approaches prevents team members from pursuing already-attempted
+  solutions, provides insight into the problem's constraints, and creates a historical
+  record of decision-making for the issue.
+
+Related Commands:
+  $ issue-cards add-question  # Add a question related to the issue
+  $ issue-cards add-note      # Add a general note to any section
+  $ issue-cards current       # View the current task with context including failed approaches
+  `);
+    
+  return command;
 }
 
 module.exports = {

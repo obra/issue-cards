@@ -250,10 +250,43 @@ function createCommand() {
 
   // Add a longer help description with examples
   command.addHelpText('after', `
+Description:
+  Creates a new issue from a template with customizable sections. Issues are 
+  stored as Markdown files in the issues directory and can contain various
+  sections including problem description, planned approach, and tasks.
+
 Examples:
-  $ issue-cards create feature --title "New login system"
-  $ issue-cards create bugfix --title "Fix login redirect" --problem "Redirect fails on mobile"
-  $ issue-cards create refactor --title "Refactor authentication" --task "Extract auth logic" --task "Add tests"
+  # Simple creation with just a title
+  $ issue-cards create feature --title "Add user authentication"
+  
+  # Create with problem and approach
+  $ issue-cards create bugfix --title "Fix login redirect" \\
+    --problem "After login, users are not redirected to the original page." \\
+    --approach "Store URL before redirect and return after authentication."
+  
+  # Create with multiple tasks
+  $ issue-cards create feature --title "Implement search functionality" \\
+    --task "Create search API endpoint" \\
+    --task "Implement frontend search interface" \\
+    --task "Add search result caching"
+  
+  # Create a comprehensive issue with all sections
+  $ issue-cards create refactor --title "Refactor authentication system" \\
+    --problem "Current auth system is hard to maintain and has security issues." \\
+    --approach "Migrate to a standard OAuth2 implementation." \\
+    --task "Extract auth logic into separate service" \\
+    --task "Implement OAuth2 authentication flow" \\
+    --task "Update API endpoints to use new auth system" \\
+    --failed-approaches "Tried patching the current JWT implementation but still had security holes." \\
+    --questions "Which OAuth2 provider should we use?" \\
+    --instructions "Ensure backward compatibility with existing tokens during transition."
+
+Section formatting:
+  --task           Each --task flag adds a new task to the Tasks section
+  --failed-approaches, --questions  Multi-line text separated by newlines will be formatted as a list
+
+For more details on templates and issue structure:
+  $ issue-cards help templates
   `);
   
   // Optionally add a more detailed list of templates to the help
@@ -281,6 +314,7 @@ ${templateListFormatted}
     command.addHelpText('after', `
 Available templates:
   Run 'issue-cards templates' to see all available templates
+  Run 'issue-cards help templates' for more information about template structure
     `);
   }
 

@@ -21,6 +21,53 @@ function createCommand() {
     .option('-v, --validate', 'Validate template structure')
     .action(templatesAction);
   
+  // Add rich help text
+  command.addHelpText('after', `
+Description:
+  Lists available templates or displays the content of a specific template.
+  Issue Cards uses templates for creating issues and for expanding tasks with tags.
+
+Examples:
+  # List all available templates
+  $ issue-cards templates
+  
+  # List templates of a specific type
+  $ issue-cards templates --type issue
+  $ issue-cards templates --type tag
+  
+  # View a specific template
+  $ issue-cards templates --type issue --name feature
+  $ issue-cards templates -t tag -n unit-test
+  
+  # Validate templates to ensure they have correct structure
+  $ issue-cards templates --validate
+  $ issue-cards templates -t issue -n feature -v
+
+Template Types:
+  - issue: Templates for creating new issues (feature, bugfix, refactor, audit)
+  - tag: Templates for expanding tasks with standardized steps (unit-test, e2e-test)
+
+Template Usage:
+  Issue templates are used with the 'create' command:
+    $ issue-cards create feature --title "New feature"
+  
+  Tag templates are used within task names with a + prefix:
+    $ issue-cards add-task "Implement login form +unit-test"
+
+Template Structure:
+  Issue templates contain placeholders like {{TITLE}} that are replaced when
+  creating a new issue. Tag templates contain steps that are inserted when
+  expanding a task.
+  
+  For detailed information on template structure and customization:
+  $ issue-cards help templates
+
+Related Commands:
+  $ issue-cards create    # Create a new issue from a template
+  $ issue-cards add-task  # Add a task with optional tag expansion
+  $ issue-cards help templates  # View detailed documentation on templates
+  `);
+  
   return command;
 }
 
