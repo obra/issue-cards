@@ -7,6 +7,7 @@ This section contains guided, step-by-step learning materials to help you master
 - [Basic Workflow](basic-workflow.md) - Get started with the core issue-cards workflow
 - [Advanced Features](advanced-features.md) - Learn about advanced features and techniques
 - [Task Management](task-management.md) - Deep dive into task management capabilities
+- [Project Planning](project-planning.md) - Convert your plans to tracked issues
 
 ## How to Use Tutorials
 
