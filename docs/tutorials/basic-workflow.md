@@ -1,10 +1,10 @@
 # Basic Workflow Tutorial
 
-This tutorial covers the essential workflow for using Issue Cards.
+This tutorial covers the essential workflow for using issue-cards. It will guide you through creating issues, managing tasks, and adding context as you work.
 
 ## Creating Issues
 
-Issues are the main units of work in Issue Cards. Each issue contains:
+Issues are the main units of work in issue-cards. Each issue contains:
 - A title and description
 - A set of tasks to complete
 - Additional context like approaches and instructions
@@ -88,6 +88,17 @@ issue-cards log-failure "Tried using localStorage but had security issues"
 # Add a general note
 issue-cards add-note "We should consider using Redis for session storage"
 ```
+
+## Summary
+
+In this tutorial, you've learned:
+
+- How to create issues with templates
+- How to view and list issues
+- How to work with tasks (viewing, completing, adding)
+- How to add context through questions, notes, and failed approaches
+
+These basic workflows form the foundation of working with issue-cards and will help you track your work efficiently.
 
 ## Related Topics
 

@@ -1,6 +1,6 @@
 # Advanced Features Tutorial
 
-This tutorial covers advanced features and workflows in issue-cards.
+This tutorial covers advanced features and workflows in issue-cards. You'll learn about templates management, custom templates, advanced task management, environment variables, and MCP server capabilities.
 
 ## Templates Management
 
@@ -105,6 +105,19 @@ issue-cards serve --port 4000
 ```
 
 This enables integrations with AI assistants and other tools.
+
+## Summary
+
+In this tutorial, you've learned about several advanced features of issue-cards:
+
+- How to manage and customize templates
+- How to leverage Git integration
+- How to create and use custom templates
+- How to perform advanced task management operations
+- How to customize behavior with environment variables
+- How to use the MCP server for AI integration
+
+These advanced features allow you to tailor issue-cards to your specific workflow needs.
 
 ## Related Topics
 

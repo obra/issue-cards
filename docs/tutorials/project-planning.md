@@ -113,6 +113,18 @@ echo $ISSUE_CARDS_DIR
 ls -la $ISSUE_CARDS_DIR
 ```
 
+## Summary
+
+In this tutorial, you've learned how to use issue-cards for project planning:
+
+- Understanding your directory configuration
+- Creating issues from plan items
+- Organizing related issues for larger projects
+- Tracking progress through your implementation plan
+- Troubleshooting common configuration issues
+
+These techniques will help you convert planning documents into actionable, tracked issues.
+
 ## Related Topics
 
 - [Basic Workflow Tutorial](basic-workflow.md)

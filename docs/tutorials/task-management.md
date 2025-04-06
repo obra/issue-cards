@@ -1,6 +1,6 @@
 # Task Management Tutorial
 
-This tutorial covers all aspects of task management in issue-cards.
+This tutorial covers all aspects of task management in issue-cards. You'll learn how to add, organize, and complete tasks efficiently, as well as how to use the tag system to expand tasks with standardized steps.
 
 ## Understanding Tasks
 
@@ -114,6 +114,19 @@ This context is shown when viewing the current task, providing valuable informat
 3. **Log context as you go** - Document questions and failed approaches immediately
 4. **Complete tasks in order** - Follow the sequence to maintain consistency
 5. **Commit changes regularly** - If using Git, commit task completions and context additions
+
+## Summary
+
+In this tutorial, you've learned how to effectively manage tasks in issue-cards:
+
+- Understanding the structure and order of tasks
+- Adding tasks in different ways and positions
+- Working with the current task system
+- Using task tags to expand tasks with standardized steps
+- Adding relevant context to tasks
+- Following best practices for task management
+
+These task management skills will help you track and complete work more efficiently.
 
 ## Related Topics
 
