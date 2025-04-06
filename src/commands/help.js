@@ -246,7 +246,8 @@ function showEnvironmentVariablesHelp() {
   // Link to detailed documentation
   outputManager.subheader('Detailed Documentation');
   outputManager.info('For complete details on all environment variables, see:');
-  outputManager.info('https://github.com/issue-cards/issue-cards/blob/main/docs/environment-variables.md');
+  outputManager.info('https://github.com/issue-cards/issue-cards/blob/main/docs/reference/environment-vars.md');
+  outputManager.info('Or run: issue-cards help reference/environment-vars');
 }
 
 /**
