@@ -7,6 +7,7 @@ This section contains practical how-to guides for working with issue-cards.
 - [Git Integration](git-integration.md) - How to use issue-cards with Git
 - [Templates Customization](templates-customization.md) - Creating and customizing issue templates
 - [AI Integration](ai-integration.md) - Working with AI tools and issue-cards
+- [Common Workflows](common-workflows.md) - Example-driven guide for common use cases
 
 ## Purpose of Guides
 

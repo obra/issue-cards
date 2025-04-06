@@ -15,7 +15,7 @@ Migrate and reorganize tutorial content into the new documentation structure wit
 ## Tasks
 - [x] Create tutorials/basic-workflow.md from tutorial.md content
 - [x] Create tutorials/advanced-features.md from tutorial.md content
-- [ ] Migrate tutorial/issue-cards-tutorial.md to new structure
+- [x] Migrate tutorial/issue-cards-tutorial.md to new structure
 - [ ] Create example-driven guides for common workflows
 - [ ] Ensure all tutorials use consistent formatting and style
 - [ ] Update cross-references between tutorial sections
