@@ -5,6 +5,7 @@ This section documents important design decisions and implementation plans for i
 ## Design Documentation
 
 - [Command Update Plan](command-update-plan.md) - Plan for updating command structure
+- [Documentation Plan](documentation-plan.md) - Plan for centralizing and restructuring documentation
 - [Output Implementation Plan](output-implementation-plan.md) - Implementation strategy for output system
 - [MCP Output Capture](mcp-output-capture.md) - Design for capturing MCP output
 - [Parameter Standardization](parameter-standardization-summary.md) - Summary of parameter standardization

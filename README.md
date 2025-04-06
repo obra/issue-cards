@@ -106,6 +106,7 @@ issue-cards complete-task --quiet
 For complete configuration references:
 - [Environment Variables Reference](docs/reference/environment-vars.md)
 - [Output Format Reference](docs/reference/output-formats.md)
+- [Commands Reference](docs/reference/commands.md)
 
 ## AI Integration
 
@@ -211,7 +212,7 @@ issue-cards create --help
 
 ### Documentation Categories
 
-- [Getting Started Guide](docs/getting-started.md) - Quick introduction for new users
+- [Getting Started Guide](docs/guides/getting-started.md) - Quick introduction for new users
 - [Tutorials](docs/tutorials/index.md) - Step-by-step learning materials
   - [Basic Workflow](docs/tutorials/basic-workflow.md) - Essential workflows
   - [Task Management](docs/tutorials/task-management.md) - Working with tasks

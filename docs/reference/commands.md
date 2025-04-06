@@ -1,7 +1,5 @@
 # Issue Cards Command Reference
 
-> **⚠️ NOTE:** This document may be reorganized in the future as part of the ongoing documentation restructuring. Command help is also available via the `--help` flag on each command.
-
 This document provides detailed information on all available commands in the Issue Cards CLI tool.
 
 ## Table of Contents

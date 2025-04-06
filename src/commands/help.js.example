@@ -1,0 +1,184 @@
+// ABOUTME: Enhanced help command implementation
+// ABOUTME: Auto-discovers and displays markdown documentation
+
+const { Command } = require('commander');
+const fs = require('fs');
+const path = require('path');
+const outputManager = require('../utils/outputManager');
+
+/**
+ * Discover all documentation files
+ * @returns {Object} Categories and documents
+ */
+function discoverDocFiles() {
+  const docsDir = path.join(__dirname, '../../docs');
+  const categories = {};
+  
+  // Find all markdown files in docs directory (recursively)
+  const findMarkdownFiles = (dir, prefix = '') => {
+    if (!fs.existsSync(dir)) return;
+    
+    const files = fs.readdirSync(dir);
+    
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        // Add category
+        const categoryName = file;
+        findMarkdownFiles(fullPath, `${prefix}${categoryName}/`);
+      } else if (file.endsWith('.md')) {
+        // Add document
+        const name = path.basename(file, '.md');
+        const category = prefix ? prefix.split('/')[0] : 'general';
+        
+        if (!categories[category]) {
+          categories[category] = [];
+        }
+        
+        // Extract title from markdown
+        const content = fs.readFileSync(fullPath, 'utf8');
+        const titleMatch = content.match(/^#\s+(.*)$/m);
+        const title = titleMatch ? titleMatch[1] : name;
+        
+        categories[category].push({
+          name,
+          path: prefix + name,
+          title,
+          fullPath
+        });
+      }
+    }
+  };
+  
+  findMarkdownFiles(docsDir);
+  return categories;
+}
+
+/**
+ * Format markdown for terminal display
+ * @param {string} markdown - Markdown content
+ * @returns {string} Formatted text
+ */
+function formatMarkdownForTerminal(markdown) {
+  let formatted = markdown;
+  
+  // Replace headings
+  formatted = formatted.replace(/^# (.*)/gm, (_, title) => 
+    outputManager.styles.header(title));
+  formatted = formatted.replace(/^## (.*)/gm, (_, title) => 
+    outputManager.styles.subheader(title));
+  formatted = formatted.replace(/^### (.*)/gm, (_, title) => 
+    outputManager.styles.bold(title));
+  
+  // Handle code blocks
+  formatted = formatted.replace(/```([^`]+)```/gms, (_, code) => 
+    outputManager.styles.code(code));
+  
+  // Handle inline code
+  formatted = formatted.replace(/`([^`]+)`/g, (_, code) => 
+    outputManager.styles.inline(code));
+  
+  // Handle lists
+  formatted = formatted.replace(/^- (.*)/gm, (_, item) => 
+    `  • ${item}`);
+  
+  return formatted;
+}
+
+/**
+ * List all available documentation topics
+ */
+function listTopics() {
+  const categories = discoverDocFiles();
+  
+  outputManager.header('Available Documentation');
+  
+  // Show command help info first
+  outputManager.subheader('Commands');
+  outputManager.info('For command documentation, use:');
+  outputManager.code('issue-cards <command> --help');
+  outputManager.empty();
+  
+  // Then show all other documentation
+  for (const [category, docs] of Object.entries(categories)) {
+    outputManager.subheader(category.charAt(0).toUpperCase() + category.slice(1));
+    
+    for (const doc of docs) {
+      outputManager.keyValue(doc.path, doc.title);
+    }
+    
+    outputManager.empty();
+  }
+  
+  outputManager.info('Run `issue-cards help <topic>` to view a specific topic');
+}
+
+/**
+ * Show help for a specific topic
+ * @param {string} topicPath - Path to the requested topic
+ */
+function showTopic(topicPath) {
+  const categories = discoverDocFiles();
+  let docFile = null;
+  
+  // Find the requested topic
+  for (const docs of Object.values(categories)) {
+    const doc = docs.find(d => d.path === topicPath);
+    if (doc) {
+      docFile = doc.fullPath;
+      break;
+    }
+  }
+  
+  if (!docFile) {
+    outputManager.error(`Topic '${topicPath}' not found`);
+    outputManager.info('Run `issue-cards help` to see all available topics');
+    return;
+  }
+  
+  // Read and render the markdown file
+  const content = fs.readFileSync(docFile, 'utf8');
+  const formatted = formatMarkdownForTerminal(content);
+  outputManager.raw(formatted);
+}
+
+/**
+ * Help command action
+ */
+function helpAction(topic) {
+  if (!topic) {
+    listTopics();
+    return;
+  }
+  
+  showTopic(topic);
+}
+
+/**
+ * Create help command
+ */
+function createCommand() {
+  return new Command('help')
+    .description('Display help for commands and topics')
+    .argument('[topic]', 'Help topic to display')
+    .action(helpAction)
+    .addHelpText('after', `
+Examples:
+  $ issue-cards help                    # List all available topics
+  $ issue-cards help tutorials/basic    # View the basic tutorial
+  $ issue-cards help reference/env      # View environment variables reference
+  
+For command-specific help, use:
+  $ issue-cards <command> --help        # e.g., issue-cards create --help
+`);
+}
+
+module.exports = { 
+  createCommand,
+  helpAction,
+  // Export for testing
+  discoverDocFiles,
+  formatMarkdownForTerminal 
+};
