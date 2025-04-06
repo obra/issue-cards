@@ -52,11 +52,21 @@ This creates:
 
 Once you've mastered the basics, explore these topics:
 
-- [Basic Workflow](tutorials/basic-workflow.md)
-- [Command Reference](commands.md)
-- [Environment Variables](reference/environment-vars.md)
+- [Basic Workflow Tutorial](tutorials/basic-workflow.md)
+- [Task Management Tutorial](tutorials/task-management.md)
+- [Git Integration Guide](guides/git-integration.md)
+- [Environment Variables Reference](reference/environment-vars.md)
 
 For detailed command help, use:
 ```bash
 issue-cards <command> --help
 ```
+
+## Documentation Structure
+
+Issue Cards documentation is organized into these categories:
+
+- **[Tutorials](tutorials/index.md)** - Step-by-step learning materials
+- **[Guides](guides/index.md)** - Practical how-to guides for specific tasks
+- **[Reference](reference/index.md)** - Technical reference documentation
+- **[Design](design/index.md)** - Background on design decisions
