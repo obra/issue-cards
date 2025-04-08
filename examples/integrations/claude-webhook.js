@@ -182,6 +182,35 @@ app.post('/webhook', authenticateWebhook, async (req, res) => {
         };
         break;
         
+      case 'onboarding':
+        toolName = 'mcp__onboarding';
+        args = {
+          role: params?.role || 'pm'
+        };
+        break;
+        
+      case 'workflow':
+        toolName = 'mcp__workflow';
+        args = {
+          workflow: params?.workflow
+        };
+        break;
+        
+      case 'pm':
+        toolName = 'mcp__pm';
+        args = {};
+        break;
+      
+      case 'dev':
+        toolName = 'mcp__dev';
+        args = {};
+        break;
+      
+      case 'reviewer':
+        toolName = 'mcp__reviewer';
+        args = {};
+        break;
+        
       default:
         return res.status(400).json({
           error: 'Bad Request',
@@ -242,6 +271,17 @@ app.listen(PORT, () => {
  * 
  * 8. Create a new issue:
  *    Call the webhook with { "action": "createIssue", "params": { "template": "feature", "title": "Issue title", "problem": "Description" } }
+ * 
+ * 9. Get onboarding guidance:
+ *    Call the webhook with { "action": "onboarding", "params": { "role": "pm" } }
+ *    Available roles: "pm" (project manager), "developer", "reviewer"
+ * 
+ * 10. Get workflow guidance:
+ *     Call the webhook with { "action": "workflow", "params": { "workflow": "create-feature" } }
+ *     For available workflows, call without the workflow parameter
+ * 
+ * You can just say "You're a project manager. Use issue-cards to help manage our project."
+ * and I'll get onboarding guidance to help me understand how to use the system.
  * 
  * Please help me work on my current task by first getting its details.
  */
