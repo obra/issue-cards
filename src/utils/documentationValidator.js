@@ -3,7 +3,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { DOCUMENTATION_INDEX, getAiDocsPath } = require('./documentationParser');
+const documentationParser = require('./documentationParser');
+const { getAiDocsPath } = documentationParser;
+const DOCUMENTATION_INDEX = documentationParser.__test__.DOCUMENTATION_INDEX;
 
 /**
  * Represents a validation issue found in documentation
