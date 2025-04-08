@@ -3,6 +3,13 @@
 
 // Import tool implementations
 const mcpTools = require('./tools');
+const onboardingTools = require('./onboardingTools');
+
+// Merge all MCP tools into a single object
+const allMcpTools = {
+  ...mcpTools,
+  ...onboardingTools
+};
 
 // Storage for registered tools
 const registeredTools = [];
@@ -17,7 +24,7 @@ function registerMcpTools() {
   registeredTools.length = 0;
   
   // Extract and register each MCP tool
-  Object.entries(mcpTools).forEach(([name, implementation]) => {
+  Object.entries(allMcpTools).forEach(([name, implementation]) => {
     // Only register functions that follow the mcp__ naming convention
     if (typeof implementation === 'function' && name.startsWith('mcp__')) {
       // Get function metadata from comments if available

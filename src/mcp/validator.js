@@ -259,6 +259,49 @@ const schemas = {
     },
     required: ['approach'],
     additionalProperties: false
+  },
+  
+  // Schema for mcp__onboarding
+  mcp__onboarding: {
+    type: 'object',
+    properties: {
+      role: {
+        type: 'string',
+        enum: ['pm', 'developer', 'reviewer'],
+        default: 'pm'
+      }
+    },
+    additionalProperties: false
+  },
+  
+  // Schema for mcp__workflow
+  mcp__workflow: {
+    type: 'object',
+    properties: {
+      workflow: {
+        type: 'string'
+      }
+    },
+    additionalProperties: false
+  },
+  
+  // Alias schemas for onboarding
+  mcp__pm: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
+  },
+  
+  mcp__dev: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
+  },
+  
+  mcp__reviewer: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
   }
 };
 
