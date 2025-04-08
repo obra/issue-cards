@@ -21,6 +21,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
+    "validate-docs": "node ./src/scripts/validate-docs.js",
     "prepare": "chmod +x ./bin/issue-cards.js",
     "prepublishOnly": "npm test && npm run lint",
     "postinstall": "node ./scripts/postinstall.js"
