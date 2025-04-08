@@ -10,6 +10,7 @@ As a project manager using issue-cards, you'll be responsible for creating and o
 - [Create Feature Issue](../workflows/create-feature.md) - For planning and tracking new features
 - [Bugfix Workflow](../workflows/bugfix.md) - For managing bug fixes
 - [Technical Audit](../workflows/audit.md) - For conducting technical reviews
+- [Task Management](../workflows/task-management.md) - For organizing and tracking work items
 
 ## Best Practices
 - **Define clear problem statements**: Make sure each issue has a well-defined problem to solve
