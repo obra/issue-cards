@@ -4,7 +4,7 @@ This guide explains how to integrate issue-cards with AI tools and services.
 
 ## Overview
 
-issue-cards supports integration with AI services through webhook endpoints and the MCP (Model Communication Protocol) server.
+issue-cards supports integration with AI services through webhook endpoints and the MCP (Model Communication Protocol) server. We provide specialized documentation for AI consumption in the [AI documentation directory](../ai/index.md).
 
 ## Using the MCP Server
 
@@ -68,6 +68,23 @@ registerTools({
   }
 });
 ```
+
+## AI Documentation
+
+We provide dedicated documentation specifically formatted for AI consumption:
+
+- [Role-specific Guidance](../ai/index.md#roles) - Documentation for project managers, developers, and reviewers
+- [Workflow Guides](../ai/index.md#workflows) - Step-by-step guides for common processes
+- [Best Practices](../ai/index.md#best-practices) - Guidance for effective issue and task management
+- [Tool Examples](../ai/index.md#tool-examples) - Example patterns for using MCP tools
+
+When integrating with AI assistants like Claude, you can direct them to use the onboarding tools:
+
+```
+You're a project manager. Use issue-cards pm onboarding to get started.
+```
+
+This will load role-appropriate guidance and help the AI understand how to interact with the system effectively.
 
 ## Related Topics
 

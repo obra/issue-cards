@@ -2,6 +2,8 @@
 
 This document provides detailed reference information for all Model-Code-Prompt (MCP) tools available in Issue Cards.
 
+> **For AI Integration**: We provide specialized [AI documentation](../ai/index.md) with role-specific guidance, workflows, and examples designed for AI consumption through the onboarding tools.
+
 ## Common Patterns
 
 All MCP tools in Issue Cards follow these consistent patterns:
@@ -470,3 +472,112 @@ MCP tools can be used in sequence to create workflows. For example, a complete w
 5. Complete the task: `mcp__completeTask`
 
 This enables AI assistants to work through tasks systematically while documenting their reasoning and progress.
+
+## Onboarding and Workflow Tools
+
+These tools help AI assistants quickly understand how to use issue-cards and follow best practices.
+
+### mcp__onboarding
+
+Provides role-specific onboarding information to guide AIs in using issue-cards.
+
+**Parameters:**
+- `role` (optional): Role-specific onboarding - "pm", "developer", or "reviewer" (default: "pm")
+
+**Returns:**
+- Comprehensive onboarding information including workflows, best practices, and tool mappings
+
+**Example Request:**
+```javascript
+{
+  "tool": "mcp__onboarding",
+  "args": { "role": "developer" }
+}
+```
+
+**Example Response:**
+```javascript
+{
+  "success": true,
+  "data": {
+    "title": "Developer Onboarding",
+    "description": "Welcome to issue-cards developer workflow! Here's how to get started:",
+    "workflows": [
+      {
+        "name": "Task workflow",
+        "steps": [
+          "1. Get your current task with mcp__getCurrentTask",
+          "2. Add questions using mcp__addQuestion if anything is unclear",
+          "3. Log failed approaches with mcp__logFailure when you try something that doesn't work",
+          "4. Complete task with mcp__completeTask when finished"
+        ]
+      },
+      // Additional workflows...
+    ],
+    "bestPractices": [
+      "Document failed approaches to help others learn",
+      "Break down complex tasks into smaller sub-tasks",
+      // Additional best practices...
+    ],
+    "toolMap": [
+      { "name": "mcp__getCurrentTask", "description": "View your current task and context" },
+      // Additional tools...
+    ]
+  }
+}
+```
+
+### mcp__workflow
+
+Provides step-by-step guides for common issue-cards workflows.
+
+**Parameters:**
+- `workflow` (optional): Specific workflow to get guidance for
+
+**Returns:**
+- Detailed workflow guide with steps, tool usage examples, and tips
+- If no workflow is specified, returns a list of available workflows
+
+**Example Request:**
+```javascript
+{
+  "tool": "mcp__workflow",
+  "args": { "workflow": "create-feature" }
+}
+```
+
+**Example Response:**
+```javascript
+{
+  "success": true,
+  "data": {
+    "title": "Create Feature Issue Workflow",
+    "description": "Guide for creating a well-structured feature issue",
+    "steps": [
+      {
+        "step": 1,
+        "description": "Check available templates",
+        "tool": "mcp__listTemplates",
+        "args": { "type": "issue" }
+      },
+      // Additional steps...
+    ],
+    "tips": [
+      "Feature titles should be clear and action-oriented",
+      // Additional tips...
+    ]
+  }
+}
+```
+
+### Role-specific Aliases
+
+For convenience, the following aliases provide direct access to role-specific onboarding:
+
+| Tool | Description |
+|------|-------------|
+| `mcp__pm` | Project Manager onboarding |
+| `mcp__dev` | Developer onboarding |
+| `mcp__reviewer` | Reviewer onboarding |
+
+These aliases take no parameters and return the same format as `mcp__onboarding` with the corresponding role.
