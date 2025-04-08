@@ -2,7 +2,7 @@
 
 This document provides detailed reference information for all Model-Code-Prompt (MCP) tools available in Issue Cards.
 
-> **For AI Integration**: We provide specialized [AI documentation](../ai/index.md) with role-specific guidance, workflows, and examples designed for AI consumption through the onboarding tools.
+> **For AI Integration**: We provide specialized [AI documentation](../ai/index.md) with role-specific guidance, workflows, and examples designed for AI consumption through the onboarding tools. For integrating Claude or other AI assistants, see [Claude Integration Examples](../ai/tool-examples/claude-integration.md) and [Advanced Usage Examples](../ai/tool-examples/advanced-usage.md).
 
 ## Common Patterns
 

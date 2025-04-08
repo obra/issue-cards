@@ -2,6 +2,8 @@
 
 This document provides example prompts for using Claude with the Issue Cards MCP API. These examples demonstrate how to structure prompts that allow Claude to effectively interact with the Issue Cards system.
 
+> **For AI-Specific Documentation**: We provide specialized [AI documentation](../ai/index.md) with role-specific guidance, workflows, and detailed [Claude integration examples](../ai/tool-examples/claude-integration.md) designed for AI consumption through the onboarding tools.
+
 ## Setting Up Claude Integration
 
 Claude can interact with Issue Cards through the MCP API using function calling. This allows Claude to access information about issues, complete tasks, add notes, and more.

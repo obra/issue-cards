@@ -29,6 +29,7 @@ Guidance for effectively using issue-cards:
 
 - [Task Organization](best-practices/task-organization.md) - Best practices for creating and organizing tasks
 - [Documentation](best-practices/documentation.md) - Effective issue and task documentation
+- [Comprehensive Usage](best-practices/comprehensive-usage.md) - Advanced strategies for effective issue management
 
 ## Tool Examples
 
@@ -36,6 +37,7 @@ Example tool usage patterns:
 
 - [Basic Usage](tool-examples/basic-usage.md) - Common tool operations and patterns
 - [Advanced Usage](tool-examples/advanced-usage.md) - Complex workflows and combinations
+- [Claude Integration](tool-examples/claude-integration.md) - Examples of Claude interaction patterns
 
 ## Using This Documentation
 
