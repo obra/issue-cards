@@ -5,7 +5,35 @@ const fs = require('fs');
 const path = require('path');
 const documentationParser = require('./documentationParser');
 const { getAiDocsPath } = documentationParser;
-const DOCUMENTATION_INDEX = documentationParser.__test__.DOCUMENTATION_INDEX;
+
+// Define our own index for the validator, since we don't want to directly 
+// access the internal test property which may not be available
+const DOCUMENTATION_INDEX = {
+  roles: {
+    'pm': 'project-manager.md',
+    'project-manager': 'project-manager.md',
+    'developer': 'developer.md',
+    'dev': 'developer.md',
+    'reviewer': 'reviewer.md'
+  },
+  workflows: {
+    'create-feature': 'create-feature.md',
+    'bugfix': 'bugfix.md',
+    'task-management': 'task-management.md',
+    'review': 'review.md',
+    'audit': 'audit.md'
+  },
+  'best-practices': {
+    'task-organization': 'task-organization.md',
+    'documentation': 'documentation.md',
+    'comprehensive-usage': 'comprehensive-usage.md'
+  },
+  'tool-examples': {
+    'basic': 'basic-usage.md',
+    'advanced': 'advanced-usage.md',
+    'claude-integration': 'claude-integration.md'
+  }
+};
 
 /**
  * Represents a validation issue found in documentation
@@ -280,8 +308,9 @@ function validateCategory(category) {
   }
   
   // Get all markdown files in the directory
-  const files = fs.readdirSync(categoryPath)
-    .filter(file => file.endsWith('.md') && !file.startsWith('README'));
+  const dirEntries = fs.readdirSync(categoryPath);
+  // Make sure we have strings, not undefined or other types
+  const files = dirEntries.filter(file => typeof file === 'string' && file.endsWith('.md') && !file.startsWith('README'));
   
   // Check if category has any files
   if (files.length === 0) {
