@@ -22,6 +22,7 @@ This document provides detailed information on all available commands in the Iss
   - [templates](#templates)
 - [AI Integration Commands](#ai-integration-commands)
   - [serve](#serve)
+  - [mcp-stdio](#mcp-stdio)
 - [Global Options](#global-options)
 
 ## Installation
@@ -442,7 +443,7 @@ issue-cards templates --type tag
 
 ### serve
 
-Starts the MCP (Model-Code-Prompt) server for AI integration.
+Starts the MCP (Model-Code-Prompt) server for AI integration using HTTP transport.
 
 ```bash
 issue-cards serve [options]
@@ -469,14 +470,44 @@ issue-cards serve -t your-api-token
 issue-cards serve -h 0.0.0.0
 ```
 
-The MCP server exposes the following API endpoints:
+The HTTP MCP server exposes the following API endpoints:
 - `GET /api/health` - Check server health
 - `GET /api/status` - Get server status and available tools
 - `GET /api/tools` - List all available MCP tools
 - `GET /api/tools/:name` - Get details for a specific tool
 - `POST /api/tools/execute` - Execute an MCP tool
 
-For detailed documentation on using the MCP server with AI models, see [AI Integration Guide](guides/ai-integration.md) and [AI Integration Reference](reference/ai-integration.md).
+### mcp-stdio
+
+Starts the MCP (Model-Code-Prompt) server for AI integration using stdio transport.
+
+```bash
+issue-cards mcp-stdio [options]
+```
+
+Options:
+- `--debug` - Enable debug logging to stderr (useful for troubleshooting)
+
+Examples:
+```bash
+# Start the stdio MCP server
+issue-cards mcp-stdio
+
+# Start with debug logging enabled
+issue-cards mcp-stdio --debug
+
+# Use as stdin/stdout pipe with an AI tool
+some-ai-tool | issue-cards mcp-stdio | process-results
+```
+
+The stdio MCP server communicates using JSON-RPC 2.0 over standard input/output streams, making it ideal for direct integration with AI tools. It supports the following JSON-RPC methods:
+- `server/info` - Get server information and capabilities
+- `tools/execute` - Execute an MCP tool
+- `client/ready` - Client notification to signal readiness
+
+Unlike the HTTP server, the stdio version has no authentication mechanism as it's designed for local integration.
+
+For detailed documentation on using both MCP server implementations with AI models, see [AI Integration Guide](guides/ai-integration.md), [AI Integration Reference](reference/ai-integration.md), and [MCP Server Implementations](reference/mcp-server-implementations.md).
 
 ## Global Options
 

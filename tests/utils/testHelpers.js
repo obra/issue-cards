@@ -2,6 +2,36 @@
 // ABOUTME: Provides mock functions and testing shortcuts
 
 /**
+ * Mock MCP tools for testing
+ */
+const mockMcpTools = [
+  {
+    name: 'mcp__testTool',
+    description: 'Test tool',
+    parameters: [
+      {
+        name: 'param1',
+        description: 'Test parameter',
+        required: true,
+        type: 'string'
+      }
+    ]
+  },
+  {
+    name: 'mcp__listIssues',
+    description: 'List all issues',
+    parameters: [
+      {
+        name: 'state',
+        description: 'Filter by issue state',
+        required: false,
+        type: 'string'
+      }
+    ]
+  }
+];
+
+/**
  * Mock console methods and capture output
  * 
  * @returns {Object} Object with captured stdout, stderr and cleanup method
@@ -133,4 +163,5 @@ function mockOutputManager() {
 module.exports = {
   mockConsole,
   mockOutputManager,
+  mockMcpTools
 };

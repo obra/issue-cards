@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "bin": {
     "issue-cards": "./bin/issue-cards.js",
-    "issue-cards-mcp-server": "./bin/mcp-server.js"
+    "issue-cards-mcp-server": "./bin/mcp-server.js",
+    "mcp-stdio-server": "./bin/mcp-stdio-server.js"
   },
   "scripts": {
     "test": "jest --silent",
@@ -23,7 +24,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "validate-docs": "node ./src/scripts/validate-docs.js",
-    "prepare": "chmod +x ./bin/issue-cards.js",
+    "prepare": "chmod +x ./bin/issue-cards.js ./bin/mcp-stdio-server.js",
     "prepublishOnly": "npm test && npm run lint",
     "postinstall": "node ./scripts/postinstall.js"
   },

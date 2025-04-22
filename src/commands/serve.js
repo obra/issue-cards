@@ -98,6 +98,9 @@ Description:
   The MCP server provides a REST API that allows AI assistants like Claude or
   GPT to interact with issues and tasks. The server runs until interrupted.
 
+  NOTE: This command uses HTTP transport for the MCP server. For stdin/stdout integration,
+  see the 'mcp-stdio' command which implements the stdio transport mechanism.
+
 Examples:
   # Start the server with default settings (localhost:3000)
   $ issue-cards serve
@@ -146,6 +149,10 @@ Environment Variables:
   ISSUE_CARDS_MCP_HOST  - Host to bind the server to
   ISSUE_CARDS_MCP_TOKEN - Authentication token
   ISSUE_CARDS_MCP_CORS  - Enable CORS for cross-origin requests
+
+Alternative Transport:
+  For direct integration with AI tools using stdin/stdout, use:
+  $ issue-cards mcp-stdio
 
 For more information:
   $ issue-cards help ai-integration  # Learn more about AI integration

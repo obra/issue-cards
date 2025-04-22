@@ -6,16 +6,20 @@ This reference document provides comprehensive information on integrating AI ass
 
 issue-cards provides a robust Model Communication Protocol (MCP) for AI integration:
 
-- **MCP Server**: RESTful API server for AI interaction
+- **MCP Server**: Server for AI interaction (HTTP or stdio transports)
 - **MCP Tools**: Standardized tool interface for structured operations
 - **Webhook Integration**: Direct integration via HTTP calls
-- **Authorization**: Optional token-based authentication
+- **Authorization**: Optional token-based authentication for HTTP transport
 
 ## MCP Server
 
-The MCP server provides the foundation for AI integration.
+The MCP server provides the foundation for AI integration and is available in two transport implementations: HTTP and stdio.
 
-### Starting the Server
+### HTTP Transport (REST API)
+
+The HTTP transport provides a RESTful API for integration with AI assistants over HTTP.
+
+#### Starting the HTTP Server
 
 ```bash
 # Basic server start on default port (3000)
@@ -28,7 +32,7 @@ issue-cards serve --port 4000 --host 0.0.0.0
 issue-cards serve --token your-secret-token
 ```
 
-### Server Configuration
+#### HTTP Server Configuration
 
 | Parameter | Environment Variable | Default | Description |
 |-----------|----------------------|---------|-------------|
@@ -37,7 +41,7 @@ issue-cards serve --token your-secret-token
 | `--token`, `-t` | `ISSUE_CARDS_MCP_TOKEN` | none | Authentication token |
 | `--cors` | `ISSUE_CARDS_MCP_CORS` | `false` | Enable CORS |
 
-### API Endpoints
+#### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -48,6 +52,72 @@ issue-cards serve --token your-secret-token
 | `/api/issues` | GET | List issues |
 | `/api/issues/:number` | GET | Get specific issue |
 | `/api/issues/:number/current` | GET | Get current task |
+
+### Stdio Transport (JSON-RPC 2.0)
+
+The stdio transport provides direct integration with AI tools through standard input/output streams using JSON-RPC 2.0.
+
+#### Starting the Stdio Server
+
+```bash
+# Basic stdio server
+issue-cards mcp-stdio
+
+# With debug logging
+issue-cards mcp-stdio --debug
+
+# Using the standalone binary
+mcp-stdio-server --debug
+```
+
+#### Stdio Server Configuration
+
+| Parameter | Description |
+|-----------|-------------|
+| `--debug` | Enable debug logging to stderr |
+
+#### JSON-RPC Methods
+
+| Method | Description | Parameters |
+|--------|-------------|------------|
+| `server/info` | Get server information and capabilities | none |
+| `tools/execute` | Execute an MCP tool | `tool`, `args` |
+| `client/ready` | Client notification to signal readiness | none |
+
+#### Message Format
+
+All messages use JSON-RPC 2.0 format:
+
+**Request:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/execute",
+  "params": {
+    "tool": "mcp__listIssues",
+    "args": {
+      "state": "open"
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "success": true,
+    "data": [
+      {"issueNumber": "0001", "title": "Example Issue"}
+    ]
+  }
+}
+```
+
+For more details on the stdio transport, see [MCP Server Implementations](mcp-server-implementations.md).
 
 ## MCP Tools
 
@@ -112,7 +182,7 @@ Or for errors:
 
 ## Integration Methods
 
-### REST API Integration
+### HTTP Integration
 
 For direct HTTP integration:
 
@@ -131,6 +201,63 @@ const response = await fetch('http://localhost:3000/api/tools/execute', {
 
 const result = await response.json();
 console.log(result.data);
+```
+
+### Stdio Integration
+
+For direct stdin/stdout integration:
+
+```javascript
+const { spawn } = require('child_process');
+const readline = require('readline');
+
+// Spawn the MCP stdio server
+const mcp = spawn('mcp-stdio-server', ['--debug'], {
+  stdio: ['pipe', 'pipe', process.stderr]
+});
+
+// Create readline interface for reading responses
+const rl = readline.createInterface({
+  input: mcp.stdout,
+  output: null
+});
+
+// Process responses
+rl.on('line', (line) => {
+  try {
+    const message = JSON.parse(line);
+    
+    // Handle server notifications
+    if (message.method === 'server/info') {
+      console.log('Connected to MCP server:', message.params.name);
+      
+      // Send a request to get current task
+      const request = {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/execute',
+        params: {
+          tool: 'mcp__getCurrentTask',
+          args: {}
+        }
+      };
+      
+      mcp.stdin.write(JSON.stringify(request) + '\n');
+    }
+    // Handle responses to our requests
+    else if (message.id === 1 && message.result) {
+      console.log('Current task:', message.result.data);
+    }
+  } catch (error) {
+    console.error('Error parsing message:', error);
+  }
+});
+
+// Handle server exit
+mcp.on('exit', (code) => {
+  console.log(`MCP server exited with code ${code}`);
+  rl.close();
+});
 ```
 
 ### Node.js Integration
@@ -322,6 +449,7 @@ Recommendations for AI assistant integration:
 
 ## Related Resources
 
+- [MCP Server Implementations](mcp-server-implementations.md)
 - [MCP Server Configuration](mcp-server-config.md)
 - [MCP Tool Reference](mcp-tool-reference.md)
 - [MCP Curl Examples](mcp-curl-examples.md)
