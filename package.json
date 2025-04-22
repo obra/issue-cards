@@ -4,7 +4,8 @@
   "description": "AI-Optimized Command Line Issue Tracking Tool",
   "main": "src/index.js",
   "bin": {
-    "issue-cards": "./bin/issue-cards.js"
+    "issue-cards": "./bin/issue-cards.js",
+    "issue-cards-mcp-server": "./bin/mcp-server.js"
   },
   "scripts": {
     "test": "jest --silent",

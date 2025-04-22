@@ -112,6 +112,24 @@ For complete configuration references:
 
 Issue Cards provides a Model-Code-Prompt (MCP) API for AI assistant integration:
 
+### Claude Code Integration
+
+To use Issue Cards with Claude Code, add one of the following to your configuration:
+
+```
+# Using NPX (installs on-demand)
+issue-cards: npx issue-cards-mcp-server@latest
+
+# Using globally installed version (if installed with npm install -g issue-cards)
+issue-cards: issue-cards-mcp-server
+```
+
+This will automatically set up the MCP server for seamless integration with Claude Code.
+
+### Manual Server Setup
+
+You can also start the server manually:
+
 ```bash
 # Start the MCP server
 issue-cards serve
