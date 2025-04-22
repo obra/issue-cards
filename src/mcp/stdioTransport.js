@@ -27,6 +27,12 @@ class StdioTransport {
     this.isRunning = false;
     this.onConnect = null;
     this.onDisconnect = null;
+    
+    // MCP protocol state
+    this.initialized = false;
+    this.shutdownRequested = false;
+    this.clientCapabilities = null;
+    this.protocolVersion = "2025-03-26"; // Latest MCP protocol version
   }
 
   /**
@@ -119,8 +125,13 @@ class StdioTransport {
       // Parse the JSON-RPC message
       const message = JSON.parse(line);
       
-      // Process the message
-      this.processMessage(message);
+      // Check if this is a batch request (array of messages)
+      if (Array.isArray(message)) {
+        this.processBatchMessages(message);
+      } else {
+        // Process single message
+        this.processMessage(message);
+      }
     } catch (error) {
       // Log parse errors to stderr
       this.logError(`Error parsing JSON-RPC message: ${error.message}`);
@@ -137,6 +148,80 @@ class StdioTransport {
           this.logError('Cannot extract request ID for error response');
         }
       }
+    }
+  }
+  
+  /**
+   * Process a batch of JSON-RPC messages
+   * 
+   * @param {Array<Object>} messages - Array of JSON-RPC messages
+   */
+  async processBatchMessages(messages) {
+    if (!Array.isArray(messages) || messages.length === 0) {
+      // Empty batch - send invalid request error
+      this.sendMessage({
+        jsonrpc: '2.0',
+        error: {
+          code: -32600,
+          message: 'Invalid Request',
+          data: { details: 'Empty batch request' }
+        },
+        id: null
+      });
+      return;
+    }
+    
+    this.logDebug(`Processing batch of ${messages.length} messages`);
+    
+    // Process each message and collect responses
+    const responses = [];
+    
+    for (const message of messages) {
+      // For requests (with ID), we need to capture the response
+      if (message.id !== undefined) {
+        try {
+          // Create a promise to capture the response
+          const responsePromise = new Promise((resolve) => {
+            // Override the sendMessage method temporarily to capture the response
+            const originalSendMessage = this.sendMessage.bind(this);
+            this.sendMessage = (response) => {
+              resolve(response);
+              // We don't actually send the response yet
+            };
+            
+            // Process the message
+            this.processMessage(message);
+            
+            // Restore the original sendMessage method
+            this.sendMessage = originalSendMessage;
+          });
+          
+          // Wait for the response and add it to the batch
+          const response = await responsePromise;
+          responses.push(response);
+        } catch (error) {
+          // Add error response to the batch
+          responses.push({
+            jsonrpc: '2.0',
+            id: message.id,
+            error: {
+              code: -32603,
+              message: 'Internal error',
+              data: { message: error.message }
+            }
+          });
+        }
+      } else {
+        // For notifications (no ID), just process them (no response needed)
+        this.processMessage(message);
+      }
+    }
+    
+    // Send batch response if there are any responses to send
+    if (responses.length > 0) {
+      this.logDebug(`Sending batch response with ${responses.length} items`);
+      const json = JSON.stringify(responses);
+      this.stdout.write(json + '\n');
     }
   }
 
@@ -189,7 +274,7 @@ class StdioTransport {
     this.logDebug(`Received request ${id}: ${method}`);
     
     try {
-      // Handle tool execution request
+      // Handle tool execution requests
       if (method === 'tools/execute') {
         await this.handleToolExecution(id, params);
         return;
@@ -237,6 +322,90 @@ class StdioTransport {
         return;
       }
       
+      // Handle initialize request - Required by MCP spec
+      if (method === 'initialize') {
+        // Store client capabilities if provided
+        if (params && params.capabilities) {
+          this.clientCapabilities = params.capabilities;
+        }
+        
+        // Send back server capabilities
+        this.sendResponse(id, {
+          capabilities: {
+            protocol_version: "2025-03-26",
+            tools: {
+              supported: true
+            },
+            async_tools: {
+              supported: false
+            },
+            resources: {
+              supported: false
+            },
+            prompts: {
+              supported: false
+            }
+          },
+          info: {
+            name: 'issue-cards-mcp',
+            version: require('../../package.json').version,
+            description: 'Issue Cards MCP Server'
+          }
+        });
+        return;
+      }
+      
+      // Handle tools/list request - Required by MCP spec
+      if (method === 'tools/list') {
+        this.sendResponse(id, {
+          tools: this.tools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'No description available',
+            schema: {
+              type: 'object',
+              properties: Object.fromEntries(
+                (tool.parameters || []).map(param => [
+                  param.name,
+                  {
+                    type: param.type || 'string',
+                    description: param.description || ''
+                  }
+                ])
+              ),
+              required: (tool.parameters || [])
+                .filter(param => param.required)
+                .map(param => param.name)
+            }
+          }))
+        });
+        return;
+      }
+      
+      // Handle tools/call request - Required by MCP spec
+      if (method === 'tools/call') {
+        if (!params || !params.name) {
+          return this.sendErrorResponse(id, -32602, 'Invalid params', { 
+            details: 'Missing required parameter: name' 
+          });
+        }
+        
+        const toolName = params.name;
+        const toolArgs = params.arguments || {};
+        
+        await this.handleToolExecution(id, {
+          tool: toolName,
+          args: toolArgs
+        });
+        return;
+      }
+      
+      // Handle shutdown request - Required by MCP spec
+      if (method === 'shutdown') {
+        this.shutdownRequested = true;
+        this.sendResponse(id, null);
+        return;
+      }
+      
       // Method not found
       this.sendErrorResponse(id, -32601, 'Method not found', { method });
     } catch (error) {
@@ -276,8 +445,39 @@ class StdioTransport {
         return;
       }
       
+      // Handle initialized notification - Required by MCP spec
+      if (method === 'initialized') {
+        // Mark as initialized
+        this.initialized = true;
+        this.logDebug('Client initialized');
+        return;
+      }
+      
+      // Handle client/exit notification - Required by MCP spec
+      if (method === 'client/exit' || method === 'exit') {
+        if (this.shutdownRequested) {
+          this.logDebug('Client requested exit after shutdown');
+          // Stop the transport
+          await this.stop();
+        } else {
+          this.logDebug('Client requested exit without shutdown');
+          // We should still stop since the client is exiting
+          await this.stop();
+        }
+        return;
+      }
+      
+      // Handle $/cancelRequest notification - Required by MCP spec for async tools
+      if (method === '$/cancelRequest') {
+        if (params && params.id) {
+          this.logDebug(`Request cancellation received for id: ${params.id}`);
+          // We don't support async cancellation yet, but acknowledge the request
+        }
+        return;
+      }
+      
       // Unknown notification - log but don't error
-      this.logError(`Unknown notification method: ${method}`);
+      this.logDebug(`Unknown notification method: ${method}`);
     } catch (error) {
       // Just log errors for notifications
       this.logError(`Error handling notification ${method}: ${error.message}`);
