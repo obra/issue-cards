@@ -11,20 +11,22 @@ Issues are the main units of work in issue-cards. Each issue contains:
 
 To create a new issue:
 
+You can create a simple issue with just a title:
+
+```bash
+issue-cards create feature --title "Add search functionality"
+```
+
+Or create a comprehensive issue with all sections:
+
 ```bash
 issue-cards create feature --title "Add user authentication" \
   --problem "Users need to securely log in." \
   --approach "We'll use JWT tokens with secure cookies." \
-  --task "Create User model" \
-  --task "Create login API endpoint" \
+  --task "Create User model #unit-test" \
+  --task "Create login API endpoint #e2e-test" \
   --task "Add authentication middleware" \
-  --task "Create login form component"
-```
-
-You can also create a simple issue with just a title:
-
-```bash
-issue-cards create feature --title "Add search functionality"
+  --instructions "Follow OWASP security guidelines."
 ```
 
 ## Viewing Issues
@@ -72,6 +74,12 @@ You can add a task before or after the current task:
 ```bash
 issue-cards add-task "Set up database connection" --before
 issue-cards add-task "Add error handling" --after
+```
+
+You can also add a task with tags that expand into standardized steps:
+
+```bash
+issue-cards add-task "Add email validation" --tags "unit-test"
 ```
 
 ## Documentation and Context
