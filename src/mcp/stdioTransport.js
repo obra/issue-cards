@@ -211,6 +211,32 @@ class StdioTransport {
         return;
       }
       
+      // Handle get_tool_specs request - Claude CLI uses this method
+      if (method === 'get_tool_specs') {
+        this.sendResponse(id, {
+          tools: this.tools.map(tool => ({
+            name: tool.name,
+            description: tool.description || 'No description available',
+            input_schema: {
+              type: 'object',
+              properties: Object.fromEntries(
+                (tool.parameters || []).map(param => [
+                  param.name,
+                  {
+                    type: param.type || 'string',
+                    description: param.description || ''
+                  }
+                ])
+              ),
+              required: (tool.parameters || [])
+                .filter(param => param.required)
+                .map(param => param.name)
+            }
+          }))
+        });
+        return;
+      }
+      
       // Method not found
       this.sendErrorResponse(id, -32601, 'Method not found', { method });
     } catch (error) {
