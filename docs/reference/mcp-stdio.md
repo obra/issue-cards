@@ -21,7 +21,7 @@ issue-cards mcp-stdio
 issue-cards mcp-stdio --debug
 
 # Standalone binary usage
-mcp-stdio-server --debug
+issue-cards-mcp-server --debug
 ```
 
 ## JSON-RPC Protocol
@@ -107,7 +107,7 @@ const { spawn } = require('child_process');
 const readline = require('readline');
 
 // Spawn the MCP stdio server
-const mcp = spawn('mcp-stdio-server', ['--debug'], {
+const mcp = spawn('issue-cards-mcp-server', ['--debug'], {
   stdio: ['pipe', 'pipe', process.stderr]
 });
 
@@ -142,7 +142,7 @@ import threading
 
 # Start the MCP stdio server
 process = subprocess.Popen(
-    ['mcp-stdio-server', '--debug'],
+    ['issue-cards-mcp-server', '--debug'],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,

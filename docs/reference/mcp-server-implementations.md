@@ -37,7 +37,7 @@ issue-cards mcp-stdio [options]
 Or use the dedicated binary:
 
 ```bash
-mcp-stdio-server [options]
+issue-cards-mcp-server [options]
 ```
 
 ### Stdio Server Protocol

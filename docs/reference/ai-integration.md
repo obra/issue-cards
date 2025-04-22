@@ -67,7 +67,7 @@ issue-cards mcp-stdio
 issue-cards mcp-stdio --debug
 
 # Using the standalone binary
-mcp-stdio-server --debug
+issue-cards-mcp-server --debug
 ```
 
 #### Stdio Server Configuration
@@ -212,7 +212,7 @@ const { spawn } = require('child_process');
 const readline = require('readline');
 
 // Spawn the MCP stdio server
-const mcp = spawn('mcp-stdio-server', ['--debug'], {
+const mcp = spawn('issue-cards-mcp-server', ['--debug'], {
   stdio: ['pipe', 'pipe', process.stderr]
 });
 
