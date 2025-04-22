@@ -1,14 +1,9 @@
 // ABOUTME: Tests for mcpStdio command implementation
 // ABOUTME: Validates the CLI command for stdio MCP server
 
-const mockIsInitialized = jest.fn();
 const mockStartStdioServer = jest.fn();
 
 // Mock dependencies
-jest.mock('../../src/utils/directory', () => ({
-  isInitialized: mockIsInitialized
-}));
-
 jest.mock('../../src/mcp/stdioServer', () => ({
   startStdioServer: mockStartStdioServer
 }));
@@ -22,7 +17,6 @@ describe('mcpStdio command', () => {
   
   beforeEach(() => {
     // Reset mocks
-    mockIsInitialized.mockReset();
     mockStartStdioServer.mockReset();
     
     // Mock process.exit
@@ -43,27 +37,7 @@ describe('mcpStdio command', () => {
     jest.restoreAllMocks();
   });
   
-  test('should check for initialization', async () => {
-    mockIsInitialized.mockResolvedValue(true);
-    mockStartStdioServer.mockResolvedValue({});
-    
-    await mcpStdioAction({});
-    
-    expect(mockIsInitialized).toHaveBeenCalled();
-  });
-  
-  test('should throw error if not initialized', async () => {
-    mockIsInitialized.mockResolvedValue(false);
-    
-    await expect(mcpStdioAction({})).rejects.toThrow();
-    
-    const error = await mcpStdioAction({}).catch(e => e);
-    expect(error.name).toBe('UninitializedError');
-    expect(error.displayMessage).toContain('Run "issue-cards init" first');
-  });
-  
   test('should start stdio server with default options', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     await mcpStdioAction({});
@@ -74,7 +48,6 @@ describe('mcpStdio command', () => {
   });
   
   test('should enable debug mode when requested', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     await mcpStdioAction({ debug: true });
@@ -85,7 +58,6 @@ describe('mcpStdio command', () => {
   });
   
   test('should not write to stdout', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     const originalStdoutWrite = process.stdout.write;
@@ -136,7 +108,7 @@ describe('mcpStdio command', () => {
                             command._listeners?.action[0];
       
       // Simulate error by rejecting action promise
-      mockIsInitialized.mockRejectedValue(error);
+      mockStartStdioServer.mockRejectedValue(error);
       
       try {
         // Call the action function - this will always throw since we're mocking an error

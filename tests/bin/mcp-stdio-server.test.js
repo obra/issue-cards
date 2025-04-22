@@ -1,14 +1,9 @@
 // ABOUTME: Tests for MCP stdio server binary entrypoint
 // ABOUTME: Validates the standalone binary for stdio MCP server
 
-const mockIsInitialized = jest.fn();
 const mockStartStdioServer = jest.fn();
 
 // Mock dependencies
-jest.mock('../../src/utils/directory', () => ({
-  isInitialized: mockIsInitialized
-}));
-
 jest.mock('../../src/mcp/stdioServer', () => ({
   startStdioServer: mockStartStdioServer
 }));
@@ -24,7 +19,6 @@ describe('mcp-stdio-server binary', () => {
   
   beforeEach(() => {
     // Reset mocks
-    mockIsInitialized.mockReset();
     mockStartStdioServer.mockReset();
     
     // Mock process functions
@@ -51,35 +45,7 @@ describe('mcp-stdio-server binary', () => {
     process.stderr.write = originalStderrWrite;
   });
   
-  test('should check if issue tracking is initialized', async () => {
-    mockIsInitialized.mockResolvedValue(true);
-    mockStartStdioServer.mockResolvedValue({});
-    
-    // Load the script
-    require('../../bin/mcp-stdio-server');
-    
-    // Wait for promises to resolve
-    await new Promise(process.nextTick);
-    
-    expect(mockIsInitialized).toHaveBeenCalled();
-  });
-  
-  test('should exit with error if not initialized', async () => {
-    mockIsInitialized.mockResolvedValue(false);
-    
-    // Load the script
-    require('../../bin/mcp-stdio-server');
-    
-    // Wait for promises to resolve
-    await new Promise(process.nextTick);
-    
-    expect(process.stderr.write).toHaveBeenCalled();
-    expect(stderrOutput.join('')).toContain('Issue tracking is not initialized');
-    expect(process.exit).toHaveBeenCalledWith(1);
-  });
-  
   test('should start stdio server with default options', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Load the script
@@ -94,7 +60,6 @@ describe('mcp-stdio-server binary', () => {
   });
   
   test('should enable debug mode with --debug flag', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Set debug flag
@@ -112,7 +77,6 @@ describe('mcp-stdio-server binary', () => {
   });
   
   test('should output debug information when debug is enabled', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Set debug flag
@@ -130,7 +94,6 @@ describe('mcp-stdio-server binary', () => {
   });
   
   test('should set up error handlers', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Load the script
@@ -145,7 +108,6 @@ describe('mcp-stdio-server binary', () => {
   });
   
   test('should handle uncaught exceptions', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Load the script
@@ -169,7 +131,6 @@ describe('mcp-stdio-server binary', () => {
   });
   
   test('should handle unhandled rejections', async () => {
-    mockIsInitialized.mockResolvedValue(true);
     mockStartStdioServer.mockResolvedValue({});
     
     // Load the script

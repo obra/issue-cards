@@ -4,7 +4,6 @@
 // ABOUTME: Provides stdio transport for MCP integration
 
 const { startStdioServer } = require('../src/mcp/stdioServer');
-const { isInitialized } = require('../src/utils/directory');
 
 // Parse options
 const args = process.argv.slice(2);
@@ -13,13 +12,6 @@ const debug = args.includes('--debug');
 // Function to start the server
 async function main() {
   try {
-    // Check if issue tracking is initialized
-    if (!(await isInitialized())) {
-      process.stderr.write('Error: Issue tracking is not initialized.\n');
-      process.stderr.write('Run "issue-cards init" first.\n');
-      process.exit(1);
-    }
-
     // Configure MCP
     const mcpConfig = {
       debug

@@ -3,8 +3,6 @@
 
 const { Command } = require('commander');
 const { startStdioServer } = require('../mcp/stdioServer');
-const { isInitialized } = require('../utils/directory');
-const { UninitializedError } = require('../utils/errors');
 
 /**
  * Execute the mcp-stdio command action
@@ -14,12 +12,6 @@ const { UninitializedError } = require('../utils/errors');
  * @returns {Promise<void>}
  */
 async function mcpStdioAction(options) {
-  // Validate issue tracking is initialized
-  if (!(await isInitialized())) {
-    throw new UninitializedError()
-      .withDisplayMessage('Issue tracking is not initialized. Run "issue-cards init" first.');
-  }
-  
   // Don't output anything to stdout - it would break the protocol
   // All logging should go to stderr
   
