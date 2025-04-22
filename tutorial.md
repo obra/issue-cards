@@ -1,40 +1,14 @@
 # Issue Cards Tutorial
 
-Issue Cards is an AI-optimized command-line issue tracking tool designed for developers and AI agents to manage tasks efficiently. This tutorial will guide you through using the tool and demonstrate its capabilities.
+This tutorial provides detailed examples and explanations for using Issue Cards. For a quick overview, see the [README](README.md).
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [Getting Started](#getting-started)
-3. [Core Concepts](#core-concepts)
-4. [Basic Workflow](#basic-workflow)
-5. [Advanced Features](#advanced-features)
-6. [Tag System](#tag-system)
-7. [Context and Output](#context-and-output)
-
-## Installation
-
-```bash
-# Install globally via npm
-npm install -g issue-cards
-
-# Or run directly with npx
-npx issue-cards [command]
-```
-
-## Getting Started
-
-To start using Issue Cards in a project:
-
-```bash
-# Initialize issue tracking in your project
-issue-cards init
-
-# This creates:
-# - .issues/config/ - Contains templates
-# - .issues/open/ - Stores open issues
-# - .issues/closed/ - Stores completed issues
-```
+1. [Core Concepts](#core-concepts)
+2. [Basic Workflow](#basic-workflow)
+3. [Advanced Features](#advanced-features)
+4. [Tag System](#tag-system)
+5. [Context and Output](#context-and-output)
 
 ## Core Concepts
 
@@ -220,15 +194,12 @@ Note: The above upcoming tasks are for context only. Do not work on them until t
 ```
 
 
-## Summary
+## Related Documentation
 
-Issue Cards provides a lightweight, file-based issue tracking system optimized for both human developers and AI agents. The focus on clear context, structured tasks, and seamless integration with development workflows makes it particularly valuable for maintaining focus and tracking progress.
+For more detailed information about specific aspects of Issue Cards, refer to the documentation in the `docs/` directory:
 
-Key benefits:
-- No database or external dependencies
-- Git integration for tracking changes
-- Tag system for standardized workflows
-- Rich context for every task
-- Optimized command output for AI consumption
-
-For more information, run `issue-cards --help` or `issue-cards help [command]` to see detailed documentation for specific commands.
+- [Getting Started Guide](docs/guides/getting-started.md)
+- [Complete Tutorials](docs/tutorials/index.md)
+- [Command Reference](docs/reference/commands.md)
+- [Tag Expansion Reference](docs/reference/tag-expansion.md)
+- [Templates Customization Guide](docs/guides/templates-customization.md)
