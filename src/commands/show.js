@@ -29,6 +29,11 @@ async function showAction(options = {}) {
         // Pad to 4 digits for issue numbers like "0001"
         const paddedNumber = options.issue.toString().padStart(4, '0');
         const issueContent = await getIssue(paddedNumber);
+        
+        // Add a note that this is for reference only
+        output.info('⚠️ This output is for reference only. If you are working on tasks, use "issue-cards current" instead.');
+        output.blank();
+        
         output.raw(issueContent);
       } catch (error) {
         throw new IssueNotFoundError(options.issue)
@@ -44,6 +49,10 @@ async function showAction(options = {}) {
       throw new UserError('No open issues found')
         .withDisplayMessage('No open issues found.');
     }
+    
+    // Add a note that this is for reference only
+    output.info('⚠️ This output is for reference only. If you are working on tasks, use "issue-cards current" instead.');
+    output.blank();
     
     // Display the first (current) issue
     output.raw(issues[0].content);

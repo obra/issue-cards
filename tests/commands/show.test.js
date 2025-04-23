@@ -69,7 +69,10 @@ describe('Show command', () => {
       // Verify issue content was displayed
       expect(issueManager.getIssue).toHaveBeenCalledWith('0001');
       expect(mockOutput.raw).toHaveBeenCalledWith(mockContent);
-      expect(mockOutput._captured.stdout).toHaveLength(1);
+      
+      // Verify warning message was shown
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('for reference only'));
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('issue-cards current'));
     });
     
     test('throws error when issue not found', async () => {
@@ -141,7 +144,10 @@ describe('Show command', () => {
       // Verify first issue content was displayed (current issue)
       expect(issueManager.listIssues).toHaveBeenCalled();
       expect(mockOutput.raw).toHaveBeenCalledWith(mockIssues[0].content);
-      expect(mockOutput._captured.stdout).toHaveLength(1);
+      
+      // Verify warning message was shown
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('for reference only'));
+      expect(mockOutput.info).toHaveBeenCalledWith(expect.stringContaining('issue-cards current'));
     });
     
     test('throws error when no issues exist', async () => {
