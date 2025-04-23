@@ -14,7 +14,7 @@ Add descriptions directly within tag templates and improve discovery in onboardi
 
 ## Tasks
 - [x] Add one-line descriptions to all tag templates (unit-test, lint-and-commit, etc.)
-- [ ] Create helper to display available tags during onboarding
+- [x] Create helper to display available tags during onboarding
 - [ ] Update onboarding documentation to demonstrate tag usage workflows
 
 ## Instructions

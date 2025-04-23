@@ -37,6 +37,7 @@ Example tool usage patterns:
 
 - [Basic Usage](tool-examples/basic-usage.md) - Common tool operations and patterns
 - [Advanced Usage](tool-examples/advanced-usage.md) - Complex workflows and combinations
+- [Tag Templates](tool-examples/tag-templates.md) - Using standardized task workflows with tags
 - [Claude Integration](tool-examples/claude-integration.md) - Examples of Claude interaction patterns
 
 ## Using This Documentation

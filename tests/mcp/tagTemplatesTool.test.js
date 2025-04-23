@@ -1,8 +1,6 @@
 // ABOUTME: Tests the tag template discovery helper in onboardingTools.js
 // ABOUTME: Verifies functionality of getTagTemplatesWithDescriptions and mcp__availableTags
 
-const path = require('path');
-
 // Mock template functions
 jest.mock('../../src/utils/template', () => ({
   getTemplateList: jest.fn(),

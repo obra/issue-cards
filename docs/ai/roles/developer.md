@@ -68,3 +68,36 @@ As a developer using issue-cards, you'll be implementing tasks, documenting your
     }
   }
   ```
+
+- **Find available tag templates**: Use `mcp__availableTags` to discover standardized workflows
+  ```json
+  {
+    "tool": "mcp__availableTags",
+    "args": {}
+  }
+  ```
+
+## Working with Tag Templates
+
+Tag templates are standardized task workflows that expand into multiple steps when using the `+tag-name` syntax in task descriptions. When assigned a task with a tag template, you'll see the expanded steps that should be followed in order.
+
+### Common Developer Tag Templates
+
+- **+unit-test**: Test-Driven Development workflow
+  1. Write failing tests for the feature
+  2. Implement code to pass the tests 
+  3. Refactor while maintaining test coverage
+
+- **+e2e-test**: End-to-end testing workflow
+  1. Design test scenarios for the feature
+  2. Implement end-to-end tests
+  3. Implement the feature to pass tests
+  4. Verify test coverage is adequate
+
+- **+lint-and-commit**: Code quality workflow
+  1. Run linting tools on your changes
+  2. Fix any style or quality issues
+  3. Run tests to verify nothing is broken
+  4. Commit your changes with a descriptive message
+
+When completing tasks that use tag templates, make sure to follow the workflow steps in order for best results.
