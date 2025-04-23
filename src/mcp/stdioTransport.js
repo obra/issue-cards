@@ -3,6 +3,7 @@
 
 const { createInterface } = require('readline');
 const { getRegisteredTools } = require('./registration');
+const McpLogger = require('../utils/mcpLogger');
 
 /**
  * MCP Stdio transport for communicating over stdin/stdout
@@ -14,6 +15,8 @@ class StdioTransport {
    * 
    * @param {Object} options - Transport options
    * @param {boolean} [options.debug=false] - Enable debug logging
+   * @param {boolean} [options.logging=true] - Enable JSONL logging to temp file
+   * @param {string} [options.logPath] - Custom path for log file
    */
   constructor(options = {}) {
     this.tools = null;
@@ -33,6 +36,15 @@ class StdioTransport {
     this.shutdownRequested = false;
     this.clientCapabilities = null;
     this.protocolVersion = "2024-11-05"; // Previous MCP protocol version for backward compatibility
+    
+    // Initialize logger if enabled
+    this.logging = options.logging !== false;
+    if (this.logging) {
+      this.logger = McpLogger.getInstance({
+        logPath: options.logPath,
+        enabled: true
+      });
+    }
   }
 
   /**
@@ -121,6 +133,11 @@ class StdioTransport {
       this.readline = null;
     }
     
+    // Close logger if enabled
+    if (this.logging && this.logger) {
+      this.logger.close();
+    }
+    
     // Mark as not running
     this.isRunning = false;
     
@@ -143,6 +160,11 @@ class StdioTransport {
       // Parse the JSON-RPC message
       const message = JSON.parse(line);
       
+      // Log the raw input if logging is enabled
+      if (this.logging && this.logger) {
+        this.logger.logRequest(message);
+      }
+      
       // Check if this is a batch request (array of messages)
       if (Array.isArray(message)) {
         this.processBatchMessages(message);
@@ -153,6 +175,11 @@ class StdioTransport {
     } catch (error) {
       // Log parse errors to stderr
       this.logError(`Error parsing JSON-RPC message: ${error.message}`);
+      
+      // Log the error if logging is enabled
+      if (this.logging && this.logger) {
+        this.logger.logError(error, { rawInput: line });
+      }
       
       // Send parse error response if we have an ID
       if (line && typeof line === 'string') {
@@ -633,6 +660,16 @@ class StdioTransport {
       }
     } catch (error) {
       this.logError(`Error executing tool ${tool}: ${error.message}`);
+      
+      // Log the error if logging is enabled
+      if (this.logging && this.logger) {
+        this.logger.logError(error, {
+          tool,
+          args,
+          phase: 'tool_execution'
+        });
+      }
+      
       this.sendErrorResponse(id, -32603, 'Internal error', { 
         message: error.message,
         stack: error.stack
@@ -753,8 +790,18 @@ class StdioTransport {
       const json = JSON.stringify(message);
       this.logDebug(`Sending: ${json}`);
       this.stdout.write(json + '\n');
+      
+      // Log the response if logging is enabled and it's a response (has id)
+      if (this.logging && this.logger && (message.id !== undefined || message.error)) {
+        this.logger.logResponse(message);
+      }
     } catch (error) {
       this.logError(`Error sending message: ${error.message}`);
+      
+      // Log the error if logging is enabled
+      if (this.logging && this.logger) {
+        this.logger.logError(error, { messageAttempt: message });
+      }
     }
   }
 

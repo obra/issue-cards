@@ -9,6 +9,8 @@ const { registerMcpTools } = require('./registration');
  * 
  * @param {Object} options - Server options
  * @param {boolean} [options.debug] - Enable debug logging
+ * @param {boolean} [options.logging] - Enable JSONL logging to temp file
+ * @param {string} [options.logPath] - Custom path for log file
  * @returns {Promise<Object>} The transport instance
  */
 async function startStdioServer(options = {}) {
@@ -17,7 +19,9 @@ async function startStdioServer(options = {}) {
   
   // Create and start the transport
   const transport = new StdioTransport({
-    debug: options.debug || false
+    debug: options.debug || false,
+    logging: options.logging !== false,
+    logPath: options.logPath
   });
   
   // Define connect handler

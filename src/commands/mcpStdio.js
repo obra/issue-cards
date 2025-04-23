@@ -9,6 +9,8 @@ const { startStdioServer } = require('../mcp/stdioServer');
  * 
  * @param {Object} options - Command options
  * @param {boolean} [options.debug] - Enable debug logging
+ * @param {boolean} [options.log] - Enable JSONL logging to temp file
+ * @param {string} [options.logPath] - Custom path for log file
  * @returns {Promise<void>}
  */
 async function mcpStdioAction(options) {
@@ -16,9 +18,16 @@ async function mcpStdioAction(options) {
   // All logging should go to stderr
   
   // Start the stdio server
-  await startStdioServer({
-    debug: options.debug || false
+  const transport = await startStdioServer({
+    debug: options.debug || false,
+    logging: options.log !== false,
+    logPath: options.logPath
   });
+  
+  // If logging is enabled, print the log path to stderr
+  if (options.log !== false && transport.logging && transport.logger) {
+    process.stderr.write(`MCP logs being written to: ${transport.logger.logPath}\n`);
+  }
   
   // Process will keep running until killed
 }
@@ -34,6 +43,8 @@ function createCommand() {
   command
     .description('Start an MCP server using stdin/stdout transport')
     .option('--debug', 'Enable debug logging to stderr')
+    .option('--log', 'Enable JSONL logging to a temp file (default: true)')
+    .option('--log-path <path>', 'Specify custom path for the log file')
     .action(async (options) => {
       try {
         await mcpStdioAction(options);
@@ -60,6 +71,9 @@ Examples:
   
   # Start with debug logging
   $ issue-cards mcp-stdio --debug
+  
+  # Start with JSONL logging to a specific file
+  $ issue-cards mcp-stdio --log-path /path/to/mcp-logs.jsonl
 
 Usage Notes:
   - This command does not output anything to stdout, as that would interfere
