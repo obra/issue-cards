@@ -246,13 +246,19 @@ function loadRoleDoc(role) {
     const parsed = parseSections(markdown);
     
     // Extract relevant data for role documentation
+    // Handle various best practices section names
+    const bestPracticesSection = 
+      extractSection(parsed, 'Best Practices') || 
+      extractSection(parsed, 'General Best Practices') ||
+      extractSection(parsed, 'Task Implementation Best Practices');
+    
     return {
       title: parsed.title,
       description: extractSection(parsed, 'Introduction') || extractSection(parsed, 'Overview'),
       workflows: extractListItems(extractSection(parsed, 'Recommended Workflows')),
-      bestPractices: extractListItems(extractSection(parsed, 'Best Practices')),
-      toolUsageMap: extractSection(parsed, 'Tool Usage Map'),
-      toolExamples: extractJsonExamples(extractSection(parsed, 'Tool Usage Map'))
+      bestPractices: extractListItems(bestPracticesSection),
+      toolUsageMap: extractSection(parsed, 'Tool Usage Map') || extractSection(parsed, 'Developer Tool Usage Guide'),
+      toolExamples: extractJsonExamples(extractSection(parsed, 'Tool Usage Map') || extractSection(parsed, 'Developer Tool Usage Guide'))
     };
   } catch (error) {
     throw new Error(`Failed to load role documentation for '${role}': ${error.message}`);
