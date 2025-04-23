@@ -659,4 +659,40 @@ describe('StdioTransport', () => {
       expect(transport.processMessage).toHaveBeenCalledWith(request);
     });
   });
+  
+  describe('formatToolResponse', () => {
+    test('should add content field to responses', () => {
+      const response = {
+        success: true,
+        data: {
+          title: 'Test',
+          workflow: ['Item 1']
+        }
+      };
+      
+      const formattedResponse = transport.formatToolResponse(response);
+      
+      expect(formattedResponse).toHaveProperty('content');
+      expect(formattedResponse.content).toBeInstanceOf(Array);
+      expect(formattedResponse.content.length).toBe(1);
+      expect(formattedResponse.content[0]).toBe(JSON.stringify(response));
+      
+      // Original properties should be preserved
+      expect(formattedResponse.success).toBe(true);
+      expect(formattedResponse.data).toEqual(response.data);
+    });
+    
+    test('should leave responses with content field unchanged', () => {
+      const response = {
+        success: true,
+        data: { test: 'data' },
+        content: ['Original content']
+      };
+      
+      const formattedResponse = transport.formatToolResponse(response);
+      
+      expect(formattedResponse).toBe(response);
+      expect(formattedResponse.content).toEqual(['Original content']);
+    });
+  });
 });

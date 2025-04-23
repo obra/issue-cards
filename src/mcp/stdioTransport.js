@@ -331,7 +331,7 @@ class StdioTransport {
       
       // Handle get_tool_specs request - Claude CLI uses this method
       if (method === 'get_tool_specs') {
-        this.sendResponse(id, {
+        const toolSpecs = {
           tools: this.tools.map(tool => ({
             name: tool.name,
             description: tool.description || 'No description available',
@@ -351,7 +351,15 @@ class StdioTransport {
                 .map(param => param.name)
             }
           }))
-        });
+        };
+        
+        // Add content field for Claude CLI compatibility
+        const formattedResponse = {
+          ...toolSpecs,
+          content: [JSON.stringify(toolSpecs)]
+        };
+        
+        this.sendResponse(id, formattedResponse);
         return;
       }
       
@@ -383,7 +391,7 @@ class StdioTransport {
       
       // Handle tools/list request - Required by MCP spec
       if (method === 'tools/list') {
-        this.sendResponse(id, {
+        const toolsList = {
           tools: this.tools.map(tool => ({
             name: tool.name,
             description: tool.description || 'No description available',
@@ -403,7 +411,15 @@ class StdioTransport {
                 .map(param => param.name)
             }
           }))
-        });
+        };
+        
+        // Add content field for Claude CLI compatibility
+        const formattedResponse = {
+          ...toolsList,
+          content: [JSON.stringify(toolsList)]
+        };
+        
+        this.sendResponse(id, formattedResponse);
         return;
       }
       
@@ -599,14 +615,21 @@ class StdioTransport {
         // Execute the tool with validation
         const result = await implementation(args);
         
+        // Format the result to match Claude's expected format
+        // Claude CLI expects a result with a content field
+        const formattedResult = this.formatToolResponse(result);
+        
         // Send the response
-        this.sendResponse(id, result);
+        this.sendResponse(id, formattedResult);
       } else {
         // Use the implementation from the registered tool
         const result = await registeredTool.implementation(args);
         
+        // Format the result to match Claude's expected format
+        const formattedResult = this.formatToolResponse(result);
+        
         // Send the response
-        this.sendResponse(id, result);
+        this.sendResponse(id, formattedResult);
       }
     } catch (error) {
       this.logError(`Error executing tool ${tool}: ${error.message}`);
@@ -753,6 +776,28 @@ class StdioTransport {
    */
   logError(message) {
     this.stderr.write(`[ERROR] ${message}\n`);
+  }
+  
+  /**
+   * Format tool response to match Claude's expected format
+   * 
+   * @param {Object} result - Tool execution result
+   * @returns {Object} Formatted tool result for Claude
+   */
+  formatToolResponse(result) {
+    // If result already has a content field, return as is
+    if (result && result.content) {
+      return result;
+    }
+    
+    // For Claude CLI compatibility, create a content array
+    // containing a string representation of the original result
+    const formattedResult = {
+      ...result,
+      content: [JSON.stringify(result)]
+    };
+    
+    return formattedResult;
   }
 }
 
