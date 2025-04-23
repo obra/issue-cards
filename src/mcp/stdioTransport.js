@@ -387,7 +387,7 @@ class StdioTransport {
           tools: this.tools.map(tool => ({
             name: tool.name,
             description: tool.description || 'No description available',
-            schema: {
+            inputSchema: {
               type: 'object',
               properties: Object.fromEntries(
                 (tool.parameters || []).map(param => [

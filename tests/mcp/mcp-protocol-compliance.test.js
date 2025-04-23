@@ -127,7 +127,7 @@ describe('MCP Protocol Compliance', () => {
         expect.objectContaining({
           name: expect.any(String),
           description: expect.any(String),
-          schema: expect.any(Object)
+          inputSchema: expect.any(Object)
         })
       ])
     }));
