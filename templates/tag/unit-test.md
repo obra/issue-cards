@@ -1,5 +1,7 @@
 # unit-test
 
+> Test-Driven Development workflow that ensures proper unit testing before, during, and after implementation.
+
 ## Steps
 - Write failing unit tests for the functionality
 - Run the unit tests and verify they fail for the expected reason

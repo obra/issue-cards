@@ -1,5 +1,7 @@
 # e2e-test
 
+> End-to-end testing workflow that verifies functionality in the full application context.
+
 ## Steps
 - Write failing end-to-end test that verifies the expected behavior
 - Run the test and verify it fails correctly

@@ -88,11 +88,17 @@ Tags are stored in the `/templates/tag/` directory. Each tag is a markdown file.
 
 ### Tag Structure
 
-Tag templates are simple lists of tasks:
+Tag templates have a title, description, and list of steps:
 
 ```markdown
+# tag-name
+
+> A short, one-line description of what this tag does and when to use it.
+
+## Steps
 - First task
 - Second task
+- [ACTUAL TASK GOES HERE]
 - Third task
 ```
 
@@ -102,14 +108,22 @@ To create a custom tag:
 
 1. Create a new markdown file in `/templates/tag/` directory
 2. Name it appropriately (e.g., `my-tag.md`)
-3. Add a list of subtasks (one per line, prefixed with `-`)
-4. Use it with `#my-tag` in your tasks
+3. Add the tag name as a heading
+4. Add a one-line description using blockquote format (`>`) that explains what the tag does
+5. Include a "Steps" section with a list of steps (one per line, prefixed with `-`)
+6. Add `[ACTUAL TASK GOES HERE]` placeholder where the original task description should appear
+7. Use it with `#my-tag` in your tasks
 
 Example custom tag:
 
 ```markdown
+# component
+
+> Component development workflow that ensures consistent design, implementation, and documentation.
+
+## Steps
 - Design component structure
-- Implement component
+- [ACTUAL TASK GOES HERE]
 - Add styling
 - Write unit tests
 - Document props and usage

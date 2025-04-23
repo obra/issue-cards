@@ -213,8 +213,9 @@ Expands a task to include documentation updates.
 Each tag template must:
 
 1. Have a name matching the tag used (e.g., "unit-test" for the `+unit-test` tag)
-2. Contain a "Steps" section with steps listed as markdown list items
-3. Include the placeholder `[ACTUAL TASK GOES HERE]` where the original task description should be inserted
+2. Include a short description of the template's purpose after the name (using blockquote format)
+3. Contain a "Steps" section with steps listed as markdown list items
+4. Include the placeholder `[ACTUAL TASK GOES HERE]` where the original task description should be inserted
 
 Important requirements for using tag templates:
 

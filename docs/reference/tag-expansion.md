@@ -17,6 +17,8 @@ Each tag file follows this format:
 ```markdown
 # tag-name
 
+> A short, one-line description of what this tag does and when to use it.
+
 ## Steps
 - First step to perform
 - Second step to perform
@@ -30,10 +32,12 @@ Example tag file (`/templates/tag/unit-test.md`):
 ```markdown
 # unit-test
 
+> Test-Driven Development workflow that ensures proper unit testing before, during, and after implementation.
+
 ## Steps
 - Write failing unit tests for the functionality
 - Run the unit tests and verify they fail for the expected reason
-- Implement the functionality
+- [ACTUAL TASK GOES HERE]
 - Run unit tests and verify they now pass
 - Make sure test coverage meets project requirements
 ```
@@ -130,14 +134,17 @@ To create a custom tag:
 1. Create a new markdown file in `/templates/tag/` directory
 2. Name it appropriately (e.g., `my-tag.md`)
 3. Add the tag name as a heading
-4. Include a "Steps" section with a list of steps (one per line, prefixed with `-`)
-5. Add `[ACTUAL TASK GOES HERE]` placeholder where the original task description should appear
-6. Use it with `#my-tag` in your tasks
+4. Add a one-line description using blockquote format (`>`) that explains what the tag does
+5. Include a "Steps" section with a list of steps (one per line, prefixed with `-`)
+6. Add `[ACTUAL TASK GOES HERE]` placeholder where the original task description should appear
+7. Use it with `#my-tag` in your tasks
 
 ### Example Custom Tag
 
 ```markdown
 # code-review
+
+> Standardized code review workflow that ensures proper peer review and quality control.
 
 ## Steps
 - Create a pull request for the changes
