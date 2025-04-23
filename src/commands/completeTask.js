@@ -107,6 +107,11 @@ async function completeTaskAction(options = {}) {
     const updatedTasks = await extractTasks(updatedContent);
     const nextTask = findCurrentTask(updatedTasks);
     
+    // Add instruction for automatic task transition
+    if (nextTask) {
+      output.info(`➡️ Unless you have explicit instructions to the contrary, it is now time to work on the next task listed below`);
+    }
+    
     if (!nextTask) {
       // Close the issue by moving it to the closed directory
       await closeIssue(targetIssue.issueNumber);

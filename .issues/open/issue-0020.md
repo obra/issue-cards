@@ -14,7 +14,7 @@ Update the onboarding documentation and associated commands to provide role-spec
 
 ## Tasks
 - [x] Update PM role onboarding to include guidance on ticket creation best practices
-- [ ] Update Developer role onboarding to emphasize proper ticket/task usage
+- [x] Update Developer role onboarding to emphasize proper ticket/task usage
 - [ ] Add examples of role-specific commands in documentation
 - [ ] Implement onboarding documentation tests to verify role-specific content
 
