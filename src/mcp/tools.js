@@ -14,6 +14,13 @@ const {
   getIssue,
   closeIssue
 } = require('../utils/issueManager');
+const { 
+  isInitialized, 
+  createDirectoryStructure 
+} = require('../utils/directory');
+const { 
+  copyDefaultTemplates 
+} = require('../utils/templateInit');
 const {
   createValidationError,
   createNotFoundError,
@@ -679,6 +686,53 @@ const mcp__failure = withValidation('mcp__failure', async (args) => {
   return await mcp__logFailure(args);
 });
 
+/**
+ * Initialize issue tracking in the current project
+ * 
+ * @param {Object} args - Command arguments
+ * @returns {Promise<Object>} MCP result object
+ */
+const mcp__init = withValidation('mcp__init',
+  withErrorHandling(async (args) => {
+    try {
+      // Check if already initialized
+      const initialized = await isInitialized();
+      
+      if (initialized) {
+        return {
+          success: true,
+          data: {
+            initialized: false,
+            message: 'Issue tracking is already initialized in this project'
+          }
+        };
+      }
+      
+      // Create directory structure
+      await createDirectoryStructure();
+      
+      // Copy default templates
+      await copyDefaultTemplates();
+      
+      return {
+        success: true,
+        data: {
+          initialized: true,
+          message: 'Successfully initialized issue tracking system. Ready to create your first issue.'
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          type: 'InitError',
+          message: `Failed to initialize issue tracking: ${error.message}`
+        }
+      };
+    }
+  }, 'init')
+);
+
 module.exports = {
   mcp__listIssues,
   mcp__showIssue,
@@ -691,6 +745,7 @@ module.exports = {
   mcp__logFailure,
   mcp__listTemplates,
   mcp__showTemplate,
+  mcp__init,
   // Aliases
   mcp__complete,
   mcp__add,

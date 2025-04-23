@@ -4,6 +4,7 @@
 const { withValidation } = require('./validator');
 const { withErrorHandling, createValidationError } = require('./errorHandler');
 const { loadRoleDoc } = require('../utils/documentationParser');
+const { isInitialized } = require('../utils/directory');
 
 /**
  * Get onboarding information for project management workflows
@@ -38,7 +39,7 @@ const mcp__onboarding = withValidation('mcp__onboarding',
         });
       }
       
-      // Format the response
+      // Format the basic response
       const responseData = {
         title: roleDoc.title,
         description: roleDoc.description,
@@ -46,6 +47,21 @@ const mcp__onboarding = withValidation('mcp__onboarding',
         bestPractices: roleDoc.bestPractices,
         toolExamples: roleDoc.toolExamples || []
       };
+      
+      // Check if repository is initialized
+      let initialized = undefined;
+      try {
+        initialized = await isInitialized();
+        responseData.isInitialized = initialized;
+        
+        // If not initialized, add a message suggesting initialization
+        if (!initialized) {
+          responseData.initMessage = "This repository is not initialized for issue-cards. Run mcp__init first to initialize issue tracking before using other tools.";
+        }
+      } catch (initError) {
+        // If we can't check initialization status for some reason, add a warning
+        responseData.initMessage = "Unable to check if repository is initialized. You may need to run mcp__init before using other issue-cards tools.";
+      }
       
       // Return standard response - stdioTransport will add content field
       return {

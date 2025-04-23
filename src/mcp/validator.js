@@ -302,6 +302,13 @@ const schemas = {
     type: 'object',
     properties: {},
     additionalProperties: false
+  },
+  
+  // Schema for mcp__init
+  mcp__init: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
   }
 };
 
