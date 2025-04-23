@@ -785,16 +785,14 @@ class StdioTransport {
    * @returns {Object} Formatted tool result for Claude
    */
   formatToolResponse(result) {
-    // If result already has a content field, return as is
-    if (result && result.content) {
-      return result;
-    }
-    
-    // For Claude CLI compatibility, create a content array
-    // containing a string representation of the original result
+    // Most basic format that should work with Claude CLI
     const formattedResult = {
-      ...result,
-      content: [JSON.stringify(result)]
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result || {})
+        }
+      ]
     };
     
     return formattedResult;

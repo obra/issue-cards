@@ -47,6 +47,7 @@ const mcp__onboarding = withValidation('mcp__onboarding',
         toolExamples: roleDoc.toolExamples || []
       };
       
+      // Return standard response - stdioTransport will add content field
       return {
         success: true,
         data: responseData
@@ -72,12 +73,14 @@ const mcp__workflow = withValidation('mcp__workflow',
     if (!args.workflow) {
       const availableWorkflows = listWorkflows();
       
+      const responseData = {
+        title: "Available Workflows",
+        workflows: availableWorkflows
+      };
+      
       return {
         success: true,
-        data: {
-          title: "Available Workflows",
-          workflows: availableWorkflows
-        }
+        data: responseData
       };
     }
     
@@ -105,15 +108,17 @@ const mcp__workflow = withValidation('mcp__workflow',
         });
       }
       
+      const responseData = {
+        title: workflowDoc.title,
+        description: workflowDoc.description,
+        steps: formattedSteps,
+        exampleToolSequence: workflowDoc.exampleToolSequence,
+        tips: workflowDoc.tips
+      };
+      
       return {
         success: true,
-        data: {
-          title: workflowDoc.title,
-          description: workflowDoc.description,
-          steps: formattedSteps,
-          exampleToolSequence: workflowDoc.exampleToolSequence,
-          tips: workflowDoc.tips
-        }
+        data: responseData
       };
     } catch (error) {
       return createValidationError(`Unknown workflow: ${args.workflow}`);
