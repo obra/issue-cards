@@ -104,14 +104,16 @@ function parseSections(markdown) {
     sections: {}
   };
   
-  // Find all second-level headings (## Heading)
-  const sectionRegex = /^##\s+(.+?)$([\s\S]*?)(?=^##\s+|\s*$)/gm;
-  let match;
+  // Find all second-level headings (## Heading) and their content
+  // Using split on ## headers to ensure we capture all content between sections
+  const sections = markdown.split(/^##\s+/m).slice(1);
   
-  while ((match = sectionRegex.exec(markdown)) !== null) {
-    const sectionName = match[1].trim().toLowerCase();
-    // Remove the heading from the content and trim
-    let sectionContent = match[2].trim();
+  for (const section of sections) {
+    const titleEndIdx = section.indexOf('\n');
+    if (titleEndIdx === -1) continue;
+    
+    const sectionName = section.substring(0, titleEndIdx).trim().toLowerCase();
+    let sectionContent = section.substring(titleEndIdx + 1).trim();
     
     // Convert section name to camelCase for easier programmatic access
     const camelCaseName = sectionName
