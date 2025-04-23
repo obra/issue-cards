@@ -574,20 +574,40 @@ class StdioTransport {
     }
     
     try {
-      // Get the implementation
-      const implementation = require('./tools')[toolDef.name];
+      // Get access to all MCP tools
+      const { getRegisteredTools } = require('./registration');
+      const allTools = getRegisteredTools();
       
-      if (!implementation) {
-        return this.sendErrorResponse(id, -32603, 'Internal error', { 
-          details: `Tool implementation not found: ${tool}` 
-        });
+      // Find the tool with implementation
+      const registeredTool = allTools.find(t => t.name === tool);
+      
+      if (!registeredTool || !registeredTool.implementation) {
+        // Fallback to direct requires if not found
+        let implementation = require('./tools')[toolDef.name];
+        
+        // If not found in tools.js, check onboardingTools.js
+        if (!implementation) {
+          implementation = require('./onboardingTools')[toolDef.name];
+        }
+        
+        if (!implementation) {
+          return this.sendErrorResponse(id, -32603, 'Internal error', { 
+            details: `Tool implementation not found: ${tool}` 
+          });
+        }
+        
+        // Execute the tool with validation
+        const result = await implementation(args);
+        
+        // Send the response
+        this.sendResponse(id, result);
+      } else {
+        // Use the implementation from the registered tool
+        const result = await registeredTool.implementation(args);
+        
+        // Send the response
+        this.sendResponse(id, result);
       }
-      
-      // Execute the tool with validation
-      const result = await implementation(args);
-      
-      // Send the response
-      this.sendResponse(id, result);
     } catch (error) {
       this.logError(`Error executing tool ${tool}: ${error.message}`);
       this.sendErrorResponse(id, -32603, 'Internal error', { 
