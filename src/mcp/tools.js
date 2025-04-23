@@ -57,9 +57,14 @@ const mcp__listIssues = withValidation('mcp__listIssues',
   withErrorHandling(async (args) => {
     const issues = await getIssues(args.state);
     
+    // Add workflow guidance to the response
     return {
       success: true,
-      data: issues
+      data: issues,
+      workflowGuidance: {
+        message: "IMPORTANT: After selecting an issue to work on, use mcp__getCurrentTask to get your current task rather than trying to implement all tasks at once.",
+        recommendedWorkflow: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark it complete and receive the next task."
+      }
     };
   }, 'listIssues')
 );
@@ -76,9 +81,29 @@ const mcp__showIssue = withValidation('mcp__showIssue', async (args) => {
     // Get issue details
     const issue = await getIssueByNumber(args.issueNumber);
     
+    // Extract tasks and find the current one
+    const tasks = await extractTasks(issue.content);
+    const currentTask = findCurrentTask(tasks);
+    
+    // Add task processing guidance to the response
+    const response = {
+      ...issue,
+      taskGuidance: "IMPORTANT: To implement tasks from this issue, use mcp__getCurrentTask to focus on ONE task at a time rather than trying to implement all tasks at once. Working on one task at a time ensures proper tracking and step-by-step progress.",
+      workflowTip: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark the task complete and receive the next task."
+    };
+    
+    // If there's a current task, include information about it
+    if (currentTask) {
+      response.currentTaskInfo = {
+        id: currentTask.id,
+        description: currentTask.text,
+        message: "Use mcp__getCurrentTask to focus on implementing this specific task."
+      };
+    }
+    
     return {
       success: true,
-      data: issue
+      data: response
     };
   } catch (error) {
     return createNotFoundError('Issue', args.issueNumber);
