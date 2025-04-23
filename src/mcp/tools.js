@@ -120,6 +120,12 @@ const mcp__getCurrentTask = withValidation('mcp__getCurrentTask',
       response.context = currentTask.contextData;
     }
     
+    // Add explicit instructions to focus only on the current task
+    if (currentTask) {
+      response.taskGuidance = "Important: Please focus ONLY on completing this specific task. Do not work on any other tasks or future tasks until this task is complete and marked as completed.";
+      response.nextSteps = "Please review the task description and implement only this specific task. When complete, use mcp__completeTask to mark it finished and receive your next task.";
+    }
+    
     return {
       success: true,
       data: response
@@ -310,11 +316,17 @@ const mcp__completeTask = withValidation('mcp__completeTask',
       responseData.nextTask = null;
       responseData.issueCompleted = true;
     } else {
-      // There's a next task, include it in the response
+      // There's a next task, include it in the response with clear instructions
       responseData.nextTask = {
         id: nextTask.id,
         description: nextTask.text
       };
+      
+      // Add explicit instruction to focus only on the next task
+      responseData.taskGuidance = "Important: Please focus ONLY on completing this specific task. Do not work on any other tasks or future tasks until this task is complete and marked as completed.";
+      
+      // Add an explicit next step instruction
+      responseData.nextSteps = "Please review the task description and implement only this specific task. When complete, use mcp__completeTask to mark it finished and receive your next task.";
       
       // Get the issue content to extract context
       const issueContent = await getIssue(currentIssue.issueNumber);
