@@ -32,7 +32,7 @@ class StdioTransport {
     this.initialized = false;
     this.shutdownRequested = false;
     this.clientCapabilities = null;
-    this.protocolVersion = "2025-03-26"; // Latest MCP protocol version
+    this.protocolVersion = "2024-11-05"; // Previous MCP protocol version for backward compatibility
   }
 
   /**
@@ -368,16 +368,9 @@ class StdioTransport {
           capabilities: {
             tools: {
               supported: true
-            },
-            async_tools: {
-              supported: false
-            },
-            resources: {
-              supported: false
-            },
-            prompts: {
-              supported: false
             }
+            // Note: async_tools, resources, and prompts are 2025-03-26 features
+            // Omitting them for 2024-11-05 compatibility
           },
           serverInfo: {
             name: 'issue-cards-mcp',

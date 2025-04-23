@@ -71,7 +71,7 @@ describe('MCP Protocol Compliance', () => {
       id: 'init',
       method: 'initialize',
       params: {
-        protocolVersion: '2025-03-26',
+        protocolVersion: '2024-11-05',
         capabilities: {},
         clientInfo: {
           name: 'TestClient',
@@ -83,7 +83,7 @@ describe('MCP Protocol Compliance', () => {
     await transport.handleRequest(request);
     
     expect(transport.sendResponse).toHaveBeenCalledWith('init', expect.objectContaining({
-      protocolVersion: '2025-03-26',
+      protocolVersion: '2024-11-05',
       capabilities: expect.objectContaining({
         tools: expect.any(Object)
       }),
