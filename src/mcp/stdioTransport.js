@@ -65,21 +65,39 @@ class StdioTransport {
     // Mark as running
     this.isRunning = true;
     
-    // Send server info
+    // Log startup to stderr
+    this.logDebug('MCP stdio server started');
+    
+    // In MCP 2025-03-26, we should wait for client to send initialize request
+    // For backward compatibility with Claude CLI, we also send server/info
+    // This dual approach ensures we work with both standard MCP clients
+    // and with the Claude CLI
     this.sendNotification('server/info', {
       name: 'issue-cards-mcp',
       version: require('../../package.json').version,
       capabilities: {
+        // For backward compatibility with our tests
         tools: Array.isArray(this.tools) ? this.tools.map(tool => ({
           name: tool.name,
           description: tool.description,
           parameters: tool.parameters
-        })) : []
+        })) : [],
+        // New MCP format
+        protocol_version: this.protocolVersion,
+        tools_support: {
+          supported: true
+        },
+        async_tools: {
+          supported: false
+        },
+        resources: {
+          supported: false
+        },
+        prompts: {
+          supported: false
+        }
       }
     });
-    
-    // Log startup to stderr
-    this.logDebug('MCP stdio server started');
     
     // Call connect handler if provided
     if (typeof this.onConnect === 'function') {
@@ -286,11 +304,26 @@ class StdioTransport {
           name: 'issue-cards-mcp',
           version: require('../../package.json').version,
           capabilities: {
+            // For backward compatibility with our tests
             tools: this.tools.map(tool => ({
               name: tool.name,
               description: tool.description,
               parameters: tool.parameters
-            }))
+            })),
+            // New MCP format
+            protocol_version: this.protocolVersion,
+            tools_support: {
+              supported: true
+            },
+            async_tools: {
+              supported: false
+            },
+            resources: {
+              supported: false
+            },
+            prompts: {
+              supported: false
+            }
           }
         });
         return;
@@ -329,10 +362,10 @@ class StdioTransport {
           this.clientCapabilities = params.capabilities;
         }
         
-        // Send back server capabilities
+        // Send back server capabilities matching expected field names
         this.sendResponse(id, {
+          protocolVersion: this.protocolVersion,
           capabilities: {
-            protocol_version: "2025-03-26",
             tools: {
               supported: true
             },
@@ -346,7 +379,7 @@ class StdioTransport {
               supported: false
             }
           },
-          info: {
+          serverInfo: {
             name: 'issue-cards-mcp',
             version: require('../../package.json').version,
             description: 'Issue Cards MCP Server'
