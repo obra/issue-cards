@@ -112,6 +112,9 @@ describe('Current command', () => {
       // Check for specific content in the calls
       expect(outputManager.section).toHaveBeenCalledWith(expect.stringContaining('TASK'), expect.any(String));
       expect(outputManager.section).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('First task'));
+      
+      // Verify instruction message was output
+      expect(outputManager.info).toHaveBeenCalledWith(expect.stringContaining('Unless you have explicit instructions to the contrary'));
     });
     
     test('throws error when no open issues exist', async () => {

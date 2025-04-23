@@ -136,6 +136,9 @@ async function currentAction() {
     // Use the shared task display utility
     displayTaskWithContext(currentTask, context, expandedSteps, { headerPrefix: 'CURRENT' });
     
+    // Add instruction to work on the task
+    output.info('➡️ Unless you have explicit instructions to the contrary, it is now time to work on the task listed above');
+    
     // Show upcoming tasks (excluding the current task)
     const upcomingTasks = tasks
       .filter(task => task.index > currentTask.index)
