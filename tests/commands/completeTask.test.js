@@ -211,9 +211,10 @@ describe('Complete Task command', () => {
       expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('All tasks complete'));
       expect(outputManager.success).toHaveBeenCalledWith(expect.stringContaining('Issue #0001 has been closed'));
       
-      // Verify info message was shown
-      expect(outputManager.info).toHaveBeenCalledTimes(2);
-      expect(outputManager.info).toHaveBeenNthCalledWith(1, expect.stringContaining('Would you like to work on another issue?'));
+      // Verify info messages were shown
+      expect(outputManager.info).toHaveBeenCalledTimes(3);
+      expect(outputManager.info).toHaveBeenCalledWith(expect.stringContaining('Unless you have explicit instructions to the contrary'));
+      expect(outputManager.info).toHaveBeenCalledWith(expect.stringContaining('Would you like to work on another issue?'));
     });
     
     test('shows error when no open issues exist', async () => {

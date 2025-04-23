@@ -148,6 +148,7 @@ async function completeTaskAction(options = {}) {
       
       output.success(`🎉 All tasks complete! Issue #${targetIssue.issueNumber} has been closed.`);
       output.blank();
+      output.info('➡️ Unless you have explicit instructions to the contrary, you should now choose another issue to work on');
       output.info('Would you like to work on another issue? Run:');
       output.info('  issue-cards list');
     } else {
