@@ -240,13 +240,17 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    expect(response.result).toHaveProperty('success', true);
-    expect(response.result).toHaveProperty('data');
-    expect(response.result.data).toHaveProperty('issueNumber', '0001');
-    expect(response.result.data).toHaveProperty('title', 'Test Issue');
-    expect(response.result.data).toHaveProperty('content');
-    expect(response.result.data.content).toContain('Problem to be solved');
-    expect(response.result.data.content).toContain('This is a test problem');
+    // Parse the content field which contains the actual tool response
+    const content = response.result.content[0].text;
+    const parsedContent = JSON.parse(content);
+    
+    expect(parsedContent).toHaveProperty('success', true);
+    expect(parsedContent).toHaveProperty('data');
+    expect(parsedContent.data).toHaveProperty('issueNumber', '0001');
+    expect(parsedContent.data).toHaveProperty('title', 'Test Issue');
+    expect(parsedContent.data).toHaveProperty('content');
+    expect(parsedContent.data.content).toContain('Problem to be solved');
+    expect(parsedContent.data.content).toContain('This is a test problem');
   });
   
   test('should get current task with mcp__getCurrentTask tool', async () => {
@@ -273,12 +277,16 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    expect(response.result).toHaveProperty('success', true);
-    expect(response.result).toHaveProperty('data');
-    expect(response.result.data).toHaveProperty('issueNumber', '0001');
-    expect(response.result.data).toHaveProperty('issueTitle', 'Test Issue');
-    expect(response.result.data).toHaveProperty('taskId');
-    expect(response.result.data).toHaveProperty('description', 'Test task 1');
+    // Parse the content field which contains the actual tool response
+    const content = response.result.content[0].text;
+    const parsedContent = JSON.parse(content);
+    
+    expect(parsedContent).toHaveProperty('success', true);
+    expect(parsedContent).toHaveProperty('data');
+    expect(parsedContent.data).toHaveProperty('issueNumber', '0001');
+    expect(parsedContent.data).toHaveProperty('issueTitle', 'Test Issue');
+    expect(parsedContent.data).toHaveProperty('taskId');
+    expect(parsedContent.data).toHaveProperty('description', 'Test task 1');
   });
   
   test('should add task with mcp__addTask tool', async () => {
@@ -308,8 +316,12 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    expect(response.result).toHaveProperty('success', true);
-    expect(response.result).toHaveProperty('data');
+    // Parse the content field which contains the actual tool response
+    const content = response.result.content[0].text;
+    const parsedContent = JSON.parse(content);
+    
+    expect(parsedContent).toHaveProperty('success', true);
+    expect(parsedContent).toHaveProperty('data');
     
     // Verify task was added by getting the issue
     const showRequestId = 6;
@@ -331,8 +343,12 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const showResponse = await server.waitForResponse(showRequestId);
     
     expect(showResponse).toBeDefined();
-    expect(showResponse.result).toHaveProperty('success', true);
-    expect(showResponse.result.data.content).toContain('New test task');
+    // Parse the content field which contains the actual tool response
+    const showContent = showResponse.result.content[0].text;
+    const parsedShowContent = JSON.parse(showContent);
+    
+    expect(parsedShowContent).toHaveProperty('success', true);
+    expect(parsedShowContent.data.content).toContain('New test task');
   });
   
   test('should complete task with mcp__completeTask tool', async () => {
@@ -359,11 +375,15 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    expect(response.result).toHaveProperty('success', true);
-    expect(response.result).toHaveProperty('data');
-    expect(response.result.data).toHaveProperty('taskCompleted', 'Test task 1');
-    expect(response.result.data).toHaveProperty('nextTask');
-    expect(response.result.data.nextTask).toHaveProperty('description', 'Test task 2');
+    // Parse the content field which contains the actual tool response
+    const content = response.result.content[0].text;
+    const parsedContent = JSON.parse(content);
+    
+    expect(parsedContent).toHaveProperty('success', true);
+    expect(parsedContent).toHaveProperty('data');
+    expect(parsedContent.data).toHaveProperty('taskCompleted', 'Test task 1');
+    expect(parsedContent.data).toHaveProperty('nextTask');
+    expect(parsedContent.data.nextTask).toHaveProperty('description', 'Test task 2');
   });
   
   test('should add question with mcp__addQuestion tool', async () => {
@@ -392,7 +412,11 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    expect(response.result).toHaveProperty('success', true);
+    // Parse the content field which contains the actual tool response
+    const content = response.result.content[0].text;
+    const parsedContent = JSON.parse(content);
+    
+    expect(parsedContent).toHaveProperty('success', true);
     
     // Verify question was added by getting the issue
     const showRequestId = 9;
@@ -414,8 +438,12 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const showResponse = await server.waitForResponse(showRequestId);
     
     expect(showResponse).toBeDefined();
-    expect(showResponse.result).toHaveProperty('success', true);
-    expect(showResponse.result.data.content).toContain('Test question?');
+    // Parse the content field which contains the actual tool response
+    const showContent = showResponse.result.content[0].text;
+    const parsedShowContent = JSON.parse(showContent);
+    
+    expect(parsedShowContent).toHaveProperty('success', true);
+    expect(parsedShowContent.data.content).toContain('Test question?');
   });
   
   test('should handle method not found error', async () => {
@@ -467,14 +495,18 @@ runOrSkip('MCP Stdio Server - Comprehensive', () => {
     const response = await server.waitForResponse(requestId);
     
     expect(response).toBeDefined();
-    // The format varies based on implementation, could be in error or in result
+    // The format varies based on implementation, could be in error or in result with content
     if (response.error) {
       expect(response.error).toBeDefined();
-    } else if (response.result) {
-      expect(response.result).toHaveProperty('success', false);
-      expect(response.result).toHaveProperty('error');
+    } else if (response.result && response.result.content) {
+      // Parse the content field which contains the actual tool response
+      const content = response.result.content[0].text;
+      const parsedContent = JSON.parse(content);
+      
+      expect(parsedContent).toHaveProperty('success', false);
+      expect(parsedContent).toHaveProperty('error');
     } else {
-      fail('Response should contain either error or result with error');
+      fail('Response should contain either error or result with content field containing error');
     }
   });
 });

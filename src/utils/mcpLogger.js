@@ -141,15 +141,18 @@ class McpLogger {
     if (!this.enabled || !this.writeStream) return;
     
     try {
-      const logEntry = {
-        type: 'message',
-        level,
-        timestamp: new Date().toISOString(),
-        message,
-        context
-      };
-      
-      this.writeStream.write(JSON.stringify(logEntry) + '\n');
+      // Check if the stream is still writable
+      if (this.writeStream.writable && !this.writeStream.closed && !this.writeStream.destroyed) {
+        const logEntry = {
+          type: 'message',
+          level,
+          timestamp: new Date().toISOString(),
+          message,
+          context
+        };
+        
+        this.writeStream.write(JSON.stringify(logEntry) + '\n');
+      }
     } catch (err) {
       // Cannot use console.error as it would write to stderr, interfering with MCP protocol
       // Just silently fail
@@ -160,21 +163,29 @@ class McpLogger {
    * Close the log file
    */
   close() {
-    if (this.writeStream) {
-      try {
-        // Write footer with metadata
-        const footer = {
-          type: 'meta',
-          event: 'shutdown',
-          timestamp: new Date().toISOString()
-        };
-        
-        this.writeStream.write(JSON.stringify(footer) + '\n');
-        this.writeStream.end();
-      } catch (error) {
-        // Cannot use console.error in stdio mode
-        // Just silently fail
+    if (!this.enabled || !this.writeStream) return;
+    
+    try {
+      // Write footer with metadata
+      const footer = {
+        type: 'meta',
+        event: 'shutdown',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Get a local reference before nullifying
+      const stream = this.writeStream;
+      this.writeStream = null;
+      this.enabled = false;
+      
+      // Write footer and close using the local reference
+      if (stream && stream.writable && !stream.closed && !stream.destroyed) {
+        stream.write(JSON.stringify(footer) + '\n');
+        stream.end();
       }
+    } catch (error) {
+      // Cannot use console.error in stdio mode
+      // Just silently fail
     }
   }
   

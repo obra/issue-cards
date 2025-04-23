@@ -73,13 +73,13 @@ describe('MCP Tools', () => {
       
       // Call the function and verify the result
       const result = await mcp__listIssues({ state: 'all' });
-      expect(result).toEqual({
-        success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({ issueNumber: '0001' }),
-          expect.objectContaining({ issueNumber: '0002' })
-        ])
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ issueNumber: '0001' }),
+        expect.objectContaining({ issueNumber: '0002' })
+      ]));
+      // Check that workflowGuidance is present
+      expect(result.workflowGuidance).toBeDefined();
     });
     
     it('should filter issues by state when specified', async () => {
@@ -89,12 +89,12 @@ describe('MCP Tools', () => {
       
       // Call the function with state=open and verify the result
       const result = await mcp__listIssues({ state: 'open' });
-      expect(result).toEqual({
-        success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({ issueNumber: '0001', state: 'open' })
-        ])
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ issueNumber: '0001', state: 'open' })
+      ]));
+      // Check that workflowGuidance is present
+      expect(result.workflowGuidance).toBeDefined();
       
       // Verify getIssues was called with the correct state
       expect(require('../../src/utils/issueManager').getIssues).toHaveBeenCalledWith('open');

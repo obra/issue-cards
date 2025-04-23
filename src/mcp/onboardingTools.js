@@ -5,6 +5,46 @@ const { withValidation } = require('./validator');
 const { withErrorHandling, createValidationError } = require('./errorHandler');
 const { loadRoleDoc } = require('../utils/documentationParser');
 const { isInitialized } = require('../utils/directory');
+const { loadTemplate, getTemplateList } = require('../utils/template');
+
+/**
+ * Get available tag templates with their descriptions
+ * 
+ * @returns {Promise<Array<{name: string, description: string}>>} Array of tag templates with descriptions
+ */
+async function getTagTemplatesWithDescriptions() {
+  try {
+    // Get list of available tag templates
+    const tagNames = await getTemplateList('tag');
+    
+    // Load each template and extract its description
+    const templatesWithDescriptions = await Promise.all(tagNames.map(async (name) => {
+      try {
+        const content = await loadTemplate(name, 'tag');
+        
+        // Extract description from the content (after the title and before the steps section)
+        const descriptionMatch = content.match(/^#\s+.*?\n\n>\s+(.*?)\n\n##\s+Steps/s);
+        const description = descriptionMatch ? descriptionMatch[1].trim() : 'No description available';
+        
+        return {
+          name,
+          description
+        };
+      } catch (error) {
+        // Return template name without description if loading fails
+        return {
+          name,
+          description: 'Description unavailable'
+        };
+      }
+    }));
+    
+    return templatesWithDescriptions;
+  } catch (error) {
+    console.error('Error getting tag templates:', error);
+    return [];
+  }
+}
 
 /**
  * Get onboarding information for project management workflows
@@ -39,13 +79,17 @@ const mcp__onboarding = withValidation('mcp__onboarding',
         });
       }
       
+      // Get available tag templates with descriptions
+      const tagTemplates = await getTagTemplatesWithDescriptions();
+      
       // Format the basic response
       const responseData = {
         title: roleDoc.title,
         description: roleDoc.description,
         workflows: workflows,
         bestPractices: roleDoc.bestPractices,
-        toolExamples: roleDoc.toolExamples || []
+        toolExamples: roleDoc.toolExamples || [],
+        tagTemplates: tagTemplates // Add the tag templates to the response
       };
       
       // Check if repository is initialized
@@ -181,10 +225,48 @@ const mcp__reviewer = withValidation('mcp__reviewer',
   }, 'reviewerOnboarding')
 );
 
+/**
+ * Get available tag templates with descriptions
+ * 
+ * @param {Object} args - Command arguments (unused, kept for consistency)
+ * @returns {Promise<Object>} MCP result object with tag templates and descriptions
+ */
+const mcp__availableTags = withValidation('mcp__availableTags',
+  withErrorHandling(async (args) => {
+    try {
+      const tagTemplates = await getTagTemplatesWithDescriptions();
+      
+      return {
+        success: true,
+        data: {
+          title: "Available Tag Templates",
+          description: "These tag templates can be used to add standardized workflows to tasks using the '+tag-name' syntax at the end of a task.",
+          tagTemplates: tagTemplates,
+          usage: {
+            example: "Add authentication to login page +unit-test",
+            description: "Adding +unit-test to a task will automatically expand it to include Test-Driven Development steps"
+          }
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          type: 'Error',
+          message: `Failed to retrieve tag templates: ${error.message}`
+        }
+      };
+    }
+  }, 'availableTags')
+);
+
 module.exports = {
   mcp__onboarding,
   mcp__workflow,
   mcp__pm,
   mcp__dev,
-  mcp__reviewer
+  mcp__reviewer,
+  mcp__availableTags,
+  // For testing
+  getTagTemplatesWithDescriptions
 };

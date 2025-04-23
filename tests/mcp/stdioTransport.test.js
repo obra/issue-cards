@@ -675,24 +675,28 @@ describe('StdioTransport', () => {
       expect(formattedResponse).toHaveProperty('content');
       expect(formattedResponse.content).toBeInstanceOf(Array);
       expect(formattedResponse.content.length).toBe(1);
-      expect(formattedResponse.content[0]).toBe(JSON.stringify(response));
+      expect(formattedResponse.content[0]).toHaveProperty('text', JSON.stringify(response));
+      expect(formattedResponse.content[0]).toHaveProperty('type', 'text');
       
       // Original properties should be preserved
       expect(formattedResponse.success).toBe(true);
       expect(formattedResponse.data).toEqual(response.data);
     });
     
-    test('should leave responses with content field unchanged', () => {
+    test('should preserve original properties while adding content field', () => {
       const response = {
         success: true,
         data: { test: 'data' },
-        content: ['Original content']
+        workflowGuidance: { message: 'Test guidance' }
       };
       
       const formattedResponse = transport.formatToolResponse(response);
       
-      expect(formattedResponse).toBe(response);
-      expect(formattedResponse.content).toEqual(['Original content']);
+      expect(formattedResponse).not.toBe(response); // Should be a new object
+      expect(formattedResponse.content[0].text).toBe(JSON.stringify(response));
+      expect(formattedResponse.success).toBe(true);
+      expect(formattedResponse.data).toEqual(response.data);
+      expect(formattedResponse.workflowGuidance).toEqual(response.workflowGuidance);
     });
   });
 });

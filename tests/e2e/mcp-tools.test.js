@@ -145,15 +145,15 @@ describe('MCP Tools E2E', () => {
       const { mcp__listIssues } = require('../../src/mcp/tools');
       const result = await mcp__listIssues({ state: 'open' });
       
-      expect(result).toEqual({
-        success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            issueNumber: '0001',
-            title: expect.stringContaining('Test Issue')
-          })
-        ])
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          issueNumber: '0001',
+          title: expect.stringContaining('Test Issue')
+        })
+      ]));
+      // Check that workflow guidance is present
+      expect(result.workflowGuidance).toBeDefined();
     });
     
     it('should validate arguments', async () => {

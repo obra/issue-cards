@@ -309,6 +309,13 @@ const schemas = {
     type: 'object',
     properties: {},
     additionalProperties: false
+  },
+  
+  // Schema for mcp__availableTags
+  mcp__availableTags: {
+    type: 'object',
+    properties: {},
+    additionalProperties: false
   }
 };
 

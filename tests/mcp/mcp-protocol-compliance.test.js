@@ -107,8 +107,11 @@ describe('MCP Protocol Compliance', () => {
     await transport.handleNotification(notification);
     
     expect(transport.initialized).toBe(true);
-    expect(mockStderr.write).toHaveBeenCalled();
-    expect(mockStderr.write.mock.calls.some(call => call[0].includes('Client initialized'))).toBe(true);
+    // In debug mode, expect debug logs to be printed
+    if (transport.debug) {
+      expect(mockStderr.write).toHaveBeenCalled();
+      expect(mockStderr.write.mock.calls.some(call => call[0].includes('Client initialized'))).toBe(true);
+    }
   });
   
   test('should handle tools/list request', async () => {
@@ -262,9 +265,12 @@ describe('MCP Protocol Compliance', () => {
     
     await transport.handleNotification(notification);
     
-    expect(mockStderr.write).toHaveBeenCalled();
-    expect(mockStderr.write.mock.calls.some(call => 
-      call[0].includes('Request cancellation received for id: 123')
-    )).toBe(true);
+    // In debug mode, expect debug logs to be printed
+    if (transport.debug) {
+      expect(mockStderr.write).toHaveBeenCalled();
+      expect(mockStderr.write.mock.calls.some(call => 
+        call[0].includes('Request cancellation received for id: 123')
+      )).toBe(true);
+    }
   });
 });
