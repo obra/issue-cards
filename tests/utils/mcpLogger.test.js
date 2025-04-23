@@ -18,7 +18,15 @@ jest.mock('fs', () => {
   };
 });
 
+// Spy on console.error and disable it for tests
+const originalConsoleError = console.error;
+console.error = jest.fn();
+
 describe('McpLogger', () => {
+  // Restore console.error after tests
+  afterAll(() => {
+    console.error = originalConsoleError;
+  });
   let logger;
   let customLogPath;
   
@@ -141,5 +149,15 @@ describe('McpLogger', () => {
     const instance2 = McpLogger.getInstance();
     
     expect(instance1).toBe(instance2);
+  });
+  
+  it('should log generic messages', () => {
+    logger.logMessage('info', 'Test message', { source: 'unittest' });
+    
+    const lastCall = logger.writeStream.write.mock.calls[1][0];
+    expect(lastCall).toContain('"type":"message"');
+    expect(lastCall).toContain('"level":"info"');
+    expect(lastCall).toContain('"message":"Test message"');
+    expect(lastCall).toContain('"source":"unittest"');
   });
 });

@@ -24,10 +24,9 @@ async function mcpStdioAction(options) {
     logPath: options.logPath
   });
   
-  // If logging is enabled, print the log path to stderr
-  if (options.log !== false && transport.logging && transport.logger) {
-    process.stderr.write(`MCP logs being written to: ${transport.logger.logPath}\n`);
-  }
+  // When logging is enabled, we cannot write to stderr as that would interfere with MCP protocol
+  // Instead we'll rely on the log file itself to contain the path information in its header
+  // No output is generated to stderr
   
   // Process will keep running until killed
 }

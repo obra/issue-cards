@@ -806,23 +806,29 @@ class StdioTransport {
   }
 
   /**
-   * Log a debug message to stderr
+   * Log a debug message
    * 
    * @param {string} message - Debug message
    */
   logDebug(message) {
-    if (this.debug) {
-      this.stderr.write(`[DEBUG] ${message}\n`);
+    // In stdio mode, we can't write to stderr as it would interfere with MCP protocol
+    // Instead, if logging is enabled, we write to the log file
+    if (this.logging && this.logger) {
+      this.logger.logMessage('debug', message);
     }
   }
 
   /**
-   * Log an error message to stderr
+   * Log an error message
    * 
    * @param {string} message - Error message
    */
   logError(message) {
-    this.stderr.write(`[ERROR] ${message}\n`);
+    // In stdio mode, we can't write to stderr as it would interfere with MCP protocol
+    // Instead, if logging is enabled, we write to the log file
+    if (this.logging && this.logger) {
+      this.logger.logMessage('error', message);
+    }
   }
   
   /**

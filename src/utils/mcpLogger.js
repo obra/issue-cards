@@ -46,12 +46,14 @@ class McpLogger {
         version: require('../../package.json').version,
         pid: process.pid,
         platform: os.platform(),
-        node: process.version
+        node: process.version,
+        logPath: this.logPath // Include log path in the log itself for reference
       };
       
       this.writeStream.write(JSON.stringify(header) + '\n');
     } catch (error) {
-      console.error(`[MCP Logger] Failed to initialize log file: ${error.message}`);
+      // Cannot use console.error in stdio mode as it would write to stderr
+      // Just disable logging silently
       this.enabled = false;
     }
   }
@@ -73,7 +75,8 @@ class McpLogger {
       
       this.writeStream.write(JSON.stringify(logEntry) + '\n');
     } catch (error) {
-      console.error(`[MCP Logger] Failed to log request: ${error.message}`);
+      // Cannot use console.error in stdio mode
+      // Just silently fail
     }
   }
   
@@ -94,7 +97,8 @@ class McpLogger {
       
       this.writeStream.write(JSON.stringify(logEntry) + '\n');
     } catch (error) {
-      console.error(`[MCP Logger] Failed to log response: ${error.message}`);
+      // Cannot use console.error in stdio mode
+      // Just silently fail
     }
   }
   
@@ -121,7 +125,34 @@ class McpLogger {
       
       this.writeStream.write(JSON.stringify(logEntry) + '\n');
     } catch (err) {
-      console.error(`[MCP Logger] Failed to log error: ${err.message}`);
+      // Cannot use console.error as it would write to stderr, interfering with MCP protocol
+      // Just silently fail
+    }
+  }
+  
+  /**
+   * Log a general message
+   * 
+   * @param {string} level - Message level (info, debug, error, etc.)
+   * @param {string} message - The message to log
+   * @param {Object} [context] - Additional context information
+   */
+  logMessage(level, message, context = {}) {
+    if (!this.enabled || !this.writeStream) return;
+    
+    try {
+      const logEntry = {
+        type: 'message',
+        level,
+        timestamp: new Date().toISOString(),
+        message,
+        context
+      };
+      
+      this.writeStream.write(JSON.stringify(logEntry) + '\n');
+    } catch (err) {
+      // Cannot use console.error as it would write to stderr, interfering with MCP protocol
+      // Just silently fail
     }
   }
   
@@ -141,7 +172,8 @@ class McpLogger {
         this.writeStream.write(JSON.stringify(footer) + '\n');
         this.writeStream.end();
       } catch (error) {
-        console.error(`[MCP Logger] Failed to close log file: ${error.message}`);
+        // Cannot use console.error in stdio mode
+        // Just silently fail
       }
     }
   }
