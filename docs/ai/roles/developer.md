@@ -10,6 +10,7 @@ As a developer using issue-cards, you'll be implementing tasks, documenting your
 - [Task Management](../workflows/task-management.md) - For working through assigned tasks
 - [Bugfix Workflow](../workflows/bugfix.md) - For fixing issues in the codebase
 - [Feature Implementation](../workflows/create-feature.md) - For contributing to feature development
+- [TDD Workflow](../workflows/tdd-workflow.md) - For implementing features using Test-Driven Development
 
 ## Working with Tickets and Tasks
 
@@ -212,28 +213,129 @@ When you see a task with a +tag suffix like "Implement login form +unit-test", y
 3. **Mark each subtask complete**: Use `mcp__completeTask` after finishing each step
 4. **Document your process**: Add notes about your implementation for each step
 
-### Common Developer Tag Templates
+## Test-Driven Development Workflow
 
-- **+unit-test**: Test-Driven Development workflow
-  1. Write failing tests for the feature
-  2. Implement code to pass the tests 
-  3. Refactor while maintaining test coverage
+Test-Driven Development (TDD) is a core development methodology in issue-cards. It involves writing tests before implementation to ensure code quality, maintainability, and correct behavior.
+
+### The TDD Cycle
+
+The TDD process follows a repeating cycle:
+
+1. **RED**: Write failing tests that define the expected behavior
+2. **GREEN**: Implement the minimum code necessary to pass the tests
+3. **REFACTOR**: Improve the code while keeping all tests passing
+
+### TDD Tag Templates
+
+Issue-cards provides specialized tag templates to facilitate TDD workflows:
+
+- **+unit-test**: For component or function-level testing
+  1. Write failing unit tests for the functionality (RED phase)
+  2. Run the unit tests and verify they fail for the expected reason
+  3. Implement code to pass the tests (GREEN phase)
+  4. Run unit tests and verify they now pass
+  5. Refactor implementation while keeping tests passing (REFACTOR phase)
+  6. Make sure test coverage meets project requirements
   
   **Best practices**:
   - Write tests that verify behavior, not implementation details
   - Ensure tests are deterministic and isolated
   - Aim for high coverage of critical code paths
+  - Use descriptive test names that explain expected behavior
 
-- **+e2e-test**: End-to-end testing workflow
-  1. Design test scenarios for the feature
-  2. Implement end-to-end tests
-  3. Implement the feature to pass tests
-  4. Verify test coverage is adequate
+- **+integration-test**: For testing component interactions and interfaces
+  1. Write failing integration tests for component interactions (RED phase)
+  2. Run the integration tests and verify they fail as expected
+  3. Implement component interfaces to satisfy tests (GREEN phase)
+  4. Run integration tests and verify they now pass
+  5. Refactor the implementation while keeping tests passing (REFACTOR phase)
+  6. Verify component integration in the broader system context
+  
+  **Best practices**:
+  - Focus on interfaces between components
+  - Test data flow across component boundaries
+  - Use real components rather than mocks when possible
+  - Verify error handling between components
+
+- **+e2e-test**: For testing full user flows and application behavior
+  1. Write failing end-to-end test for the feature (RED phase)
+  2. Run the test and verify it fails correctly
+  3. Implement the feature to pass tests (GREEN phase)
+  4. Run the end-to-end test and verify it passes
+  5. Refactor implementation while maintaining test passing status (REFACTOR phase)
+  6. Verify the feature works in the full application context
   
   **Best practices**:
   - Focus on critical user journeys and flows
   - Test with realistic data and environments
   - Include both happy path and error cases
+  - Test from the user's perspective
+
+### Implementing TDD in Practice
+
+To effectively implement TDD in your workflow:
+
+1. **Start with clear test requirements**:
+   - Understand what success looks like before writing tests
+   - Define test cases that cover core functionality and edge cases
+   - Think about failure modes and error conditions
+
+2. **Create small, focused tests**:
+   ```json
+   {
+     "tool": "mcp__addNote",
+     "args": {
+       "section": "Test implementation",
+       "note": "Created unit tests for authentication service:\n- validateCredentials rejects invalid emails\n- validateCredentials requires password with minimum length\n- generateToken creates valid JWT with user data\n- verifyToken correctly validates token signatures"
+     }
+   }
+   ```
+
+3. **Implement minimal code to pass tests**:
+   ```json
+   {
+     "tool": "mcp__addNote",
+     "args": {
+       "section": "Implementation notes",
+       "note": "Implemented authentication service with:\n- Email validation using regex pattern\n- Password validation with length and complexity checks\n- JWT token generation with proper payload structure\n- Token verification with signature validation"
+     }
+   }
+   ```
+
+4. **Document refactoring steps**:
+   ```json
+   {
+     "tool": "mcp__addNote",
+     "args": {
+       "section": "Refactoring",
+       "note": "Refactored authentication service:\n- Extracted validation to separate utility functions\n- Improved error messages for better debugging\n- Added configurable options for token expiration\n- Optimized token verification performance"
+     }
+   }
+   ```
+
+5. **Complete the TDD cycle properly**:
+   - Never skip the refactoring step
+   - Ensure all tests pass after refactoring
+   - Document any design improvements made during refactoring
+
+6. **Handle failures appropriately**:
+   ```json
+   {
+     "tool": "mcp__logFailure",
+     "args": {
+       "approach": "Tried implementing email regex with simple pattern",
+       "reason": "Failed to handle all valid email formats according to RFC 5322"
+     }
+   }
+   ```
+
+For detailed guidance on creating TDD task sequences, see [TDD Task Sequences](../best-practices/tdd-task-sequences.md) in the best practices documentation.
+
+For a complete walkthrough of the TDD process, see the [TDD Workflow](../workflows/tdd-workflow.md) guide.
+
+For practical examples of MCP commands for implementing TDD, see [TDD MCP Examples](/docs/reference/tdd-mcp-examples.md) in the reference documentation.
+
+### Common Developer Tag Templates
 
 - **+lint-and-commit**: Code quality workflow
   1. Run linting tools on your changes

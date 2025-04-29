@@ -8,6 +8,7 @@ As a project manager using issue-cards, you'll be responsible for creating and o
 
 ## Recommended Workflows
 - [Create Feature Issue](../workflows/create-feature.md) - For planning and tracking new features
+- [Ticket Creation Workflow](../workflows/ticket-creation-workflow.md) - Comprehensive MCP command sequences for ticket creation
 - [Bugfix Workflow](../workflows/bugfix.md) - For managing bug fixes
 - [Technical Audit](../workflows/audit.md) - For conducting technical reviews
 - [Task Management](../workflows/task-management.md) - For organizing and tracking work items
