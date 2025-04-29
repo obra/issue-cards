@@ -82,15 +82,94 @@ const mcp__onboarding = withValidation('mcp__onboarding',
       // Get available tag templates with descriptions
       const tagTemplates = await getTagTemplatesWithDescriptions();
       
-      // Format the basic response
+      // Format the enhanced response with comprehensive guidance
       const responseData = {
         title: roleDoc.title,
         description: roleDoc.description,
         workflows: workflows,
         bestPractices: roleDoc.bestPractices,
         toolExamples: roleDoc.toolExamples || [],
-        tagTemplates: tagTemplates // Add the tag templates to the response
+        tagTemplates: tagTemplates, // Add the tag templates to the response
+        
+        // Add role-specific guidance
+        roleGuidance: {
+          message: `Welcome to issue-cards ${role} role! Here's how to get started:`,
+          startingSteps: role === 'pm' ? [
+            "1️⃣ Create a new issue with mcp__createIssue or view existing issues with mcp__listIssues",
+            "2️⃣ Structure tasks in a logical sequence with clear requirements",
+            "3️⃣ Use tag templates to add standardized workflows to tasks",
+            "4️⃣ Monitor progress with mcp__showIssue"
+          ] : role === 'developer' ? [
+            "1️⃣ View your assigned issues with mcp__listIssues",
+            "2️⃣ Set your current issue with mcp__setCurrentIssue",
+            "3️⃣ Get your current task with mcp__getCurrentTask",
+            "4️⃣ Follow the TDD workflow for test-related tasks"
+          ] : [
+            "1️⃣ View issues to be reviewed with mcp__listIssues",
+            "2️⃣ Examine issue details with mcp__showIssue",
+            "3️⃣ Review task implementation and provide feedback", 
+            "4️⃣ Verify all tasks are appropriately completed"
+          ],
+          recommendedCommands: role === 'pm' ? [
+            {
+              "description": "Create a new feature issue",
+              "command": {
+                "tool": "mcp__createIssue",
+                "args": {
+                  "template": "feature",
+                  "title": "[Feature title]",
+                  "problem": "[Problem description]",
+                  "task": ["[First task]", "[Second task]"]
+                }
+              }
+            },
+            {
+              "description": "List all issues",
+              "command": {
+                "tool": "mcp__listIssues",
+                "args": { "state": "open" }
+              }
+            }
+          ] : role === 'developer' ? [
+            {
+              "description": "Get your current task",
+              "command": {
+                "tool": "mcp__getCurrentTask",
+                "args": {}
+              }
+            },
+            {
+              "description": "Complete current task",
+              "command": {
+                "tool": "mcp__completeTask",
+                "args": {}
+              }
+            }
+          ] : [
+            {
+              "description": "Show issue details",
+              "command": {
+                "tool": "mcp__showIssue",
+                "args": { "issueNumber": "[ISSUE_NUMBER]" }
+              }
+            }
+          ]
+        }
       };
+      
+      // Add TDD-specific guidance for developers
+      if (role === 'developer') {
+        responseData.tddGuidance = {
+          message: "For Test-Driven Development tasks, follow this workflow:",
+          tddCycle: [
+            "🔴 RED: Write failing tests that define the expected behavior",
+            "🟢 GREEN: Write the minimum code necessary to pass the tests",
+            "🔄 REFACTOR: Improve the code while keeping tests passing"
+          ],
+          tagUsage: "Look for tasks with +unit-test, +integration-test, or +e2e-test tags for TDD workflows.",
+          documentation: "For comprehensive TDD guidance, see the 'TDD Workflow' and 'TDD Task Sequences' documentation."
+        };
+      }
       
       // Check if repository is initialized
       let initialized = undefined;
@@ -168,6 +247,12 @@ const mcp__workflow = withValidation('mcp__workflow',
         });
       }
       
+      // Check if this is a TDD-related workflow
+      const isTDDWorkflow = args.workflow === 'tdd-workflow' || 
+                            workflowDoc.title.toLowerCase().includes('tdd') || 
+                            workflowDoc.title.toLowerCase().includes('test-driven');
+      
+      // Basic response data
       const responseData = {
         title: workflowDoc.title,
         description: workflowDoc.description,
@@ -175,6 +260,38 @@ const mcp__workflow = withValidation('mcp__workflow',
         exampleToolSequence: workflowDoc.exampleToolSequence,
         tips: workflowDoc.tips
       };
+      
+      // Add enhanced workflow guidance
+      responseData.workflowGuidance = {
+        message: `Follow this workflow to implement ${workflowDoc.title.toLowerCase()} effectively:`,
+        bestPractices: [
+          "✅ Follow steps in the sequence provided for best results",
+          "✅ Document your approach before implementation",
+          "✅ Use provided example commands as templates",
+          "✅ Reference related documentation for detailed guidance"
+        ],
+        relatedWorkflows: args.workflow === 'create-feature' ? 
+          ['task-management', 'tdd-workflow'] : 
+          args.workflow === 'bugfix' ?
+            ['task-management', 'tdd-workflow'] :
+            args.workflow === 'tdd-workflow' ?
+              ['create-feature', 'task-management'] :
+              ['create-feature', 'task-management']
+      };
+      
+      // Add TDD-specific guidance for TDD workflows or testing-related workflows
+      if (isTDDWorkflow) {
+        responseData.workflowGuidance.tddSpecificGuidance = {
+          message: "This workflow follows Test-Driven Development principles:",
+          tddCycle: [
+            "🔴 RED: Write failing tests that define the expected behavior",
+            "🟢 GREEN: Write the minimum code necessary to pass the tests",
+            "🔄 REFACTOR: Improve the code while keeping tests passing"
+          ],
+          tagUsage: "Use +unit-test, +integration-test, or +e2e-test tags to automatically add TDD steps to tasks.",
+          documentation: "For comprehensive guidance on implementing TDD, see the 'TDD Task Sequences' documentation."
+        };
+      }
       
       return {
         success: true,
@@ -236,15 +353,58 @@ const mcp__availableTags = withValidation('mcp__availableTags',
     try {
       const tagTemplates = await getTagTemplatesWithDescriptions();
       
+      // Categorize templates by type for better organization
+      const categorizedTemplates = {
+        testingTemplates: tagTemplates.filter(t => 
+          t.name.includes('test') || t.description.includes('test')),
+        documentationTemplates: tagTemplates.filter(t => 
+          t.name.includes('doc') || t.description.includes('documentation')),
+        qualityTemplates: tagTemplates.filter(t => 
+          t.name.includes('lint') || t.description.includes('quality')),
+        otherTemplates: tagTemplates.filter(t => 
+          !t.name.includes('test') && 
+          !t.description.includes('test') && 
+          !t.name.includes('doc') && 
+          !t.description.includes('documentation') &&
+          !t.name.includes('lint') && 
+          !t.description.includes('quality'))
+      };
+      
       return {
         success: true,
         data: {
           title: "Available Tag Templates",
           description: "These tag templates can be used to add standardized workflows to tasks using the '+tag-name' syntax at the end of a task.",
           tagTemplates: tagTemplates,
+          categorizedTemplates: categorizedTemplates,
           usage: {
             example: "Add authentication to login page +unit-test",
             description: "Adding +unit-test to a task will automatically expand it to include Test-Driven Development steps"
+          },
+          workflowGuidance: {
+            message: "Tag templates provide structured workflows for common development tasks:",
+            bestPractices: [
+              "✅ Use +unit-test for component or function-level testing",
+              "✅ Use +integration-test for testing component interactions",
+              "✅ Use +e2e-test for testing full user flows",
+              "✅ Use +update-docs for documentation tasks",
+              "✅ Use +lint-and-commit for code quality checks"
+            ],
+            examples: [
+              "Implement user authentication +unit-test",
+              "Create payment service integration +integration-test",
+              "Add user registration flow +e2e-test",
+              "Document API endpoints +update-docs"
+            ],
+            tddWorkflow: {
+              description: "For Test-Driven Development workflows, use the testing tags (+unit-test, +integration-test, +e2e-test).",
+              steps: [
+                "1️⃣ RED: Write failing tests that define the expected behavior",
+                "2️⃣ GREEN: Write the minimum code necessary to pass the tests",
+                "3️⃣ REFACTOR: Improve the code while keeping tests passing"
+              ],
+              documentation: "For detailed TDD guidance, see the 'TDD Workflow' and 'TDD Task Sequences' documentation."
+            }
           }
         }
       };

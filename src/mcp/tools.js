@@ -57,13 +57,35 @@ const mcp__listIssues = withValidation('mcp__listIssues',
   withErrorHandling(async (args) => {
     const issues = await getIssues(args.state);
     
-    // Add workflow guidance to the response
+    // Add comprehensive workflow guidance to the response
     return {
       success: true,
       data: issues,
       workflowGuidance: {
         message: "IMPORTANT: After selecting an issue to work on, use mcp__getCurrentTask to get your current task rather than trying to implement all tasks at once.",
-        recommendedWorkflow: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark it complete and receive the next task."
+        recommendedWorkflow: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark it complete and receive the next task.",
+        nextSteps: [
+          "1️⃣ Choose an issue to work on from the list above",
+          "2️⃣ Use mcp__setCurrentIssue with the issue number to set it as your current issue",
+          "3️⃣ Use mcp__getCurrentTask to see the first task to implement"
+        ],
+        exampleCommands: [
+          {
+            "description": "Set an issue as current",
+            "command": {
+              "tool": "mcp__setCurrentIssue",
+              "args": { "issueNumber": "[ISSUE_NUMBER]" }
+            }
+          },
+          {
+            "description": "View your current task",
+            "command": {
+              "tool": "mcp__getCurrentTask",
+              "args": {}
+            }
+          }
+        ],
+        details: "Following the task sequence ensures each step is properly documented and tracked. Never skip ahead in the sequence, as tasks often build upon each other. For comprehensive command sequences, see the 'Ticket Creation Workflow' documentation."
       }
     };
   }, 'listIssues')
@@ -85,19 +107,62 @@ const mcp__showIssue = withValidation('mcp__showIssue', async (args) => {
     const tasks = await extractTasks(issue.content);
     const currentTask = findCurrentTask(tasks);
     
-    // Add task processing guidance to the response
+    // Add comprehensive task processing guidance to the response
     const response = {
       ...issue,
       taskGuidance: "IMPORTANT: To implement tasks from this issue, use mcp__getCurrentTask to focus on ONE task at a time rather than trying to implement all tasks at once. Working on one task at a time ensures proper tracking and step-by-step progress.",
-      workflowTip: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark the task complete and receive the next task."
+      workflowTip: "For proper task workflow: 1) Use mcp__getCurrentTask to get your current task, 2) Implement ONLY that specific task, 3) Use mcp__completeTask when done to mark the task complete and receive the next task.",
+      workflowGuidance: {
+        message: "⚠️ This command provides a reference view of the entire issue. For actual implementation work, follow the task-by-task approach below.",
+        nextSteps: [
+          "1️⃣ Set this issue as your current issue (if not already)",
+          "2️⃣ Use mcp__getCurrentTask to see your specific assigned task",
+          "3️⃣ Document your approach with mcp__addNote before implementation",
+          "4️⃣ Mark task complete with mcp__completeTask when finished"
+        ],
+        exampleCommands: [
+          {
+            "description": "Set this issue as current",
+            "command": {
+              "tool": "mcp__setCurrentIssue",
+              "args": { "issueNumber": issue.issueNumber }
+            }
+          },
+          {
+            "description": "Get your current task",
+            "command": {
+              "tool": "mcp__getCurrentTask",
+              "args": {}
+            }
+          },
+          {
+            "description": "Document your approach",
+            "command": {
+              "tool": "mcp__addNote",
+              "args": {
+                "section": "Planned approach",
+                "note": "[Your implementation approach here]"
+              }
+            }
+          }
+        ],
+        details: "For a complete guide to working with tasks in issue-cards, see the 'Task Management Workflow' and 'Ticket Creation Workflow' documentation."
+      }
     };
     
-    // If there's a current task, include information about it
+    // If there's a current task, include detailed information about it
     if (currentTask) {
       response.currentTaskInfo = {
         id: currentTask.id,
         description: currentTask.text,
-        message: "Use mcp__getCurrentTask to focus on implementing this specific task."
+        message: "Use mcp__getCurrentTask to focus on implementing this specific task.",
+        implementationGuidance: "When implementing this task, follow these best practices:",
+        bestPractices: [
+          "✅ Document your implementation plan before coding",
+          "✅ If you have questions, use mcp__addQuestion to document them",
+          "✅ If you try an approach that doesn't work, use mcp__logFailure to document it",
+          "✅ Mark the task complete with mcp__completeTask when finished"
+        ]
       };
     }
     
@@ -145,10 +210,77 @@ const mcp__getCurrentTask = withValidation('mcp__getCurrentTask',
       response.context = currentTask.contextData;
     }
     
-    // Add explicit instructions to focus only on the current task
+    // Add comprehensive implementation guidance for the current task
     if (currentTask) {
+      const taskHasTDDTag = currentTask.description && 
+                           (currentTask.description.includes('+unit-test') || 
+                            currentTask.description.includes('+e2e-test') || 
+                            currentTask.description.includes('+integration-test'));
+      
       response.taskGuidance = "Important: Please focus ONLY on completing this specific task. Do not work on any other tasks or future tasks until this task is complete and marked as completed.";
       response.nextSteps = "Please review the task description and implement only this specific task. When complete, use mcp__completeTask to mark it finished and receive your next task.";
+      
+      // Comprehensive workflow guidance
+      response.workflowGuidance = {
+        message: "🎯 Focus on implementing ONLY this task, following best practices.",
+        implementationSteps: [
+          "1️⃣ Document your implementation plan with mcp__addNote",
+          "2️⃣ Record questions or unclear requirements with mcp__addQuestion",
+          "3️⃣ Document any failed approaches with mcp__logFailure",
+          "4️⃣ Mark task complete with mcp__completeTask when finished"
+        ],
+        exampleCommands: [
+          {
+            "description": "Document implementation approach",
+            "command": {
+              "tool": "mcp__addNote",
+              "args": {
+                "section": "Planned approach",
+                "note": "[Your implementation approach here]"
+              }
+            }
+          },
+          {
+            "description": "Ask a clarifying question",
+            "command": {
+              "tool": "mcp__addQuestion",
+              "args": {
+                "question": "[Your question about requirements or implementation]"
+              }
+            }
+          },
+          {
+            "description": "Record a failed approach",
+            "command": {
+              "tool": "mcp__logFailure",
+              "args": {
+                "approach": "[Approach that didn't work]",
+                "reason": "[Why it didn't work]"
+              }
+            }
+          },
+          {
+            "description": "Complete this task",
+            "command": {
+              "tool": "mcp__completeTask",
+              "args": {}
+            }
+          }
+        ]
+      };
+      
+      // Add TDD-specific guidance if the task has a TDD tag
+      if (taskHasTDDTag) {
+        response.workflowGuidance.tddGuidance = {
+          message: "This task requires Test-Driven Development (Red-Green-Refactor cycle):",
+          tddSteps: [
+            "🔴 RED: Write failing tests that define the expected behavior",
+            "🟢 GREEN: Write the minimum code necessary to pass the tests",
+            "🔄 REFACTOR: Improve the code while keeping tests passing"
+          ],
+          documentation: "For detailed TDD guidance, see the 'TDD Workflow' documentation."
+        };
+      }
     }
     
     return {
@@ -270,12 +402,39 @@ const mcp__createIssue = withValidation('mcp__createIssue',
     // Save issue
     await saveIssue(issueNumber, issueContent);
     
+    // Create enhanced response with workflow guidance
     return {
       success: true,
       data: {
         issueNumber: issueNumber,
         title: args.title,
-        template: args.template
+        template: args.template,
+        // Add detailed workflow guidance
+        workflowGuidance: {
+          message: "✅ Issue created successfully! Here's how to start working on it:",
+          nextSteps: [
+            "1️⃣ Set this issue as your current issue",
+            "2️⃣ Use mcp__getCurrentTask to see your first task",
+            "3️⃣ Follow the task-by-task workflow to implement the solution"
+          ],
+          exampleCommands: [
+            {
+              "description": "Set this issue as current",
+              "command": {
+                "tool": "mcp__setCurrentIssue",
+                "args": { "issueNumber": issueNumber }
+              }
+            },
+            {
+              "description": "View your first task",
+              "command": {
+                "tool": "mcp__getCurrentTask",
+                "args": {}
+              }
+            }
+          ],
+          details: "For a complete guide to working with issues and tasks, see the 'Ticket Creation Workflow' documentation."
+        }
       }
     };
   } catch (error) {
@@ -347,11 +506,59 @@ const mcp__completeTask = withValidation('mcp__completeTask',
         description: nextTask.text
       };
       
-      // Add explicit instruction to focus only on the next task
+      // Add explicit, comprehensive guidance for the next task
       responseData.taskGuidance = "Important: Please focus ONLY on completing this specific task. Do not work on any other tasks or future tasks until this task is complete and marked as completed.";
       
       // Add an explicit next step instruction
       responseData.nextSteps = "Please review the task description and implement only this specific task. When complete, use mcp__completeTask to mark it finished and receive your next task.";
+      
+      // Add detailed workflow guidance for the next task
+      responseData.workflowGuidance = {
+        message: "✅ Great job completing the previous task! Now focus on the next task below.",
+        progressUpdate: `Task ${responseData.nextTask.id} of the issue is now ready to implement.`,
+        implementationSteps: [
+          "1️⃣ Take time to understand this task before implementation",
+          "2️⃣ Document your implementation plan with mcp__addNote",
+          "3️⃣ Implement the solution, documenting decisions as you go",
+          "4️⃣ Mark task complete with mcp__completeTask when finished"
+        ],
+        exampleCommands: [
+          {
+            "description": "Document implementation approach",
+            "command": {
+              "tool": "mcp__addNote",
+              "args": {
+                "section": "Planned approach",
+                "note": "[Your implementation approach for this task]"
+              }
+            }
+          },
+          {
+            "description": "Complete this task when finished",
+            "command": {
+              "tool": "mcp__completeTask",
+              "args": {}
+            }
+          }
+        ],
+        details: "Each task is a discrete unit of work. Ensure this task is fully implemented and tested before marking it complete."
+      };
+      
+      // Check if the next task requires TDD
+      if (nextTask.text && (
+          nextTask.text.includes('+unit-test') || 
+          nextTask.text.includes('+e2e-test') || 
+          nextTask.text.includes('+integration-test'))) {
+        responseData.workflowGuidance.tddGuidance = {
+          message: "This task requires Test-Driven Development (Red-Green-Refactor cycle):",
+          tddSteps: [
+            "🔴 RED: Write failing tests that define the expected behavior",
+            "🟢 GREEN: Write the minimum code necessary to pass the tests",
+            "🔄 REFACTOR: Improve the code while keeping tests passing"
+          ],
+          documentation: "For detailed TDD guidance, see the 'TDD Workflow' documentation."
+        };
+      }
       
       // Get the issue content to extract context
       const issueContent = await getIssue(currentIssue.issueNumber);
