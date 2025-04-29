@@ -265,4 +265,4 @@ For detailed guidance on creating properly structured TDD task sequences, see [T
 
 ## MCP Command Examples
 
-For comprehensive examples of MCP commands for implementing TDD workflows, see [TDD MCP Examples](/docs/reference/tdd-mcp-examples.md) in the reference documentation. This resource provides detailed examples of MCP command sequences for unit testing, integration testing, and end-to-end testing scenarios.
+For comprehensive examples of MCP commands for implementing TDD workflows, see [TDD MCP Examples](../../reference/tdd-mcp-examples.md) in the reference documentation. This resource provides detailed examples of MCP command sequences for unit testing, integration testing, and end-to-end testing scenarios.

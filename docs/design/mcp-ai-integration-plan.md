@@ -302,9 +302,9 @@ module.exports = {
 As a project manager using issue-cards, you'll be responsible for creating and organizing issues, defining tasks, and tracking progress. The system provides tools to help you plan work, document requirements, and monitor team progress.
 
 ## Recommended Workflows
-- [Create Feature Issue](../workflows/create-feature.md) - For planning and tracking new features
-- [Bugfix Workflow](../workflows/bugfix.md) - For managing bug fixes
-- [Technical Audit](../workflows/audit.md) - For conducting technical reviews
+- [Create Feature Issue](../ai/workflows/create-feature.md) - For planning and tracking new features
+- [Bugfix Workflow](../ai/workflows/bugfix.md) - For managing bug fixes
+- [Technical Audit](../ai/workflows/audit.md) - For conducting technical reviews
 
 ## Best Practices
 - **Define clear problem statements**: Make sure each issue has a well-defined problem to solve

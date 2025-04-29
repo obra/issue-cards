@@ -507,7 +507,7 @@ The stdio MCP server communicates using JSON-RPC 2.0 over standard input/output 
 
 Unlike the HTTP server, the stdio version has no authentication mechanism as it's designed for local integration.
 
-For detailed documentation on using both MCP server implementations with AI models, see [AI Integration Guide](guides/ai-integration.md), [AI Integration Reference](reference/ai-integration.md), and [MCP Server Implementations](reference/mcp-server-implementations.md).
+For detailed documentation on using both MCP server implementations with AI models, see [AI Integration Guide](../guides/ai-integration.md), [AI Integration Reference](ai-integration.md), and [MCP Server Implementations](mcp-server-implementations.md).
 
 ## Global Options
 

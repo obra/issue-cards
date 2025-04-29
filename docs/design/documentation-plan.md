@@ -363,8 +363,7 @@ issue-cards complete-task
 
 ## Related Topics
 
-- [Task Tags](../reference/task-tags.md)
-- [Task Expansion](../reference/task-expansion.md)
+- [Tag Expansion](../reference/tag-expansion.md)
 ```
 
 ## Documentation Example: Create Command

@@ -279,7 +279,7 @@ console.log(`Open issues: ${openIssues.length}, Total tasks: ${tasksCount}`);
 
 ## Related Topics
 
-- [Getting Started Guide](../getting-started.md) - Basic installation
+- [Getting Started Guide](getting-started.md) - Basic installation
 - [Environment Variables Reference](../reference/environment-vars.md) - All configuration options
 - [AI Integration Guide](ai-integration.md) - Setting up AI integration
 - [Git Integration Guide](git-integration.md) - Using with Git

@@ -333,7 +333,7 @@ For detailed guidance on creating TDD task sequences, see [TDD Task Sequences](.
 
 For a complete walkthrough of the TDD process, see the [TDD Workflow](../workflows/tdd-workflow.md) guide.
 
-For practical examples of MCP commands for implementing TDD, see [TDD MCP Examples](/docs/reference/tdd-mcp-examples.md) in the reference documentation.
+For practical examples of MCP commands for implementing TDD, see [TDD MCP Examples](../../reference/tdd-mcp-examples.md) in the reference documentation.
 
 ### Common Developer Tag Templates
 
