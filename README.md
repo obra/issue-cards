@@ -1,10 +1,11 @@
 # Issue Cards
 
-Issue Cards is an AI-optimized command-line issue tracking tool designed for both AI coding agents and human developers. It manages tasks efficiently through a lightweight, markdown-based system that lives directly in your project repository.
+Issue Cards is an AI-optimized command-line issue tracking tool designed for both AI coding agents and human developers. (But primarily for keeping your coding agent on-task)
 
-<p align="center">
-  <img src="https://github.com/issue-cards/issue-cards/raw/main/docs/logo.png" alt="Issue Cards Logo" width="300">
-</p>
+Pretty much every part of this was built using Claude Code, but I have actually used it for a couple of projects and it seems to do a good job of keeping the coding agent on task.
+
+I owe a blog post about how to use it. -Jesse, April 2025
+
 
 ## Features
 
@@ -13,7 +14,7 @@ Issue Cards is an AI-optimized command-line issue tracking tool designed for bot
 - **Tag-Based Task Expansion**: Apply common patterns like testing requirements with simple tags
 - **Context-Rich Display**: Each task shows all the context needed to implement it
 - **Git Integration**: Automatically stages issue updates when using git
-- **AI Integration**: Built-in MCP (Model-Code-Prompt) server for direct AI assistant integration
+- **AI Integration**: Built-in MCP server for direct AI assistant integration
 - **AI-Friendly Output**: Standardized command output format for easy parsing by AI agents
 - **Configurable**: Customize directories and behavior through environment variables
 
