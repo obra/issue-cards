@@ -21,12 +21,13 @@ describe('Documentation structure', () => {
     const output = runCommand('node ./src/index.js help');
     
     // Verify core categories appear in the output
-    expect(output).toContain('Guides');
     expect(output).toContain('General');
+    expect(output).toContain('Commands');
     
-    // Verify some specific files appear
+    // Verify all documentation files appear
     expect(output).toContain('quick-start');
     expect(output).toContain('workflows');
+    expect(output).toContain('task-management');
     expect(output).toContain('ai-integration');
     expect(output).toContain('contributing');
     expect(output).toContain('env');
