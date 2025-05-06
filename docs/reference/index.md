@@ -9,7 +9,6 @@ This section contains technical reference documentation for issue-cards.
 - [Commands Reference](commands.md) - Detailed documentation for all commands
 - [Environment Variables](environment-vars.md) - Configuration variables and settings
 - [Templates](templates.md) - Template structure and variables
-- [Output Formats](output-formats.md) - Understanding output formats
 - [Tag Expansion](tag-expansion.md) - Task tag expansion system
 - [Naming and Terminology](naming-and-terminology.md) - Standardized naming conventions
 
@@ -19,7 +18,6 @@ This section contains technical reference documentation for issue-cards.
 - [MCP Server Configuration](mcp-server-config.md) - Setting up and configuring the MCP server
 - [MCP Tool Reference](mcp-tool-reference.md) - Details of all available MCP tools
 - [Ticket Navigation](ticket-navigation.md) - Guide for navigating between tickets and tasks
-- [MCP Curl Examples](mcp-curl-examples.md) - Command-line examples for MCP tools
 - [TDD MCP Examples](tdd-mcp-examples.md) - MCP command examples for Test-Driven Development
 - [Claude Prompt Examples](claude-prompt-examples.md) - Example prompts for Claude integration
 

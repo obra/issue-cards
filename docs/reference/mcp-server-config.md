@@ -210,7 +210,6 @@ issue-cards serve --cors
 
 ## Resources
 
-- [MCP Curl Examples](mcp-curl-examples.md) - Examples of using the API with curl
 - [AI Integration](ai-integration.md) - General guide for AI integration
 - [Claude Prompt Examples](claude-prompt-examples.md) - Example prompts for Claude
 - [MCP Tool Reference](mcp-tool-reference.md) - Detailed reference for all MCP tools

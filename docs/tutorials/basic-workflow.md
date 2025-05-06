@@ -114,4 +114,3 @@ These basic workflows form the foundation of working with issue-cards and will h
 - [Advanced Features Tutorial](advanced-features.md) - Learn advanced capabilities
 - [Project Planning Tutorial](project-planning.md) - Convert plans to tracked issues
 - [Tag Expansion Reference](../reference/tag-expansion.md) - How tags work
-- [Git Integration Guide](../guides/git-integration.md) - Using issue-cards with Git

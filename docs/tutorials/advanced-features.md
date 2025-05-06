@@ -22,8 +22,6 @@ If your project uses Git, issue-cards is designed to work seamlessly with it:
 - Changes can be committed to track progress
 - Branch management can be aligned with issues
 
-See the [Git Integration Guide](../guides/git-integration.md) for more details.
-
 ## Custom Templates
 
 You can create custom issue and tag templates to match your workflow:

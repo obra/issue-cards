@@ -128,7 +128,6 @@ These techniques will help you convert planning documents into actionable, track
 ## Related Topics
 
 - [Basic Workflow Tutorial](basic-workflow.md) - Essential workflows
-- [Git Integration Guide](../guides/git-integration.md) - Using issue-cards with Git
 - [Templates Customization Guide](../guides/templates-customization.md) - Create custom templates
 - [Common Workflows Guide](../guides/common-workflows.md) - Example-driven guide
 - [Advanced Features Tutorial](advanced-features.md) - Learn advanced capabilities

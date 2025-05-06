@@ -54,7 +54,6 @@ Once you've mastered the basics, explore these topics:
 
 - [Basic Workflow Tutorial](../tutorials/basic-workflow.md)
 - [Task Management Tutorial](../tutorials/task-management.md)
-- [Git Integration Guide](git-integration.md)
 - [Environment Variables Reference](../reference/environment-vars.md)
 
 For detailed command help, use:

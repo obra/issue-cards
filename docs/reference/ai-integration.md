@@ -452,5 +452,4 @@ Recommendations for AI assistant integration:
 - [MCP Server Implementations](mcp-server-implementations.md)
 - [MCP Server Configuration](mcp-server-config.md)
 - [MCP Tool Reference](mcp-tool-reference.md)
-- [MCP Curl Examples](mcp-curl-examples.md)
 - [AI Integration Guide](../guides/ai-integration.md)

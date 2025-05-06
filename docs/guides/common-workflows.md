@@ -156,6 +156,5 @@ git push
 
 ## Related Topics
 
-- [Git Integration Guide](git-integration.md)
 - [Templates Customization](templates-customization.md)
 - [Basic Workflow Tutorial](../tutorials/basic-workflow.md)

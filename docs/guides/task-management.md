@@ -221,4 +221,3 @@ For especially large issues:
 - [Task Management Tutorial](../tutorials/task-management.md) - Step-by-step learning
 - [Tag Expansion Reference](../reference/tag-expansion.md) - Detailed tag documentation
 - [Common Workflows Guide](common-workflows.md) - Example-driven workflows
-- [Git Integration Guide](git-integration.md) - Using issue-cards with Git
