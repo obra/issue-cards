@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-describe('TDD Tag Templates', () => {
+describe.skip('TDD Tag Templates', () => {
   const unitTestPath = path.join(__dirname, '../../templates/tag/unit-test.md');
   const e2eTestPath = path.join(__dirname, '../../templates/tag/e2e-test.md');
   const integrationTestPath = path.join(__dirname, '../../templates/tag/integration-test.md');

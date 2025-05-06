@@ -66,13 +66,16 @@ issue-cards list                         # List all open issues
 issue-cards show 1                       # Show issue details
 ```
 
-For comprehensive command documentation:
+For detailed help on any command or topic:
 
 ```bash
 # Get help on any command
 issue-cards <command> --help
 
-# Browse documentation by category
+# View environment variables reference
+issue-cards help env
+
+# Browse all documentation
 issue-cards help
 ```
 
@@ -104,10 +107,14 @@ issue-cards list --json
 issue-cards complete-task --quiet
 ```
 
-For complete configuration references:
-- [Environment Variables Reference](docs/reference/environment-vars.md)
-- [Output Format Reference](docs/reference/output-formats.md)
-- [Commands Reference](docs/reference/commands.md)
+For complete configuration references use built-in help:
+```bash
+# Environment variables reference
+issue-cards help env
+
+# Commands reference
+issue-cards --help
+```
 
 ## AI Integration
 
@@ -146,9 +153,7 @@ Enables AI assistants to:
 - Add context through notes and questions
 
 Documentation:
-- [AI Integration Guide](docs/guides/ai-integration.md)
-- [AI Integration Reference](docs/reference/ai-integration.md)
-- [MCP Server Configuration](docs/reference/mcp-server-config.md)
+- [AI Integration Guide](docs/ai-integration.md)
 
 ## Issue Example
 
@@ -199,7 +204,7 @@ When viewing the task, it expands to show all required steps:
 - Write unit tests, implement feature, verify tests pass
 - Follow consistent workflows for different task types
 
-Learn more in the [Tag Expansion Reference](docs/reference/tag-expansion.md).
+Learn more with `issue-cards help tags`.
 
 ### Git Integration
 
@@ -207,8 +212,6 @@ When working in a Git repository, issue-cards automatically stages changes to is
 - Complete tasks
 - Add notes or questions
 - Log failed approaches
-
-See the [Git Integration Guide](docs/guides/git-integration.md) for details.
 
 ## Documentation
 
@@ -229,24 +232,19 @@ issue-cards help tutorials/basic-workflow
 issue-cards create --help
 ```
 
-### Documentation Categories
+### Documentation
 
-- [Getting Started Guide](docs/guides/getting-started.md) - Quick introduction for new users
-- [Tutorials](docs/tutorials/index.md) - Step-by-step learning materials
-  - [Basic Workflow](docs/tutorials/basic-workflow.md) - Essential workflows
-  - [Task Management](docs/tutorials/task-management.md) - Working with tasks
-  - [Advanced Features](docs/tutorials/advanced-features.md) - Power user features
-  - [Project Planning](docs/tutorials/project-planning.md) - Planning with issue-cards
-- [Guides](docs/guides/index.md) - How-to guides for specific tasks
-  - [Git Integration](docs/guides/git-integration.md) - Using with Git
-  - [Templates Customization](docs/guides/templates-customization.md) - Creating custom templates
-  - [AI Integration](docs/guides/ai-integration.md) - Working with AI tools
-  - [Common Workflows](docs/guides/common-workflows.md) - Example-driven workflows
-- [Reference Documentation](docs/reference/index.md) - Technical specifications
-  - [Environment Variables](docs/reference/environment-vars.md) - Configuration
-  - [Tag Expansion](docs/reference/tag-expansion.md) - How tags work
-  - [AI Integration Reference](docs/reference/ai-integration.md) - AI details
-- [Design Decisions](docs/design/index.md) - Background on architecture choices
+The documentation has been streamlined for clarity:
+
+- [Quick Start Guide](docs/quick-start.md) - Essential setup and first issue workflow
+- [Common Workflows](docs/workflows.md) - Practical examples of using Issue Cards
+- [AI Integration Guide](docs/ai-integration.md) - How to use with AI assistants
+- [Contributing Guide](docs/contributing.md) - Information for project contributors
+
+For additional help, run:
+```bash
+issue-cards help
+```
 
 ## Contributing
 

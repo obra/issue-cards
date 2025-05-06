@@ -17,30 +17,28 @@ describe('Documentation structure', () => {
     }
   };
 
-  test('help command returns all documentation categories', () => {
+  test('help command returns basic documentation categories', () => {
     const output = runCommand('node ./src/index.js help');
     
-    // Verify all categories appear in the output
-    expect(output).toContain('Tutorials');
+    // Verify core categories appear in the output
     expect(output).toContain('Guides');
-    expect(output).toContain('Reference');
-    expect(output).toContain('Design');
+    expect(output).toContain('General');
     
     // Verify some specific files appear
-    expect(output).toContain('tutorials/basic-workflow');
-    // Reference to git-integration removed as the file doesn't exist
-    expect(output).toContain('reference/tag-expansion');
-    expect(output).toContain('design/index');
+    expect(output).toContain('quick-start');
+    expect(output).toContain('workflows');
+    expect(output).toContain('ai-integration');
+    expect(output).toContain('contributing');
+    expect(output).toContain('env');
   });
 
   test('accessing a specific documentation file works', () => {
-    const output = runCommand('node ./src/index.js help tutorials/index');
+    const output = runCommand('node ./src/index.js help quick-start');
     
-    // Check that the tutorial index content is shown
-    expect(output).toContain('Tutorials');
-    expect(output).toContain('Available Tutorials');
-    expect(output).toContain('Basic Workflow');
-    expect(output).toContain('Advanced Features');
-    expect(output).toContain('Task Management');
+    // Check that the quick start content is shown
+    expect(output).toContain('Quick Start Guide');
+    expect(output).toContain('Installation');
+    expect(output).toContain('Initialize Issue Tracking');
+    expect(output).toContain('Create Your First Issue');
   });
 });

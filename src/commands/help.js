@@ -206,48 +206,77 @@ function showEnvironmentVariablesHelp() {
   outputManager.subheader('Core Configuration');
   outputManager.keyValue('ISSUE_CARDS_DIR', 'Directory to store issues and templates');
   outputManager.detail('Default: .issues in current working directory');
+  outputManager.detail('Purpose: Sets the directory where Issue Cards stores issues, templates, and configuration');
   outputManager.detail('Example: export ISSUE_CARDS_DIR=/path/to/custom/issues');
+  outputManager.detail('Use cases: Shared issue location across repositories, CI/CD environments');
   outputManager.empty();
   
   // MCP server variables
   outputManager.subheader('MCP Server Configuration');
   outputManager.keyValue('ISSUE_CARDS_MCP_PORT', 'Port for the MCP server');
   outputManager.detail('Default: 3000');
+  outputManager.detail('Purpose: Sets the port number the MCP server will listen on');
+  outputManager.detail('Format: Integer');
   outputManager.detail('Example: ISSUE_CARDS_MCP_PORT=8080 issue-cards serve');
   outputManager.empty();
   
   outputManager.keyValue('ISSUE_CARDS_MCP_HOST', 'Host to bind the MCP server to');
   outputManager.detail('Default: localhost');
+  outputManager.detail('Purpose: Sets the network interface the MCP server will bind to');
+  outputManager.detail('Format: Hostname or IP address');
+  outputManager.detail('Security note: Use localhost for development, 0.0.0.0 exposes to all interfaces');
   outputManager.detail('Example: ISSUE_CARDS_MCP_HOST=0.0.0.0 issue-cards serve');
   outputManager.empty();
   
   outputManager.keyValue('ISSUE_CARDS_MCP_TOKEN', 'Authentication token for the MCP server');
   outputManager.detail('Default: None (authentication disabled)');
+  outputManager.detail('Purpose: Sets an authentication token required for API requests');
+  outputManager.detail('Security: Required for production use with remote access');
+  outputManager.detail('Format: String, use a secure random value');
   outputManager.detail('Example: ISSUE_CARDS_MCP_TOKEN=my-secret-token issue-cards serve');
   outputManager.empty();
   
   outputManager.keyValue('ISSUE_CARDS_MCP_CORS', 'Enable CORS for the MCP server');
   outputManager.detail('Default: false');
+  outputManager.detail('Purpose: Enables Cross-Origin Resource Sharing for web browser access');
+  outputManager.detail('Format: Boolean (true/false)');
   outputManager.detail('Example: ISSUE_CARDS_MCP_CORS=true issue-cards serve');
+  outputManager.empty();
+  
+  outputManager.keyValue('ISSUE_CARDS_MCP_AUTH', 'Enable/disable authentication');
+  outputManager.detail('Default: true when token is provided, false otherwise');
+  outputManager.detail('Purpose: Explicitly enable or disable authentication regardless of token');
+  outputManager.detail('Format: Boolean (true/false)');
+  outputManager.detail('Example: ISSUE_CARDS_MCP_AUTH=false issue-cards serve');
   outputManager.empty();
   
   // Testing configuration
   outputManager.subheader('Testing Configuration');
   outputManager.keyValue('NODE_ENV', 'Application environment');
+  outputManager.detail('Default: Not set');
+  outputManager.detail('Purpose: Sets the application environment for testing and development');
   outputManager.detail('Values: development, production, test');
   outputManager.detail('Example: NODE_ENV=test issue-cards list');
   outputManager.empty();
   
-  outputManager.keyValue('E2E_COLLECT_COVERAGE', 'Enable code coverage collection for E2E tests');
+  outputManager.keyValue('E2E_COLLECT_COVERAGE', 'Enable code coverage for E2E tests');
   outputManager.detail('Default: false');
+  outputManager.detail('Purpose: Enables code coverage collection during end-to-end tests');
+  outputManager.detail('Format: Boolean (true/false)');
   outputManager.detail('Example: E2E_COLLECT_COVERAGE=true npm run test:e2e');
   outputManager.empty();
   
-  // Link to detailed documentation
-  outputManager.subheader('Detailed Documentation');
-  outputManager.info('For complete details on all environment variables, see:');
-  outputManager.info('https://github.com/issue-cards/issue-cards/blob/main/docs/reference/environment-vars.md');
-  outputManager.info('Or run: issue-cards help reference/environment-vars');
+  // Usage examples
+  outputManager.subheader('Usage Examples');
+  outputManager.info('Combined usage examples:');
+  outputManager.empty();
+  outputManager.detail('Custom issues directory:');
+  outputManager.detail('  export ISSUE_CARDS_DIR=/data/shared-issues');
+  outputManager.detail('  issue-cards init');
+  outputManager.empty();
+  outputManager.detail('MCP server with authentication:');
+  outputManager.detail('  ISSUE_CARDS_MCP_PORT=8080 ISSUE_CARDS_MCP_TOKEN=secure-token issue-cards serve');
+  outputManager.empty();
 }
 
 /**
