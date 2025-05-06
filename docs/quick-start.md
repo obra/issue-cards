@@ -8,6 +8,9 @@ This guide will get you up and running with Issue Cards in minutes.
 # Install globally
 npm install -g issue-cards
 
+# Or run directly with npx
+npx issue-cards [command]
+
 # Verify installation
 issue-cards --version
 ```
@@ -21,7 +24,10 @@ In your project directory:
 issue-cards init
 ```
 
-This creates a `.issues` directory with templates and configuration.
+This creates:
+- `.issues/` directory to store all issues and configuration
+- Pre-loaded templates for issues and tags
+- Directory structure for tracking open and closed issues
 
 ## Create Your First Issue
 
@@ -89,8 +95,24 @@ issue-cards show -i 1
 issue-cards set-current -i 2
 ```
 
+## Core Workflow Summary
+
+The basic Issue Cards workflow consists of:
+
+1. **Create an issue** to track a feature, bug, or task
+2. **View your current task** to see what to work on
+3. **Document your work** with notes, questions, and failure logs
+4. **Complete tasks** as you work through them
+5. **Manage multiple issues** when working on several things in parallel
+
 ## Next Steps
 
 - Explore [Workflows](workflows.md) for more usage patterns
 - For AI integration, see [AI Integration Guide](ai-integration.md)
+- For team collaboration, see [Task Management](guides/task-management.md)
 - Run `issue-cards --help` for command details
+
+For detailed command help, use:
+```bash
+issue-cards <command> --help
+```
