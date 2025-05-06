@@ -114,7 +114,7 @@ The MCP server exposes the following endpoints:
 | `/api/tools/:name` | GET | Get details for a specific tool |
 | `/api/tools/execute` | POST | Execute an MCP tool |
 
-For details on using these endpoints, see the [MCP Curl Examples](mcp-curl-examples.md) documentation.
+For details on using these endpoints, see the MCP Tool Reference documentation.
 
 ## Security Considerations
 

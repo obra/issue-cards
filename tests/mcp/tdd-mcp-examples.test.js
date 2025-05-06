@@ -82,11 +82,11 @@ describe('TDD MCP Examples Documentation', () => {
     });
 
     it('should be referenced in the TDD workflow document', () => {
-      expect(tddWorkflowContent).toMatch(/\[TDD MCP Examples\]\(\/docs\/reference\/tdd-mcp-examples\.md\)/);
+      expect(tddWorkflowContent).toMatch(/\[TDD MCP Examples\]\(\.\.\/\.\.\/reference\/tdd-mcp-examples\.md\)/);
     });
 
     it('should be referenced in the developer documentation', () => {
-      expect(developerDocContent).toMatch(/\[TDD MCP Examples\]\(\/docs\/reference\/tdd-mcp-examples\.md\)/);
+      expect(developerDocContent).toMatch(/\[TDD MCP Examples\]\(\.\.\/\.\.\/reference\/tdd-mcp-examples\.md\)/);
     });
   });
 });

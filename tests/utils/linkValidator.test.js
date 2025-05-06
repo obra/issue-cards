@@ -49,15 +49,35 @@ describe('Documentation Link Validation', () => {
     
     console.log(`Checking ${internalLinks.length} internal links...`);
     
+    const invalidLinks = [];
+    
     for (const link of internalLinks) {
       const result = await linkValidator.validateLink(link, false);
       
-      // Prepare a meaningful error message if link is invalid
+      // Collect invalid links for reporting
       if (!result.result.valid) {
         const relativePath = path.relative(path.resolve(__dirname, '../..'), link.filePath);
-        const message = `Broken internal link in ${relativePath} (line ${link.line}): "${link.text}" -> "${link.url}"\n${result.result.reason}`;
-        expect(result.result.valid).toBe(true, message);
+        invalidLinks.push({
+          filePath: relativePath,
+          line: link.line,
+          text: link.text,
+          url: link.url,
+          reason: result.result.reason
+        });
       }
+    }
+
+    // Report all invalid links
+    if (invalidLinks.length > 0) {
+      console.log(`Found ${invalidLinks.length} broken links:`);
+      invalidLinks.forEach(link => {
+        console.log(`Broken link in ${link.filePath} (line ${link.line}): "${link.text}" -> "${link.url}"\n  Reason: ${link.reason}`);
+      });
+      
+      // Fail the test with the first broken link
+      const firstLink = invalidLinks[0];
+      const message = `Broken internal link in ${firstLink.filePath} (line ${firstLink.line}): "${firstLink.text}" -> "${firstLink.url}"\n${firstLink.reason}`;
+      expect(invalidLinks.length).toBe(0, message);
     }
   });
   
