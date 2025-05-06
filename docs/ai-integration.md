@@ -98,6 +98,51 @@ For Anthropic's Claude:
    }
    ```
 
+### Webhook Integration
+
+Issue Cards can be integrated with webhook-capable AI services.
+
+```javascript
+// Example webhook integration
+const issueData = {
+  title: "Implement new feature",
+  template: "feature",
+  tasks: [
+    "Research requirements",
+    "Design implementation",
+    "Implement feature",
+    "Write tests"
+  ]
+};
+
+// Send to webhook endpoint
+fetch('http://localhost:3000/api/issues', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(issueData)
+});
+```
+
+### Tool Registration
+
+When integrating with AI assistants, you can register issue-cards tools:
+
+```javascript
+// Custom tool registration
+const { registerTools } = require('issue-cards/mcp');
+
+registerTools({
+  addTask: async (params) => {
+    // Implementation
+  },
+  completeTask: async () => {
+    // Implementation
+  }
+});
+```
+
 ### Available Tools
 
 All tools are accessed via the `tool` parameter with specific arguments:
@@ -213,6 +258,16 @@ Here's a complete workflow example for AI integration:
    - Document the implementation with `addNote`
    - Complete the task with `completeTask`
    - Move on to the next task
+
+## AI Onboarding
+
+When integrating with AI assistants like Claude, you can direct them to use the onboarding tools:
+
+```
+You're a project manager. Use issue-cards pm onboarding to get started.
+```
+
+This will load role-appropriate guidance and help the AI understand how to interact with the system effectively.
 
 ## Security Considerations
 
