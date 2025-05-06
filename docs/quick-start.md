@@ -109,7 +109,7 @@ The basic Issue Cards workflow consists of:
 
 - Explore [Workflows](workflows.md) for more usage patterns
 - For AI integration, see [AI Integration Guide](ai-integration.md)
-- For team collaboration, see [Task Management](guides/task-management.md)
+- For team collaboration, see [Task Management](task-management.md)
 - Run `issue-cards --help` for command details
 
 For detailed command help, use:

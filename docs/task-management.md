@@ -218,6 +218,6 @@ For especially large issues:
 
 ## Related Topics
 
-- [Task Management Tutorial](../tutorials/task-management.md) - Step-by-step learning
-- [Tag Expansion Reference](../reference/tag-expansion.md) - Detailed tag documentation
-- [Common Workflows Guide](common-workflows.md) - Example-driven workflows
+- [Quick Start](quick-start.md) - Getting started with Issue Cards
+- [Workflows](workflows.md) - Common workflow patterns and examples
+- [AI Integration](ai-integration.md) - Working with AI tools and assistants

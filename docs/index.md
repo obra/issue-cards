@@ -16,6 +16,7 @@ issue-cards --version
 
 - [Quick Start](quick-start.md) - Get up and running in minutes
 - [Workflows](workflows.md) - Common usage patterns and examples
+- [Task Management](task-management.md) - Strategies for effective task organization
 - [AI Integration](ai-integration.md) - Use with AI coding assistants
 - [Contributing](contributing.md) - Contribute to the project
 
