@@ -2,7 +2,7 @@
 
 Issue Cards is an AI-optimized command-line issue tracking tool designed for both AI coding agents and human developers. (But primarily for keeping your coding agent on-task)
 
-Pretty much every part of this was built using Claude Code, but I have actually used it for a couple of projects and it seems to do a good job of keeping the coding agent on task.
+** Caveat Emptor: Pretty much every part of this was built using Claude Code, but I have actually used it for a couple of projects and it seems to do a good job of keeping the coding agent on task. **
 
 I owe a blog post about how to use it. -Jesse, April 2025
 
